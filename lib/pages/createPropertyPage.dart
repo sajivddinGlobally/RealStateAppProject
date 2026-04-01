@@ -149,8 +149,8 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
       selectedPropertyType = _capitalize(data.property);
       selectedPropertySubType = data.propertyType;
       selectedListingCategory = _normalizeListingCategory(data.listingCategory);
-      selectedCity = data.city;
-      selectedLocality = data.localityArea;
+      selectedCity = data.city?.trim();
+      selectedLocality = data.localityArea?.trim();
       selectedFurnishing = _normalizeFurnishing(data.furnishing);
       _priceController.text = data.price ?? '';
       // _localityAreaController.text = data.localityArea ?? "";
@@ -802,7 +802,6 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 24),
               _buildSectionTitle("Property Photos"),
               const SizedBox(height: 12),
@@ -1106,19 +1105,81 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
     );
   }
 
+  // Widget _buildCityDropdown(AsyncValue<CityResponseModel> cityAsync) {
+  //   return cityAsync.when(
+  //     data: (cityRes) {
+  //       final cities = cityRes.data ?? [];
+
+  //       // ✅ EDIT MODE FIX
+  //       if (isEditMode && selectedCity != null && localityList.isEmpty) {
+  //         final matchedCity = cities
+  //             .where((c) => c.cityName == selectedCity)
+  //             .toList();
+
+  //         if (matchedCity.isNotEmpty) {
+  //           localityList = matchedCity.first.areas ?? [];
+  //         }
+  //       }
+
+  //       return _buildDropdown(
+  //         'City',
+  //         selectedCity,
+  //         cities.map((c) => c.cityName ?? "").toList(),
+  //         (v) {
+  //           setState(() {
+  //             selectedCity = v;
+  //             selectedLocality = null;
+
+  //             // ✅ FIXED LOGIC
+  //             final selectedCityObj = cities
+  //                 .where((c) => c.cityName == v)
+  //                 .toList();
+
+  //             if (selectedCityObj.isNotEmpty) {
+  //               localityList = selectedCityObj.first.areas ?? [];
+  //             } else {
+  //               localityList = [];
+  //             }
+  //           });
+  //         },
+  //       );
+  //     },
+  //     loading: () =>
+  //         const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+  //     error: (_, __) => const Text(
+  //       "Failed to load cities",
+  //       style: TextStyle(color: Colors.red),
+  //     ),
+  //   );
+  // }
+
   Widget _buildCityDropdown(AsyncValue<CityResponseModel> cityAsync) {
     return cityAsync.when(
       data: (cityRes) {
+        // Get the list of cities from your API response
         final cities = cityRes.data ?? [];
 
-        // ✅ EDIT MODE FIX
-        if (isEditMode && selectedCity != null && localityList.isEmpty) {
-          final matchedCity = cities
-              .where((c) => c.cityName == selectedCity)
-              .toList();
+        // logic to sync localityList when data arrives or when city is pre-filled
+        if (selectedCity != null && cities.isNotEmpty) {
+          // Find the city object that matches our selectedCity string
+          final matchedCity = cities.cast<dynamic>().firstWhere(
+            (c) =>
+                (c.cityName ?? "").toString().trim().toLowerCase() ==
+                selectedCity!.trim().toLowerCase(),
+            orElse: () => null,
+          );
 
-          if (matchedCity.isNotEmpty) {
-            localityList = matchedCity.first.areas ?? [];
+          if (matchedCity != null && matchedCity.areas != null) {
+            // Check if we actually need to update the list to avoid infinite loops
+            if (localityList.length != matchedCity.areas!.length) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  setState(() {
+                    localityList = List<String>.from(matchedCity.areas!);
+                  });
+                }
+              });
+            }
           }
         }
 
@@ -1130,23 +1191,29 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
             setState(() {
               selectedCity = v;
               selectedLocality = null;
+              final selectedCityObj = cities.cast<dynamic>().firstWhere(
+                (c) =>
+                    (c.cityName ?? "").toString().trim().toLowerCase() ==
+                    (v ?? "").trim().toLowerCase(),
+                orElse: () => null,
+              );
 
-              // ✅ FIXED LOGIC
-              final selectedCityObj = cities
-                  .where((c) => c.cityName == v)
-                  .toList();
-
-              if (selectedCityObj.isNotEmpty) {
-                localityList = selectedCityObj.first.areas ?? [];
+              if (selectedCityObj != null) {
+                localityList = List<String>.from(selectedCityObj.areas ?? []);
               } else {
                 localityList = [];
               }
             });
           },
+          isRequired: true,
         );
       },
-      loading: () =>
-          const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      loading: () => const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 10),
+          child: CupertinoActivityIndicator(),
+        ),
+      ),
       error: (_, __) => const Text(
         "Failed to load cities",
         style: TextStyle(color: Colors.red),
