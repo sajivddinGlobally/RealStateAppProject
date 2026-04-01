@@ -1,0 +1,20 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:realstate/Model/myBookingServiceRequestResModel.dart';
+import 'package:realstate/core/network/api.state.dart';
+import 'package:realstate/core/utils/preety.dio.dart';
+
+import '../Model/GetLoanQueryModel.dart';
+import '../Model/SavedModel.dart';
+
+final myRequestBookingServiceContorller =
+    FutureProvider.autoDispose<MyBookingServiceRequestResModel>((ref) async {
+      final service = APIStateNetwork(createDio());
+      return await service.MyRequestBookingService();
+    });
+
+
+final myLoanServiceContorller =
+FutureProvider.autoDispose<GetLoanQueryModel>((ref) async {
+  final service = APIStateNetwork(createDio());
+  return await service.myLoanQuery();
+});

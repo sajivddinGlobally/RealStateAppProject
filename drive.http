@@ -1,0 +1,310 @@
+@token = Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTM4ZmY3MzRiMDc4OGQ5NTJjYmRkYjAiLCJlbWFpbCI6InNhaGlsam95YUBnbWFpbC5jb20iLCJpYXQiOjE3NjUzNDM5NDQsImV4cCI6MTc5Njg3OTk0NH0.TJLeynyh-xSNoiMFTEkdin5x4zEJw1yi05nvK318f-0
+@url = https://api.propertyleinnovation.com/api/v1
+//@url =  https://majesticlivingproperties.com/api/v1
+//@url =  https://api.propertyleinnovation.com/api/v1
+
+# 
+post {{url}}/user/userRegister
+Content-type: application/json
+
+{
+    "name":"demo1",
+    "email":"demo1@gmail.com",
+    "phone":"1234567890",
+    "password":"123456"
+}
+
+############
+# login user
+post {{url}}/user/userLogin
+Content-type: application/json
+
+{
+    "phone":"8955892899"
+}
+
+############
+# otp verify
+post {{url}}/user/verifyOtp
+Content-type: application/json
+
+{
+    "token":"w1dI6AhKBDfDMPM1jH7dXYZszCm8ydJ05yscfw0x",
+    "otp":"123456"
+}
+
+
+############
+# userProfile
+post {{url}}/user/userProfile
+Content-type: application/json
+Authorization: {{token}
+
+
+
+############
+# userUpdate
+post {{url}}/user/userUpdate
+Content-type: application/json
+Authorization: {{token}}
+
+{
+    "name":"Sahil Joya",
+    "image":"https://demmyimage.com/upload/khan.png"
+}
+
+
+//userSellProperty ============= new field add 
+###
+POST {{url}}/user/sell-property HTTP/1.1
+Content-type: application/json
+Authorization: {{token}}
+
+{
+  "property": "residential",
+  "propertyType": "apartment",
+  "listingCategory": "rent",
+
+  "localityArea": "Vaishali Nagar",
+  "city": "Jaipur",
+
+  "price": "4500000",
+  "area": "2342 sqft",
+  "bedRoom": "2",
+
+  "bathrooms": "2",
+  "furnishing": "semi-furnished",
+
+  "amenities": [
+    "Lift",
+    "Parking",
+    "Power Backup",
+    "Security"
+  ],
+
+  "permitNo": "PERMIT-12345",
+  "rera": "RERA-JAIPUR-2024-001",
+
+  "ded": "",
+  "brn": "",
+
+  "aroundProject": [
+    {
+      "name": "World Trade Park",
+      "details": "10 minutes drive"
+    },
+    {
+      "name": "Metro Station",
+      "details": "500 meters"
+    }
+  ],
+
+  "description": "Spacious 2 BHK apartment with good ventilation and modern amenities.",
+
+  "aveneuOverView": {
+    "projectArea": "5 Acres",
+    "size": "2342 sqft",
+    "projectSize": "120 Units",
+    "launchDate": "2023-01-15",
+    "possessionStart": "2024-06-01"
+  },
+
+  "propertyAddress": "Flat No 302, Vaishali Nagar, Jaipur, Rajasthan",
+
+  "uploadedPhotos": [
+    "https://cdn.propertyle.com/images/property1.jpg",
+    "https://cdn.propertyle.com/images/property2.jpg"
+  ]
+}
+
+
+############
+# getPropertyList
+post {{url}}/user/get-list
+Content-type: application/json
+Authorization: {{token}}
+
+{
+    "sortOrder":"desc",
+    "sortBy":"createdAt",
+    "pageNo":"1",
+    "size":"10"
+}
+
+############
+# getMyProperty
+post {{url}}/user/getMyProperty
+Content-type: application/json
+Authorization: {{token}}
+
+
+############
+# getPropertyById
+post {{url}}/user/get-property-by-id
+Content-type: application/json
+Authorization: {{token}}
+
+{
+    "id":"2-bhk-apartment-mansarovar-jaipur-rent-1706092339123"
+}
+
+############
+# contact property wale ko
+post {{url}}/user/saveContactInProperty
+Content-type: application/json
+Authorization: {{token}}
+
+{
+    "email":"vivek.khenna@gmail.com",
+    "name":"vivek khenna",
+    "phone":"32423423423",
+    "propertyId":"695b5f85c79cf6cd0bfca5d1"
+}
+
+############
+# Contact Us
+post {{url}}/user/contact-us
+Content-type: application/json
+Authorization: {{token}}
+
+{
+    "email":"vivek.khenna@gmail.com",
+    "name":"vivek khenna",
+    "phone":"32423423423",
+    "subject" : "abs",
+    "message" : "abs",
+    "location":"Jaipur"
+}
+
+############
+# getLoanList
+post {{url}}/user/getLoanList
+Content-type: application/json
+Authorization: {{token}}
+
+{
+  "pageNo":1,
+  "size":10
+}
+
+############
+# loanQuery
+post {{url}}/user/loanQuery
+Content-type: application/json
+Authorization: {{token}}
+
+{
+  "phone":"9784945414",
+  "loanType":"home_loan",
+  "name":"rt",
+  "city":"Merta"
+}
+
+############
+# getServiceCategory
+post {{url}}/user/getServiceCategory
+Content-type: application/json
+Authorization: {{token}}
+
+############
+# serviceSave
+post {{url}}/user/serviceSave
+Content-type: application/json
+Authorization: {{token}}
+
+{
+  "name":"John",
+  "email":"John@gmail.com",
+  "phone":"9583764576",
+  "serviceType":"69425d19cb4e5371e2d03f44"
+}
+
+############
+# city list
+post {{url}}/user/getCityList
+Content-type: application/json
+
+
+############
+# updateMy property status
+post {{url}}/user/updatePropertyStatus
+Content-type: application/json
+Authorization: {{token}}
+
+{
+    "id":"69467b1685ce3dd0edd45703",
+    "status":"sold"
+}
+
+
+############
+# Book service for my home
+post {{url}}/user/BookService
+Content-type: application/json
+Authorization: {{token}}
+
+{
+  "address":"mere gar par",
+  "message": "",
+  "serviceType":"69425d19cb4e5371e2d03f44"
+}
+
+
+############
+# My booked home serices
+post {{url}}/user/BookingServices
+Content-type: application/json
+Authorization: {{token}}
+
+
+############
+# togelProperties
+post {{url}}/user/togelProperties
+Content-type: application/json
+Authorization: {{token}}
+{
+  "propertyId":"6944fb14b77f6c3433909769"
+}
+
+############
+# togelProperties 
+post {{url}}user/getLikeProperties
+Content-type: application/json
+Authorization: {{token}}
+
+////////////////////////////////////////  newwwwwwwwwwwwwwwwwwwww  
+
+############
+# getServiceCategory
+post {{url}}/user/getServiceCategory
+Content-type: application/json
+Authorization: {{token}}
+
+############
+# checkSlotAvailability
+post {{url}}/user/checkSlotAvailability
+Content-type: application/json
+Authorization: {{token}}
+
+{
+   "serviceType": "69425cb6cb4e5371e2d03f3e",
+    "serviceTimeSlot": "06:00 AM - 08:00 AM",
+    "serviceDate": "2026-03-18"
+}
+
+
+############
+# Book service for my home
+post {{url}}/user/BookService
+Content-type: application/json
+Authorization: {{token}}
+
+{
+  "serviceType": "69425cb6cb4e5371e2d03f3e",
+  "address": "Jaipur, Rajasthan",
+  "message": "Pipe leakage issue in kitchen",
+  "serviceDate": "2026-03-20",
+  "serviceTimeSlot": "11:00 AM - 01:00 PM",
+  "serviceFee": 500,
+  "problemImgae": null
+}
