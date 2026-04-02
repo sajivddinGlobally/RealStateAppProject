@@ -477,6 +477,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
       } else {
         response = await service.createProperty(body);
       }
+      if (!mounted) return;
 
       if (response.error == false) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -492,7 +493,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
         );
 
         if (!widget.fromBottomNav) {
-          if (mounted) Navigator.pop(context, true);
+          Navigator.pop(context, true);
           ref.invalidate(getMyPropertyController);
           return;
         } else {
@@ -508,14 +509,13 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
       }
     } catch (e, st) {
       log("Submit error: $e\n$st");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Something went wrong."),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Something went wrong."),
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
