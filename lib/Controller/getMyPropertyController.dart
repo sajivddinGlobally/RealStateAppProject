@@ -14,7 +14,7 @@ final getMyPropertyController =
     });
 
 final getMyPropertyDetailsController =
-    FutureProvider.family<GetMyPropertyDetailsResModel, String>((
+    FutureProvider.family.autoDispose<GetMyPropertyDetailsResModel, String>((
       ref,
       body,
     ) async {
