@@ -205,6 +205,7 @@ class CommonLoader extends StatelessWidget {
 }
 */
 
+import 'dart:async';
 import 'dart:developer';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -224,11 +225,7 @@ class OtpVerifyPage extends StatefulWidget {
   final String token;
   final String phone;
 
-  const OtpVerifyPage({
-    super.key,
-    required this.token,
-    required this.phone,
-  });
+  const OtpVerifyPage({super.key, required this.token, required this.phone});
 
   @override
   State<OtpVerifyPage> createState() => _OtpVerifyPageState();
@@ -246,8 +243,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
 
     setState(() => isVerify = true);
 
-    final body =
-    VerifyBodyModel(token: widget.token, otp: otpController.text);
+    final body = VerifyBodyModel(token: widget.token, otp: otpController.text);
 
     try {
       final service = APIStateNetwork(createDio());
@@ -262,18 +258,17 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
 
         Fluttertoast.showToast(msg: response.message ?? "");
 
-        response.data!.register==false?
-        Navigator.pushAndRemoveUntil(
-          context,
-          CupertinoPageRoute(builder: (context) => RealEstateHomePage()),
-              (route) => false,
-        ):  Navigator.pushAndRemoveUntil(
-          context,
-          CupertinoPageRoute(builder: (context) => WelcomeNamePage()),
-              (route) => false,
-        );
-
-
+        response.data!.register == false
+            ? Navigator.pushAndRemoveUntil(
+                context,
+                CupertinoPageRoute(builder: (context) => RealEstateHomePage()),
+                (route) => false,
+              )
+            : Navigator.pushAndRemoveUntil(
+                context,
+                CupertinoPageRoute(builder: (context) => WelcomeNamePage()),
+                (route) => false,
+              );
       } else {
         otpController.clear();
         Fluttertoast.showToast(msg: response.message ?? "Error");
@@ -283,6 +278,36 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
     } finally {
       setState(() => isVerify = false);
     }
+  }
+
+  Timer? _timer;
+  int _start = 60;
+  @override
+  void initState() {
+    super.initState();
+    startTimer();
+  }
+
+  void startTimer() {
+    _start = 60;
+
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_start == 0) {
+        timer.cancel();
+      } else {
+        setState(() {
+          _start--;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    otpController.dispose();
+    super.dispose();
   }
 
   @override
@@ -310,17 +335,14 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                           color: Colors.black12,
                           blurRadius: 12,
                           offset: Offset(0, 4),
-                        )
+                        ),
                       ],
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         /// LOGO
-                        Image.asset(
-                          "assets/logo.png",
-                          width: 150,
-                        ),
+                        Image.asset("assets/logo.png", width: 150),
 
                         const SizedBox(height: 20),
 
@@ -376,20 +398,27 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
 
                         const SizedBox(height: 10),
 
-                        /// RESEND TIMER
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Text("Resend OTP in "),
-                            Text(
-                              "00:22",
-                              style: TextStyle(
-                                color: Color(0xffE86A34),
-                                fontWeight: FontWeight.bold,
+                        _start == 0
+                            ? GestureDetector(
+                                onTap: () {
+                                  startTimer();
+                                  // API call for resend OTP
+                                },
+                                child: const Text(
+                                  "Resend OTP",
+                                  style: TextStyle(
+                                    color: Color(0xffE86A34),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              )
+                            : Text(
+                                "00:${_start.toString().padLeft(2, '0')}",
+                                style: const TextStyle(
+                                  color: Color(0xffE86A34),
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
 
                         const SizedBox(height: 20),
 
@@ -403,8 +432,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                               color: isVerify
                                   ? Colors.grey
                                   : const Color(0xffE86A34),
-                              borderRadius:
-                              BorderRadius.circular(30),
+                              borderRadius: BorderRadius.circular(30),
                             ),
                             child: const Center(
                               child: Text(
@@ -475,11 +503,7 @@ class CommonLoader extends StatelessWidget {
   final bool isLoading;
   final Widget child;
 
-  const CommonLoader({
-    super.key,
-    required this.isLoading,
-    required this.child,
-  });
+  const CommonLoader({super.key, required this.isLoading, required this.child});
 
   @override
   Widget build(BuildContext context) {

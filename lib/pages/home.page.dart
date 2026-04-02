@@ -866,7 +866,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
                             ElevatedButton.icon(
                               onPressed: () {
                                 setState(() {
-                                  bottomIndex == 2;
+                                  bottomIndex = 2;
                                 });
                               },
                               icon: const Icon(Icons.add, color: Colors.white),

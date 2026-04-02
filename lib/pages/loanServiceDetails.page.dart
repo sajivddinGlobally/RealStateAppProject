@@ -59,6 +59,9 @@ class _LoanServiceDetailsPageState extends State<LoanServiceDetailsPage> {
   @override
   void initState() {
     super.initState();
+    if (tensureList.isNotEmpty) {
+      selectTensure = tensureList.last;
+    }
 
     /// ✅ Loan Amount (API)
     loanAmountController.text = widget.item.loandAmount?.toString() ?? "";

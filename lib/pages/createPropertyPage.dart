@@ -1109,18 +1109,15 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
   //   return cityAsync.when(
   //     data: (cityRes) {
   //       final cities = cityRes.data ?? [];
-
   //       // ✅ EDIT MODE FIX
   //       if (isEditMode && selectedCity != null && localityList.isEmpty) {
   //         final matchedCity = cities
   //             .where((c) => c.cityName == selectedCity)
   //             .toList();
-
   //         if (matchedCity.isNotEmpty) {
   //           localityList = matchedCity.first.areas ?? [];
   //         }
   //       }
-
   //       return _buildDropdown(
   //         'City',
   //         selectedCity,
@@ -1129,12 +1126,10 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
   //           setState(() {
   //             selectedCity = v;
   //             selectedLocality = null;
-
   //             // ✅ FIXED LOGIC
   //             final selectedCityObj = cities
   //                 .where((c) => c.cityName == v)
   //                 .toList();
-
   //             if (selectedCityObj.isNotEmpty) {
   //               localityList = selectedCityObj.first.areas ?? [];
   //             } else {
