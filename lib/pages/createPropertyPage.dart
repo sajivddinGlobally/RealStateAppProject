@@ -991,7 +991,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
     TextInputType? type,
     VoidCallback? onTap,
     bool readOnly = false,
-    bool isRequired = true, // ← Added
+    bool isRequired = true,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1049,7 +1049,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
     String? value,
     List<String> items,
     Function(String?) onChanged, {
-    bool isRequired = true, // ← Added
+    bool isRequired = true,
   }) {
     String? safeValue = items.contains(value) ? value : null;
     return Column(

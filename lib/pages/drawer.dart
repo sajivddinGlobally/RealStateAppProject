@@ -442,33 +442,32 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
             child: ListView(
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
               children: [
-                _drawerItem(
-                  icon: Icons.home_rounded,
-                  label: 'Home',
-                  index: 0,
-                  context: context,
-                ),
-                _drawerItem(
-                  icon: Icons.description_rounded,
-                  label: 'My Listings',
-                  index: 1,
-                  context: context,
-                ),
+                // _drawerItem(
+                //   icon: Icons.home_rounded,
+                //   label: 'Home',
+                //   index: 0,
+                //   context: context,
+                // ),
+                // _drawerItem(
+                //   icon: Icons.description_rounded,
+                //   label: 'My Listings',
+                //   index: 1,
+                //   context: context,
+                // ),
 
-                _drawerItem(
-                  icon: Icons.bookmark_rounded,
-                  label: 'Saved Properties',
-                  index: 4,
-                  context: context,
-                ),
+                // _drawerItem(
+                //   icon: Icons.bookmark_rounded,
+                //   label: 'Saved Properties',
+                //   index: 4,
+                //   context: context,
+                // ),
 
-                _drawerItem(
-                  icon: Icons.call_rounded,
-                  label: 'Contact Us',
-                  index: 3,
-                  context: context,
-                ),
-
+                // _drawerItem(
+                //   icon: Icons.call_rounded,
+                //   label: 'Contact Us',
+                //   index: 3,
+                //   context: context,
+                // ),
                 _drawerItem(
                   icon: Icons.support_agent,
                   label: 'My Services Request',
@@ -704,25 +703,21 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
     bool isSelected = false;
     return ListTile(
       dense: true,
-
+      contentPadding: EdgeInsets.only(left: 10.w),
       onTap:
           onTap ??
           () {
-            // Agar onTap diya hai toh wo chalega, nahi toh purana index wala logic
             Navigator.pop(context);
             if (index != null && index != -1) widget.onItemSelected(index);
           },
-      leading: Icon(
-        icon,
-        color: isSelected ? const Color(0xffFF6A2A) : Colors.blueGrey.shade700,
-      ),
-
+      leading: Icon(icon, color: Colors.blueGrey.shade700),
       title: Text(
         label,
         style: GoogleFonts.inter(
           fontSize: 15.sp,
-          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-          color: isSelected ? const Color(0xffFF6A2A) : Colors.black87,
+          fontWeight: FontWeight.w500,
+          color: Colors.black87,
+          letterSpacing: -0.70,
         ),
       ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.r)),
