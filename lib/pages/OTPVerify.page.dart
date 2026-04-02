@@ -249,8 +249,33 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
       final service = APIStateNetwork(createDio());
       final response = await service.verifyUser(body);
 
+      // if (response.code == 0 || response.error == false) {
+      //   var box = Hive.box("userdata");
+      //   await box.put("token", response.data!.token.toString());
+      //   await box.put("name", response.data!.user!.name.toString());
+      //   await box.put("email", response.data!.user!.email.toString());
+      //   await box.put("phone", response.data!.user!.phone.toString());
+
+      //   Fluttertoast.showToast(msg: response.message ?? "");
+
+      //   response.data!.register == false
+      //       ? Navigator.pushAndRemoveUntil(
+      //           context,
+      //           CupertinoPageRoute(builder: (context) => RealEstateHomePage()),
+      //           (route) => false,
+      //         )
+      //       : Navigator.pushAndRemoveUntil(
+      //           context,
+      //           CupertinoPageRoute(builder: (context) => WelcomeNamePage()),
+      //           (route) => false,
+      //         );
+      // } else {
+      //   otpController.clear();
+      //   Fluttertoast.showToast(msg: response.message ?? "Error");
+      // }
       if (response.code == 0 || response.error == false) {
         var box = Hive.box("userdata");
+
         await box.put("token", response.data!.token.toString());
         await box.put("name", response.data!.user!.name.toString());
         await box.put("email", response.data!.user!.email.toString());
@@ -258,20 +283,23 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
 
         Fluttertoast.showToast(msg: response.message ?? "");
 
-        response.data!.register == false
-            ? Navigator.pushAndRemoveUntil(
-                context,
-                CupertinoPageRoute(builder: (context) => RealEstateHomePage()),
-                (route) => false,
-              )
-            : Navigator.pushAndRemoveUntil(
-                context,
-                CupertinoPageRoute(builder: (context) => WelcomeNamePage()),
-                (route) => false,
-              );
-      } else {
-        otpController.clear();
-        Fluttertoast.showToast(msg: response.message ?? "Error");
+        if (!mounted) return;
+
+        if (response.data!.register == false) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            CupertinoPageRoute(builder: (context) => RealEstateHomePage()),
+            (route) => false,
+          );
+        } else {
+          Navigator.pushAndRemoveUntil(
+            context,
+            CupertinoPageRoute(builder: (context) => WelcomeNamePage()),
+            (route) => false,
+          );
+        }
+
+        return; // 🔥 VERY IMPORTANT
       }
     } catch (e) {
       log(e.toString());
@@ -293,6 +321,11 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
 
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
       if (_start == 0) {
         timer.cancel();
       } else {
@@ -303,12 +336,12 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
     });
   }
 
-  // @override
-  // void dispose() {
-  //   _timer?.cancel();
-  //   otpController.dispose();
-  //   super.dispose();
-  // }
+  @override
+  void dispose() {
+    _timer?.cancel();
+    otpController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -373,6 +406,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                           appContext: context,
                           length: 6,
                           controller: otpController,
+                          autoDisposeControllers: false,
                           keyboardType: TextInputType.number,
                           animationType: AnimationType.fade,
                           cursorColor: const Color(0xffE86A34),

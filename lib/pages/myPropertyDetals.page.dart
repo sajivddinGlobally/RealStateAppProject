@@ -240,7 +240,7 @@ class _MyPropertyDetalsPageState extends ConsumerState<MyPropertyDetalsPage> {
                             ),
                             SizedBox(height: 10.h),
                             Text(
-                              item.description!,
+                              item.description ?? "",
                               style: TextStyle(
                                 fontSize: 14.sp,
                                 color: Colors.grey.shade700,
@@ -269,7 +269,7 @@ class _MyPropertyDetalsPageState extends ConsumerState<MyPropertyDetalsPage> {
           return Center(child: Text(error.toString()));
         },
 
-        loading: () => Center(child: CircularProgressIndicator()),
+        loading: () => Center(child: CircularProgressIndicator(color: primary)),
       ),
     );
   }
