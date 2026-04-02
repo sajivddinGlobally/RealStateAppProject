@@ -303,12 +303,12 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
     });
   }
 
-  @override
-  void dispose() {
-    _timer?.cancel();
-    otpController.dispose();
-    super.dispose();
-  }
+  // @override
+  // void dispose() {
+  //   _timer?.cancel();
+  //   otpController.dispose();
+  //   super.dispose();
+  // }
 
   @override
   Widget build(BuildContext context) {
