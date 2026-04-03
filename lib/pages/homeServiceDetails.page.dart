@@ -148,7 +148,7 @@ class _HomeServiceDetailsPageState
                                     onPressed: () {
                                       pageController.previousPage(
                                         duration: const Duration(
-                                          milliseconds: 300, 
+                                          milliseconds: 300,
                                         ),
                                         curve: Curves.easeInOut,
                                       );
@@ -234,11 +234,11 @@ class _HomeServiceDetailsPageState
 
                                       setState(() => currentPage = 1);
 
-                                      Fluttertoast.showToast(
-                                        msg:
-                                            response.message ??
-                                            "Slot Available!",
-                                      );
+                                      // Fluttertoast.showToast(
+                                      //   msg:
+                                      //       response.message ??
+                                      //       "Slot Available!",
+                                      // );
                                     } else {
                                       Fluttertoast.showToast(
                                         msg:
@@ -809,20 +809,19 @@ class _HomeServiceDetailsPageState
                         SizedBox(height: 20.h),
 
                         /// --- Highlights Row ---
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: [
-                              _modernChip(Icons.timer_outlined, "60 min"),
-                              _modernChip(
-                                Icons.verified_user_outlined,
-                                "Verified",
-                              ),
-                              _modernChip(Icons.security_outlined, "Warranty"),
-                            ],
-                          ),
-                        ),
-
+                        // SingleChildScrollView(
+                        //   scrollDirection: Axis.horizontal,
+                        //   child: Row(
+                        //     children: [
+                        //       _modernChip(Icons.timer_outlined, "60 min"),
+                        //       _modernChip(
+                        //         Icons.verified_user_outlined,
+                        //         "Verified",
+                        //       ),
+                        //       _modernChip(Icons.security_outlined, "Warranty"),
+                        //     ],
+                        //   ),
+                        // ),
                         const Divider(height: 40, thickness: 1),
 
                         /// --- Price Section ---

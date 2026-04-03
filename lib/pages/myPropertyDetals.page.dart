@@ -257,8 +257,6 @@ class _MyPropertyDetalsPageState extends ConsumerState<MyPropertyDetalsPage> {
                   ),
                 ],
               ),
-
-              // ================= BOTTOM CTA =================
             ],
           );
         },
