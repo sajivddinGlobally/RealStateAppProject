@@ -178,7 +178,6 @@ class _LoginPageWithOtpState extends State<LoginPageWithOtp> {
 }
 */
 
-
 import 'dart:developer';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -199,7 +198,6 @@ class _LoginPageWithOtpState extends State<LoginPageWithOtp> {
   bool isLoading = false;
   bool isChecked = true;
   final phoneController = TextEditingController();
-
 
   Future<void> loginWithPhone() async {
     if (phoneController.text.trim().isEmpty) {
@@ -226,11 +224,10 @@ class _LoginPageWithOtpState extends State<LoginPageWithOtp> {
         Navigator.push(
           context,
           CupertinoPageRoute(
-            builder: (context) =>
-                OtpVerifyPage(
-                  token: response.data!.token ?? "",
-                  phone: phoneController.text,   // ADD THIS
-                ),
+            builder: (context) => OtpVerifyPage(
+              token: response.data!.token ?? "",
+              phone: phoneController.text, // ADD THIS
+            ),
           ),
         );
       } else {
@@ -242,6 +239,7 @@ class _LoginPageWithOtpState extends State<LoginPageWithOtp> {
       setState(() => isLoading = false);
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return CommonLoader(
@@ -267,7 +265,7 @@ class _LoginPageWithOtpState extends State<LoginPageWithOtp> {
                           color: Colors.black12,
                           blurRadius: 12,
                           offset: Offset(0, 4),
-                        )
+                        ),
                       ],
                     ),
                     child: Column(
@@ -275,10 +273,7 @@ class _LoginPageWithOtpState extends State<LoginPageWithOtp> {
                       children: [
                         /// LOGO
                         Center(
-                          child: Image.asset(
-                            "assets/logo.png",
-                            width: 160,
-                          ),
+                          child: Image.asset("assets/logo.png", width: 160),
                         ),
 
                         const SizedBox(height: 25),
@@ -308,19 +303,14 @@ class _LoginPageWithOtpState extends State<LoginPageWithOtp> {
                         /// MOBILE FIELD
                         Container(
                           height: 58,
-                          padding:
-                          const EdgeInsets.symmetric(horizontal: 14),
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(14),
-                            border:
-                            Border.all(color: Colors.grey.shade300),
+                            border: Border.all(color: Colors.grey.shade300),
                           ),
                           child: Row(
                             children: [
-                              const Text(
-                                "+91",
-                                style: TextStyle(fontSize: 16),
-                              ),
+                              const Text("+91", style: TextStyle(fontSize: 16)),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: TextField(
@@ -367,14 +357,13 @@ class _LoginPageWithOtpState extends State<LoginPageWithOtp> {
                         GestureDetector(
                           onTap: isLoading ? null : loginWithPhone,
                           child: Container(
-                            height: 55,
+                            height: 50,
                             width: double.infinity,
                             decoration: BoxDecoration(
                               color: isLoading
                                   ? Colors.grey
                                   : const Color(0xffE86A34),
-                              borderRadius:
-                              BorderRadius.circular(30),
+                              borderRadius: BorderRadius.circular(30),
                             ),
                             child: const Center(
                               child: Text(

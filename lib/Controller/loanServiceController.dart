@@ -5,7 +5,7 @@ import 'package:realstate/Model/loanServiceResModel.dart';
 import 'package:realstate/core/network/api.state.dart';
 import 'package:realstate/core/utils/preety.dio.dart';
 
-final loanServiceController = FutureProvider<LoanServiceResModel>((ref) async {
+final loanServiceController = FutureProvider.autoDispose<LoanServiceResModel>((ref) async {
   final loanService = APIStateNetwork(createDio());
   return await loanService.fetchAllLoanService(
     LoanServiceBodyModel(pageNo: 1, size: 20),

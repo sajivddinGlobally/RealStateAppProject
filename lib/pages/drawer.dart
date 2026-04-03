@@ -441,7 +441,6 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
             child: ListView(
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
               children: [
-
                 // _drawerItem(
                 //   icon: Icons.home_rounded,
                 //   label: 'Home',
@@ -466,7 +465,6 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                 //   index: 3,
                 //   context: context,
                 // ),
-              
                 _drawerItem(
                   icon: Icons.support_agent,
                   label: 'My Services Request',
@@ -549,18 +547,11 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
           //     ),
           //   ),
           // ),
-
           SafeArea(
-            top:
-                false, // ← Top safe area ignore karo (header already handle karta hai)
+            top: false,
             minimum: EdgeInsets.zero,
             child: Padding(
-              padding: EdgeInsets.fromLTRB(
-                20.w,
-                12.h,
-                20.w,
-                20.h,
-              ), // bottom padding thoda zyada safe feel ke liye
+              padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 20.h),
               child: InkWell(
                 onTap: showLogoutDialog,
                 borderRadius: BorderRadius.circular(15),
