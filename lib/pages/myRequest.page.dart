@@ -239,47 +239,154 @@ class MyRequestPage extends ConsumerWidget {
       );
     }
 
-    // New requested chain
-    final steps = [
-      _Step(title: "Pending", active: true),
-      _Step(title: "Assigned", active: status != 'pending'),
-      _Step(
-        title: "On Way",
-        active:
-            status == 'on_way' || status == 'working' || status == 'complete',
-      ),
-      _Step(
-        title: "Working",
-        active: status == 'working' || status == 'complete',
-      ),
-      _Step(title: "Completed", active: status == 'complete'),
+    // final steps = [
+    //   _Step(title: "Pending", active: true),
+    //   _Step(title: "Assigned", active: status != 'pending'),
+    //   _Step(
+    //     title: "On Way",
+    //     active:
+    //         status == 'assigned' ||
+    //         status == 'on_way' ||
+    //         status == 'working' ||
+    //         status == 'complete',
+    //   ),
+    //   _Step(
+    //     title: "Working",
+    //     active: status == 'working' || status == 'complete',
+    //   ),
+    //   _Step(title: "Completed", active: status == 'complete'),
+    // ];
+    // return Padding(
+    //   padding: EdgeInsets.fromLTRB(12.w, 16.h, 12.w, 16.h),
+    //   child: SingleChildScrollView(
+    //     scrollDirection: Axis.horizontal,
+    //     child: Row(
+    //       mainAxisAlignment: MainAxisAlignment.center,
+    //       children: List.generate(steps.length, (i) {
+    //         final step = steps[i];
+    //         final isLast = i == steps.length - 1;
+    //         return Row(
+    //           mainAxisSize: MainAxisSize.min,
+    //           children: [
+    //             Column(
+    //               children: [
+    //                 Container(
+    //                   width: 32.w,
+    //                   height: 32.w,
+    //                   decoration: BoxDecoration(
+    //                     shape: BoxShape.circle,
+    //                     color: step.active
+    //                         ? primaryColor
+    //                         : Colors.grey.shade200,
+    //                     border: Border.all(
+    //                       color: step.active
+    //                           ? primaryColor
+    //                           : Colors.grey.shade400,
+    //                       width: 2.5,
+    //                     ),
+    //                   ),
+    //                   child: Center(
+    //                     child: Text(
+    //                       '${i + 1}',
+    //                       style: TextStyle(
+    //                         color: step.active
+    //                             ? Colors.white
+    //                             : Colors.grey.shade600,
+    //                         fontWeight: FontWeight.bold,
+    //                         fontSize: 15.sp,
+    //                       ),
+    //                     ),
+    //                   ),
+    //                 ),
+    //                 SizedBox(height: 8.h),
+    //                 Text(
+    //                   step.title,
+    //                   style: GoogleFonts.inter(
+    //                     fontSize: 11.sp,
+    //                     color: step.active
+    //                         ? primaryColor
+    //                         : Colors.grey.shade700,
+    //                     fontWeight: step.active
+    //                         ? FontWeight.w600
+    //                         : FontWeight.normal,
+    //                   ),
+    //                 ),
+    //               ],
+    //             ),
+    //             if (!isLast)
+    //               Container(
+    //                 width: 50.w,
+    //                 height: 3.h,
+    //                 margin: EdgeInsets.symmetric(horizontal: 4.w),
+    //                 color: step.active ? primaryColor : Colors.grey.shade300,
+    //               ),
+    //           ],
+    //         );
+    //       }),
+    //     ),
+    //   ),
+    // );
+
+    int currentStepIndex = 0;
+    if (status == 'pending') {
+      currentStepIndex = 0;
+    } else if (status == 'in_progress') {
+      currentStepIndex = 1;
+    } else if (status == 'working') {
+      currentStepIndex = 3; // On Way (index 2) ko skip karke seedha 3 par
+    } else if (status == 'complete') {
+      currentStepIndex = 4;
+    }
+
+    // 2. CUSTOM LOGIC: Agar status 'assigned' hai, toh hum 3rd circle (index 2) ko
+    // FORCEfully active mark karenge taaki UI par "On Way" fill dikhe.
+    int activeUntil = currentStepIndex;
+    if (status == 'in_progress') {
+      activeUntil = 2; // Yeh "On Way" wale container aur line ko fill kar dega
+    } else if (status == 'working' || status == 'complete') {
+      activeUntil = currentStepIndex; // 'working' par index 3 tak sab fill hoga
+    }
+
+    final stepTitles = [
+      "Pending",
+      "Assigned",
+      "On Way",
+      "Working",
+      "Completed",
     ];
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(12.w, 16.h, 12.w, 16.h),
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 16.h),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(steps.length, (i) {
-            final step = steps[i];
-            final isLast = i == steps.length - 1;
+          children: List.generate(stepTitles.length, (i) {
+            // Circle Fill Logic
+            final bool isCircleActive = i <= activeUntil;
+
+            // Line Fill Logic: Previous step se current step tak ki line
+            final bool isLineActive = i < activeUntil;
+
+            final bool isLast = i == stepTitles.length - 1;
 
             return Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Column(
                   children: [
+                    // --- CIRCLE (Container) ---
                     Container(
                       width: 32.w,
                       height: 32.w,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: step.active
+                        // Yahan isCircleActive se container fill hoga
+                        color: isCircleActive
                             ? primaryColor
                             : Colors.grey.shade200,
                         border: Border.all(
-                          color: step.active
+                          color: isCircleActive
                               ? primaryColor
                               : Colors.grey.shade400,
                           width: 2.5,
@@ -289,7 +396,7 @@ class MyRequestPage extends ConsumerWidget {
                         child: Text(
                           '${i + 1}',
                           style: TextStyle(
-                            color: step.active
+                            color: isCircleActive
                                 ? Colors.white
                                 : Colors.grey.shade600,
                             fontWeight: FontWeight.bold,
@@ -299,28 +406,32 @@ class MyRequestPage extends ConsumerWidget {
                       ),
                     ),
                     SizedBox(height: 8.h),
+                    // --- TITLE ---
                     Text(
-                      step.title,
+                      stepTitles[i],
                       style: GoogleFonts.inter(
                         fontSize: 11.sp,
-                        color: step.active
+                        color: isCircleActive
                             ? primaryColor
                             : Colors.grey.shade700,
-                        fontWeight: step.active
+                        fontWeight: isCircleActive
                             ? FontWeight.w600
                             : FontWeight.normal,
                       ),
                     ),
                   ],
                 ),
+                // --- CONNECTING LINE ---
                 if (!isLast)
                   Container(
                     width: 50.w,
                     height: 3.h,
-                    margin: EdgeInsets.symmetric(horizontal: 4.w),
-                    color: steps[i + 1].active
-                        ? primaryColor
-                        : Colors.grey.shade300,
+                    margin: EdgeInsets.only(
+                      left: 4.w,
+                      right: 4.w,
+                      bottom: 20.h,
+                    ),
+                    color: isLineActive ? primaryColor : Colors.grey.shade300,
                   ),
               ],
             );
@@ -359,8 +470,8 @@ class MyRequestPage extends ConsumerWidget {
     final lowerStatus = status.toLowerCase();
 
     final bool isPending = lowerStatus == 'pending';
-    final bool isAssigned = lowerStatus == 'assigned';
-    final bool isOnWay = lowerStatus == 'on_way';
+    final bool isAssigned = lowerStatus == 'in_progress';
+    // final bool isOnWay = lowerStatus == 'on_way';
     final bool isWorking = lowerStatus == 'working';
     final bool isCompleted = lowerStatus == 'complete';
 
@@ -376,8 +487,8 @@ class MyRequestPage extends ConsumerWidget {
         color: isCompleted
             ? Colors.green.shade50
             : isWorking
-            ? Colors.indigo.shade50
-            : isOnWay
+            // ? Colors.indigo.shade50
+            // : isOnWay
             ? Colors.blue.shade50
             : isAssigned
             ? Colors.amber.shade50
@@ -387,8 +498,8 @@ class MyRequestPage extends ConsumerWidget {
           color: isCompleted
               ? Colors.green.shade200
               : isWorking
-              ? Colors.indigo.shade200
-              : isOnWay
+              // ? Colors.indigo.shade200
+              // : isOnWay
               ? Colors.blue.shade200
               : isAssigned
               ? Colors.amber.shade200
@@ -402,7 +513,7 @@ class MyRequestPage extends ConsumerWidget {
               GestureDetector(
                 onTap:
                     technicianImage.isNotEmpty &&
-                        (isOnWay || isWorking || isCompleted)
+                        (isAssigned || isWorking || isCompleted)
                     ? () {
                         showDialog(
                           context: context,
@@ -480,9 +591,9 @@ class MyRequestPage extends ConsumerWidget {
                       isPending
                           ? "Finding technician..."
                           : isAssigned
-                          ? "Technician assigned"
-                          : isOnWay
                           ? "Technician is on the way"
+                          // : isOnWay
+                          // ? "Technician is on the way"
                           : isWorking
                           ? "Service in progress"
                           : isCompleted
@@ -496,7 +607,7 @@ class MyRequestPage extends ConsumerWidget {
                   ],
                 ),
               ),
-              if (isOnWay || isWorking)
+              if (isAssigned || isWorking)
                 IconButton(
                   onPressed: () async {
                     final phone = item.serviceBoy?.phone ?? "";
@@ -519,14 +630,14 @@ class MyRequestPage extends ConsumerWidget {
           SizedBox(height: 16.h),
 
           // Action / Status indicator
-          if (isOnWay || isWorking)
+          if (isAssigned || isWorking)
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () =>
                     _showVerifyDialog(context, technicianName, item.id, ref),
                 icon: const Icon(Icons.verified_user, size: 18),
-                label: const Text("VERIFY TECHNICIAN ARRIVAL"),
+                label: Text("VERIFY TECHNICIAN ARRIVAL"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue.shade100,
                   foregroundColor: Colors.blue.shade800,
@@ -551,19 +662,12 @@ class MyRequestPage extends ConsumerWidget {
               Colors.indigo.shade800,
               Colors.indigo.shade50,
             )
-          else if (isOnWay)
+          else if (isAssigned)
             _statusIndicator(
               Icons.directions_car,
               "TECHNICIAN IS ON THE WAY",
               Colors.blue.shade800,
               Colors.blue.shade50,
-            )
-          else if (isAssigned)
-            _statusIndicator(
-              Icons.person_add,
-              "TECHNICIAN ASSIGNED",
-              Colors.amber.shade900,
-              Colors.amber.shade100,
             )
           else if (isPending)
             _statusIndicator(
