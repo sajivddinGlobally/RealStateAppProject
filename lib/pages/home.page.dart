@@ -2740,7 +2740,10 @@ class FeaturedProject extends StatelessWidget {
                   ),
                   child: Text(title),
                 ),
-                Text(subtitle, style: const TextStyle(color: Colors.white)),
+                Text(
+                  subtitle,
+                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                ),
               ],
             ),
           ),
@@ -2786,7 +2789,6 @@ class _LoanServiceState extends ConsumerState<LoanService> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 padding: EdgeInsets.zero,
-                // itemCount: loanList.length,
                 itemCount: list.length,
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 3,
@@ -2821,11 +2823,6 @@ class _LoanServiceState extends ConsumerState<LoanService> {
                       ),
                       child: Column(
                         children: [
-                          // Icon(
-                          //   loanList[index].icon,
-                          //   size: 36.sp,
-                          //   color: Colors.blue,
-                          // ),
                           ClipRRect(
                             borderRadius: BorderRadius.circular(10.r),
                             child: Image.network(
