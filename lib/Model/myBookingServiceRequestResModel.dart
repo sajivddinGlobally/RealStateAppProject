@@ -82,6 +82,7 @@ class ListElement {
   String? rejectedReason;
   ServiceBoy? serviceBoy;
   String? serviceProviderArrivalTime;
+  String? serviceProviderImage;
 
   ListElement({
     this.id,
@@ -101,6 +102,7 @@ class ListElement {
     this.rejectedReason,
     this.serviceBoy,
     this.serviceProviderArrivalTime,
+    this.serviceProviderImage,
   });
 
   factory ListElement.fromJson(Map<String, dynamic> json) => ListElement(
@@ -125,6 +127,7 @@ class ListElement {
         ? null
         : ServiceBoy.fromJson(json["serviceBoy"]),
     serviceProviderArrivalTime: json["serviceProviderArrivalTime"],
+    serviceProviderImage: json["serviceProviderImage"],
   );
 
   Map<String, dynamic> toJson() => {
@@ -145,6 +148,7 @@ class ListElement {
     "rejectedReason": rejectedReason,
     "serviceBoy": serviceBoy?.toJson(),
     "serviceProviderArrivalTime": serviceProviderArrivalTime,
+    "serviceProviderImage": serviceProviderImage,
   };
 }
 

@@ -13,7 +13,7 @@ import 'package:realstate/core/utils/preety.dio.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class MyRequestPage extends ConsumerWidget {
-  const MyRequestPage({super.key});
+  MyRequestPage({super.key});
 
   Color getStatusColor(String status) {
     switch (status.toLowerCase()) {
@@ -33,6 +33,12 @@ class MyRequestPage extends ConsumerWidget {
         return Colors.blueGrey;
     }
   }
+
+  final ratingProvider = StateProvider.family<int, String>((ref, id) => 0);
+
+  final reviewTextProvider = StateProvider.family<String, String>(
+    (ref, id) => "",
+  );
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -478,7 +484,10 @@ class MyRequestPage extends ConsumerWidget {
     final serviceCategory = item.serviceType?.name ?? "Technician";
     final technicianName =
         item.serviceBoy?.name ?? "Assigning $serviceCategory...";
-    final technicianImage = item.serviceBoy?.image ?? "";
+    final technicianImage = item.serviceProviderImage ?? "";
+
+    final rating = ref.watch(ratingProvider(item.id ?? ""));
+    final reviewText = ref.watch(reviewTextProvider(item.id ?? ""));
 
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
@@ -491,7 +500,7 @@ class MyRequestPage extends ConsumerWidget {
             // : isOnWay
             ? Colors.blue.shade50
             : isAssigned
-            ? Colors.amber.shade50
+            ? Colors.blue.shade50
             : Colors.orange.shade50,
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(
@@ -502,7 +511,7 @@ class MyRequestPage extends ConsumerWidget {
               // : isOnWay
               ? Colors.blue.shade200
               : isAssigned
-              ? Colors.amber.shade200
+              ? Colors.blue.shade50
               : Colors.orange.shade200,
         ),
       ),
@@ -510,75 +519,155 @@ class MyRequestPage extends ConsumerWidget {
         children: [
           Row(
             children: [
-              GestureDetector(
-                onTap:
-                    technicianImage.isNotEmpty &&
-                        (isAssigned || isWorking || isCompleted)
-                    ? () {
-                        showDialog(
-                          context: context,
-                          barrierColor: Colors.black87,
-                          builder: (_) => Stack(
-                            children: [
-                              Dialog(
-                                backgroundColor: Colors.transparent,
-                                insetPadding: EdgeInsets.zero,
-                                child: GestureDetector(
-                                  onTap: () => Navigator.pop(context),
-                                  child: Hero(
-                                    tag: technicianImage,
-                                    child: PhotoView(
-                                      imageProvider: NetworkImage(
-                                        technicianImage,
+              Stack(
+                children: [
+                  GestureDetector(
+                    onTap:
+                        technicianImage.isNotEmpty &&
+                            (isAssigned || isWorking || isCompleted)
+                        ? () {
+                            showDialog(
+                              context: context,
+                              barrierColor: Colors.black87,
+                              builder: (_) => Stack(
+                                children: [
+                                  Dialog(
+                                    backgroundColor: Colors.transparent,
+                                    insetPadding: EdgeInsets.zero,
+                                    child: Hero(
+                                      tag: technicianImage,
+                                      child: PhotoView(
+                                        imageProvider: NetworkImage(
+                                          technicianImage,
+                                        ),
+                                        backgroundDecoration:
+                                            const BoxDecoration(
+                                              color: Colors.black,
+                                            ),
+                                        minScale:
+                                            PhotoViewComputedScale.contained,
+                                        maxScale:
+                                            PhotoViewComputedScale.covered *
+                                            2.5,
                                       ),
-                                      backgroundDecoration: const BoxDecoration(
-                                        color: Colors.black,
-                                      ),
-                                      minScale:
-                                          PhotoViewComputedScale.contained,
-                                      maxScale:
-                                          PhotoViewComputedScale.covered * 2.5,
                                     ),
                                   ),
-                                ),
-                              ),
-                              Positioned(
-                                top: 40.h,
-                                left: 16.w,
-                                child: IconButton(
-                                  icon: const Icon(
-                                    Icons.close,
-                                    color: Colors.white,
-                                    size: 32,
+                                  Positioned(
+                                    top: 40.h,
+                                    left: 16.w,
+                                    child: IconButton(
+                                      icon: const Icon(
+                                        Icons.close,
+                                        color: Colors.white,
+                                        size: 32,
+                                      ),
+                                      onPressed: () => Navigator.pop(context),
+                                    ),
                                   ),
-                                  onPressed: () => Navigator.pop(context),
-                                ),
+                                ],
                               ),
-                            ],
+                            );
+                          }
+                        : null,
+                    child: CircleAvatar(
+                      radius: 26.r,
+                      backgroundColor: Colors.white,
+                      backgroundImage: technicianImage.isNotEmpty
+                          ? NetworkImage(technicianImage)
+                          : null,
+                      child: technicianImage.isEmpty
+                          ? Icon(
+                              Icons.person_search,
+                              color: Colors.orange,
+                              size: 28.sp,
+                            )
+                          : null,
+                    ),
+                  ),
+                  if (!isPending)
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: InkWell(
+                        onTap:
+                            technicianImage.isNotEmpty &&
+                                (isAssigned || isWorking || isCompleted)
+                            ? () {
+                                showDialog(
+                                  context: context,
+                                  barrierColor: Colors.black87,
+                                  builder: (_) => Stack(
+                                    children: [
+                                      Dialog(
+                                        backgroundColor: Colors.transparent,
+                                        insetPadding: EdgeInsets.zero,
+                                        child: Hero(
+                                          tag: technicianImage,
+                                          child: PhotoView(
+                                            imageProvider: NetworkImage(
+                                              technicianImage,
+                                            ),
+                                            backgroundDecoration:
+                                                const BoxDecoration(
+                                                  color: Colors.black,
+                                                ),
+                                            minScale: PhotoViewComputedScale
+                                                .contained,
+                                            maxScale:
+                                                PhotoViewComputedScale.covered *
+                                                2.5,
+                                          ),
+                                        ),
+                                      ),
+                                      Positioned(
+                                        top: 40.h,
+                                        left: 16.w,
+                                        child: IconButton(
+                                          icon: const Icon(
+                                            Icons.close,
+                                            color: Colors.white,
+                                            size: 32,
+                                          ),
+                                          onPressed: () =>
+                                              Navigator.pop(context),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
+                            : null,
+                        child: Container(
+                          padding: EdgeInsets.all(3),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.green,
                           ),
-                        );
-                      }
-                    : null,
-                child: CircleAvatar(
-                  radius: 26.r,
-                  backgroundColor: Colors.white,
-                  backgroundImage: technicianImage.isNotEmpty
-                      ? NetworkImage(technicianImage)
-                      : null,
-                  child: technicianImage.isEmpty
-                      ? Icon(
-                          Icons.person_search,
-                          color: Colors.orange,
-                          size: 28.sp,
-                        )
-                      : null,
-                ),
+                          child: Center(
+                            child: Icon(
+                              Icons.zoom_in_rounded,
+                              color: Colors.white,
+                              size: 12.sp,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
               SizedBox(width: 14.w),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (!isPending)
+                      Text(
+                        "Service Partner",
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12.sp,
+                        ),
+                      ),
                     Text(
                       technicianName,
                       style: GoogleFonts.inter(
@@ -630,7 +719,7 @@ class MyRequestPage extends ConsumerWidget {
           SizedBox(height: 16.h),
 
           // Action / Status indicator
-          if (isAssigned || isWorking)
+          if (isAssigned)
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -648,14 +737,108 @@ class MyRequestPage extends ConsumerWidget {
                 ),
               ),
             )
-          else if (isCompleted)
+          else if (isCompleted) ...[
             _statusIndicator(
               Icons.check_circle,
               "SERVICE COMPLETED SUCCESSFULLY",
               Colors.green.shade800,
               Colors.green.shade100,
-            )
-          else if (isWorking)
+            ),
+            SizedBox(height: 12.h),
+
+            // ⭐ REVIEW CARD
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(14.w),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14.r),
+                border: Border.all(color: Colors.green.shade200),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Rate Your Experience",
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14.sp,
+                    ),
+                  ),
+
+                  SizedBox(height: 10.h),
+
+                  // ⭐ STAR RATING
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: List.generate(5, (index) {
+                      return IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        icon: Icon(
+                          index < rating ? Icons.star : Icons.star_border,
+                          color: Colors.orange,
+                          size: 26.sp,
+                        ),
+                        onPressed: () {
+                          ref
+                                  .read(ratingProvider(item.id ?? "").notifier)
+                                  .state =
+                              index + 1;
+                        },
+                      );
+                    }),
+                  ),
+
+                  SizedBox(height: 10.h),
+
+                  // 📝 REVIEW TEXT
+                  TextField(
+                    maxLines: 3,
+                    onChanged: (val) {
+                      ref
+                              .read(reviewTextProvider(item.id ?? "").notifier)
+                              .state =
+                          val;
+                    },
+                    decoration: InputDecoration(
+                      hintText: "Write your review...",
+                      filled: true,
+                      fillColor: Colors.grey.shade100,
+                      contentPadding: EdgeInsets.all(10.w),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.r),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 12.h),
+
+                  // 🚀 SUBMIT BUTTON
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // 👉 API call yaha kare
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
+                      ),
+                      child: Text(
+                        "Submit Review",
+                        style: TextStyle(fontSize: 13.sp),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ] else if (isWorking)
             _statusIndicator(
               Icons.engineering,
               "TECHNICIAN WORKING ON SITE",
