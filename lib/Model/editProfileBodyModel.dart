@@ -1,6 +1,3 @@
-// To parse this JSON data, do
-//
-//     final editProfileBodyModel = editProfileBodyModelFromJson(jsonString);
 
 import 'dart:convert';
 
@@ -12,7 +9,6 @@ String editProfileBodyModelToJson(EditProfileBodyModel data) =>
 
 class EditProfileBodyModel {
   String? name;
-  // String? phone;
   String? image;
   String? email;
   String? pincode;
@@ -22,7 +18,6 @@ class EditProfileBodyModel {
 
   EditProfileBodyModel({
      this.name,
-     // this.phone,
      this.image,
      this.email,
      this.pincode,
@@ -34,7 +29,6 @@ class EditProfileBodyModel {
   factory EditProfileBodyModel.fromJson(Map<String, dynamic> json) =>
       EditProfileBodyModel(
         name: json["name"],
-        // phone: json["phone"],
         image: json["image"],
         address: json["address"],
         city: json["city"],
@@ -45,7 +39,6 @@ class EditProfileBodyModel {
 
   Map<String, dynamic> toJson() => {
     "name": name,
-    // "phone": phone,
     "image": image,
     "pincode": pincode,
     "state": state,

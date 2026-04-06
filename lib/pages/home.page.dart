@@ -5,20 +5,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:marquee/marquee.dart';
-import 'package:realstate/Controller/contactUsController.dart';
 import 'package:realstate/Controller/getCityListController.dart';
 import 'package:realstate/Controller/getMyPropertyController.dart';
 import 'package:realstate/Controller/homeServiceCategoryController.dart';
 import 'package:realstate/Controller/likePropertyController.dart';
 import 'package:realstate/Controller/loanServiceController.dart';
 import 'package:realstate/Controller/userProfileController.dart';
-import 'package:realstate/Model/contactUsBodyModel.dart';
 import 'package:realstate/Model/getLikeProperyResModel.dart';
 import 'package:realstate/pages/homeServiceDetails.page.dart';
 import 'package:realstate/pages/loanServiceDetails.page.dart';
@@ -145,7 +142,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
         ],
         fullName: 'Rahul Sharma',
         email: 'rahul@example.com',
-        phone: '+91 9876543210',
+        phone: '+91 9171719060',
         address: 'Palm Grove Apartments, Andheri West, Mumbai',
         description: 'Luxurious 3 BHK with sea view...',
       ),
@@ -937,387 +934,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
             ),
           ),
 
-          // Expanded(
-          //   child: SingleChildScrollView(
-          //     padding: EdgeInsets.all(24.w),
-          //     child: Column(
-          //       children: [
-          //         Form(
-          //           key: _formKeyContactUs,
-          //           child: Column(
-          //             crossAxisAlignment: CrossAxisAlignment.start,
-          //             children: [
-          //               const Text(
-          //                 "Enter Your Email",
-          //                 style: TextStyle(
-          //                   fontSize: 14,
-          //                   fontWeight: FontWeight.w600,
-          //                   color: Color(0xff0E1A35),
-          //                 ),
-          //               ),
-          //               const SizedBox(height: 10),
-          //               TextFormField(
-          //                 controller: emailController,
-          //                 keyboardType: TextInputType.emailAddress,
-          //                 decoration: InputDecoration(
-          //                   prefixIcon: Icon(
-          //                     Icons.mail_outline,
-          //                     color: Colors.grey,
-          //                   ),
-          //                   hintStyle: TextStyle(fontSize: 14.sp),
-          //                   hintText: "Email",
-          //                   filled: true,
-          //                   fillColor: Colors.white,
-          //                   enabledBorder: OutlineInputBorder(
-          //                     borderRadius: BorderRadius.circular(14.r),
-          //                     borderSide: BorderSide(
-          //                       color: Colors.grey.shade300,
-          //                     ),
-          //                   ),
-          //                   focusedBorder: OutlineInputBorder(
-          //                     borderRadius: BorderRadius.circular(14.r),
-          //                     borderSide: BorderSide(
-          //                       color: Colors.grey.shade300,
-          //                     ),
-          //                   ),
-          //                   errorBorder: OutlineInputBorder(
-          //                     borderRadius: BorderRadius.circular(14.r),
-          //                     borderSide: BorderSide(
-          //                       color: Colors.red.shade300,
-          //                     ),
-          //                   ),
-          //                 ),
-          //                 validator: (value) {
-          //                   if (value == null || value.isEmpty) {
-          //                     return "Email is required";
-          //                   }
-          //                   return null;
-          //                 },
-          //               ),
-          //               const SizedBox(height: 15),
-          //               const Text(
-          //                 "Enter Your Name",
-          //                 style: TextStyle(
-          //                   fontSize: 14,
-          //                   fontWeight: FontWeight.w600,
-          //                   color: Color(0xff0E1A35),
-          //                 ),
-          //               ),
-          //               const SizedBox(height: 10),
-          //               TextFormField(
-          //                 controller: nameController,
-          //                 keyboardType: TextInputType.name,
-          //                 decoration: InputDecoration(
-          //                   prefixIcon: Icon(Icons.person, color: Colors.grey),
-          //                   hintStyle: TextStyle(fontSize: 14.sp),
-          //                   hintText: "Name",
-          //                   filled: true,
-          //                   fillColor: Colors.white,
-          //                   enabledBorder: OutlineInputBorder(
-          //                     borderRadius: BorderRadius.circular(14.r),
-          //                     borderSide: BorderSide(
-          //                       color: Colors.grey.shade300,
-          //                     ),
-          //                   ),
-          //                   focusedBorder: OutlineInputBorder(
-          //                     borderRadius: BorderRadius.circular(14.r),
-          //                     borderSide: BorderSide(
-          //                       color: Colors.grey.shade300,
-          //                     ),
-          //                   ),
-          //                   errorBorder: OutlineInputBorder(
-          //                     borderRadius: BorderRadius.circular(14.r),
-          //                     borderSide: BorderSide(
-          //                       color: Colors.red.shade300,
-          //                     ),
-          //                   ),
-          //                 ),
-          //                 validator: (value) {
-          //                   if (value == null || value.isEmpty) {
-          //                     return "Name is required";
-          //                   }
-          //                   return null;
-          //                 },
-          //               ),
-          //               const SizedBox(height: 15),
-          //               const Text(
-          //                 "Mobile Number",
-          //                 style: TextStyle(
-          //                   fontSize: 14,
-          //                   fontWeight: FontWeight.w600,
-          //                   color: Color(0xff0E1A35),
-          //                 ),
-          //               ),
-          //               const SizedBox(height: 10),
-          //               TextFormField(
-          //                 maxLength: 10,
-          //                 controller: phoneController,
-          //                 keyboardType: TextInputType.number,
-          //                 decoration: InputDecoration(
-          //                   prefixIcon: Icon(
-          //                     Icons.call_outlined,
-          //                     color: Colors.grey,
-          //                   ),
-          //                   counterText: "",
-          //                   hintStyle: TextStyle(fontSize: 14.sp),
-          //                   hintText: "Mobile Number",
-          //                   filled: true,
-          //                   fillColor: Colors.white,
-          //                   enabledBorder: OutlineInputBorder(
-          //                     borderRadius: BorderRadius.circular(14.r),
-          //                     borderSide: BorderSide(
-          //                       color: Colors.grey.shade300,
-          //                     ),
-          //                   ),
-          //                   focusedBorder: OutlineInputBorder(
-          //                     borderRadius: BorderRadius.circular(14.r),
-          //                     borderSide: BorderSide(
-          //                       color: Colors.grey.shade300,
-          //                     ),
-          //                   ),
-          //                   errorBorder: OutlineInputBorder(
-          //                     borderRadius: BorderRadius.circular(14.r),
-          //                     borderSide: BorderSide(
-          //                       color: Colors.red.shade300,
-          //                     ),
-          //                   ),
-          //                 ),
-          //                 validator: (value) {
-          //                   if (value == null || value.isEmpty) {
-          //                     return "Mobile Number is required";
-          //                   }
-          //                   return null;
-          //                 },
-          //               ),
-          //               const SizedBox(height: 15),
-          //               const Text(
-          //                 "Subject",
-          //                 style: TextStyle(
-          //                   fontSize: 14,
-          //                   fontWeight: FontWeight.w600,
-          //                   color: Color(0xff0E1A35),
-          //                 ),
-          //               ),
-          //               const SizedBox(height: 10),
-          //               TextFormField(
-          //                 controller: subjectController,
-          //                 keyboardType: TextInputType.text,
-          //                 decoration: InputDecoration(
-          //                   prefixIcon: Icon(
-          //                     Icons.subject_outlined,
-          //                     color: Colors.grey,
-          //                   ),
-          //                   hintStyle: TextStyle(fontSize: 14.sp),
-          //                   hintText: "Subject",
-          //                   filled: true,
-          //                   fillColor: Colors.white,
-          //                   enabledBorder: OutlineInputBorder(
-          //                     borderRadius: BorderRadius.circular(14.r),
-          //                     borderSide: BorderSide(
-          //                       color: Colors.grey.shade300,
-          //                     ),
-          //                   ),
-          //                   focusedBorder: OutlineInputBorder(
-          //                     borderRadius: BorderRadius.circular(14.r),
-          //                     borderSide: BorderSide(
-          //                       color: Colors.grey.shade300,
-          //                     ),
-          //                   ),
-          //                   errorBorder: OutlineInputBorder(
-          //                     borderRadius: BorderRadius.circular(14.r),
-          //                     borderSide: BorderSide(
-          //                       color: Colors.red.shade300,
-          //                     ),
-          //                   ),
-          //                 ),
-          //                 validator: (value) {
-          //                   if (value == null || value.isEmpty) {
-          //                     return "Subject is required";
-          //                   }
-          //                   return null;
-          //                 },
-          //               ),
-          //               const SizedBox(height: 15),
-          //               const Text(
-          //                 "Message",
-          //                 style: TextStyle(
-          //                   fontSize: 14,
-          //                   fontWeight: FontWeight.w600,
-          //                   color: Color(0xff0E1A35),
-          //                 ),
-          //               ),
-          //               const SizedBox(height: 10),
-          //               TextFormField(
-          //                 controller: messageController,
-          //                 keyboardType: TextInputType.text,
-          //                 decoration: InputDecoration(
-          //                   prefixIcon: Icon(
-          //                     Icons.messenger_outline,
-          //                     color: Colors.grey,
-          //                   ),
-          //                   filled: true,
-          //                   fillColor: Colors.white,
-          //                   enabledBorder: OutlineInputBorder(
-          //                     borderRadius: BorderRadius.circular(14.r),
-          //                     borderSide: BorderSide(
-          //                       color: Colors.grey.shade300,
-          //                     ),
-          //                   ),
-          //                   focusedBorder: OutlineInputBorder(
-          //                     borderRadius: BorderRadius.circular(14.r),
-          //                     borderSide: BorderSide(
-          //                       color: Colors.grey.shade300,
-          //                     ),
-          //                   ),
-          //                   errorBorder: OutlineInputBorder(
-          //                     borderRadius: BorderRadius.circular(14.r),
-          //                     borderSide: BorderSide(
-          //                       color: Colors.red.shade300,
-          //                     ),
-          //                   ),
-          //                   hintStyle: TextStyle(fontSize: 14.sp),
-          //                   hintText: "Message",
-          //                 ),
-          //                 validator: (value) {
-          //                   if (value == null || value.isEmpty) {
-          //                     return "Message is required";
-          //                   }
-          //                   return null;
-          //                 },
-          //               ),
-          //               const SizedBox(height: 15),
-          //               const Text(
-          //                 "Location",
-          //                 style: TextStyle(
-          //                   fontSize: 14,
-          //                   fontWeight: FontWeight.w600,
-          //                   color: Color(0xff0E1A35),
-          //                 ),
-          //               ),
-          //               const SizedBox(height: 10),
-          //               SizedBox(width: 10),
-          //               TextFormField(
-          //                 controller: locationController,
-          //                 keyboardType: TextInputType.text,
-          //                 decoration: InputDecoration(
-          //                   filled: true,
-          //                   fillColor: Colors.white,
-          //                   enabledBorder: OutlineInputBorder(
-          //                     borderRadius: BorderRadius.circular(14.r),
-          //                     borderSide: BorderSide(
-          //                       color: Colors.grey.shade300,
-          //                     ),
-          //                   ),
-          //                   focusedBorder: OutlineInputBorder(
-          //                     borderRadius: BorderRadius.circular(14.r),
-          //                     borderSide: BorderSide(
-          //                       color: Colors.grey.shade300,
-          //                     ),
-          //                   ),
-          //                   errorBorder: OutlineInputBorder(
-          //                     borderRadius: BorderRadius.circular(14.r),
-          //                     borderSide: BorderSide(
-          //                       color: Colors.red.shade300,
-          //                     ),
-          //                   ),
-          //                   hintStyle: TextStyle(fontSize: 14.sp),
-          //                   hintText: "Location",
-          //                   prefixIcon: Icon(
-          //                     Icons.location_on_outlined,
-          //                     color: Colors.grey,
-          //                   ),
-          //                 ),
-          //                 validator: (value) {
-          //                   if (value == null || value.isEmpty) {
-          //                     return "Location is required";
-          //                   }
-          //                   return null;
-          //                 },
-          //               ),
-          //               const SizedBox(height: 20),
-          //               /// ==== SIGN IN BUTTON ====
-          //               Center(
-          //                 child: GestureDetector(
-          //                   onTap: isLoading
-          //                       ? null
-          //                       : () async {
-          //                           if (!_formKeyContactUs.currentState!
-          //                               .validate()) {
-          //                             return;
-          //                           }
-          //                           setState(() {
-          //                             isLoading = true;
-          //                           });
-          //                           final body = ContactUsBodyModel(
-          //                             email: emailController.text,
-          //                             name: nameController.text,
-          //                             phone: phoneController.text,
-          //                             subject: subjectController.text,
-          //                             message: messageController.text,
-          //                             location: locationController.text,
-          //                           );
-          //                           try {
-          //                             final response = await ref.read(
-          //                               contactUsController(body).future,
-          //                             );
-          //                             if (response.code == 0 ||
-          //                                 response.error == false) {
-          //                               Fluttertoast.showToast(
-          //                                 msg: response.message,
-          //                               );
-          //                               emailController.clear();
-          //                               nameController.clear();
-          //                               phoneController.clear();
-          //                               subjectController.clear();
-          //                               messageController.clear();
-          //                               locationController.clear();
-          //                             } else {
-          //                               Fluttertoast.showToast(
-          //                                 msg: response.message,
-          //                               );
-          //                             }
-          //                           } catch (e) {
-          //                             log(e.toString());
-          //                           } finally {
-          //                             setState(() {
-          //                               isLoading = false;
-          //                             });
-          //                           }
-          //                         },
-          //                   child: Container(
-          //                     height: 50,
-          //                     width: double.infinity,
-          //                     decoration: BoxDecoration(
-          //                       color: Color(0xffE86A34),
-          //                       borderRadius: BorderRadius.circular(40),
-          //                     ),
-          //                     child: Center(
-          //                       child: isLoading
-          //                           ? Center(
-          //                               child: CircularProgressIndicator(
-          //                                 color: Colors.white,
-          //                               ),
-          //                             )
-          //                           : Text(
-          //                               "Submit",
-          //                               style: TextStyle(
-          //                                 color: Colors.white,
-          //                                 fontSize: 17.sp,
-          //                                 fontWeight: FontWeight.w600,
-          //                               ),
-          //                             ),
-          //                     ),
-          //                   ),
-          //                 ),
-          //               ),
-          //             ],
-          //           ),
-          //         ),
-          //         const SizedBox(height: 22),
-          //       ],
-          //     ),
-          //   ),
-          // ),
+
           SizedBox(height: 50.h),
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -1376,7 +993,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
                             ),
                           ),
                           onPressed: () async {
-                            String phone = "9876543210";
+                            String phone = "9171719060";
                             final Uri url = Uri.parse("tel:$phone");
 
                             if (await canLaunchUrl(url)) {
@@ -1413,7 +1030,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
                             ),
                           ),
                           onPressed: () async {
-                            String phone = "9876543210";
+                            String phone = "9171719060";
                             final Uri url = Uri.parse("https://wa.me/$phone");
 
                             if (await canLaunchUrl(url)) {
@@ -1444,7 +1061,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
 
               /// Phone Text
               Text(
-                "Support: +91 9876543210",
+                "Support: +91 9171719060",
                 style: GoogleFonts.inter(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w500,

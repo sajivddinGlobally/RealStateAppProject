@@ -4,12 +4,7 @@ import 'package:realstate/Model/userProfileResModel.dart';
 import 'package:realstate/core/network/api.state.dart';
 import 'package:realstate/core/utils/preety.dio.dart';
 
-// final userProfileController = FutureProvider.autoDispose<UserProfileResModel>((
-//   ref,
-// ) async {
-//   final service = APIStateNetwork(createDio());
-//   return await service.userProfile();
-// });
+
 
 final userProfileController = FutureProvider.autoDispose<UserProfileResModel>((
   ref,

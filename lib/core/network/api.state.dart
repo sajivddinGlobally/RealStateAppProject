@@ -160,4 +160,9 @@ abstract class APIStateNetwork {
   Future<VerifyServiceAgentResModel> verifyServiceAgent(
     @Body() VerifyServiceAgentBodyModel body,
   );
+
+  @POST("/user/createServiceRating")
+  Future<dynamic> createServiceRating(
+      @Body() Map<String, dynamic> body,
+      );
 }

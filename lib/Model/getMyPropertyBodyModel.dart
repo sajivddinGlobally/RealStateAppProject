@@ -1,6 +1,3 @@
-// To parse this JSON data, do
-//
-//     final getMyPropertyDetailsBodyModel = getMyPropertyDetailsBodyModelFromJson(jsonString);
 
 import 'dart:convert';
 
