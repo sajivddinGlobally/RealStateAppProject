@@ -30,11 +30,10 @@ class _HomeServiceDetailsPageState
     extends ConsumerState<HomeServiceDetailsPage> {
   String? serviceType;
   String? Id;
-  //static const primaryColor = Color(0xFFFF5722);
   static const primaryColor = Color(0xFFFF5722);
   static const darkBlue = Color(0xff0E1A35);
 
-  File? selectedImage; // List ki jagah single file
+  File? selectedImage;
   final ImagePicker _picker = ImagePicker();
 
   Future<void> pickImage(ImageSource source, StateSetter dialogState) async {
@@ -78,17 +77,13 @@ class _HomeServiceDetailsPageState
     );
   }
 
-  // 1. Updated to return the list of uploaded URLs
   Future<String?> uploadSingleImage(File file) async {
     try {
       final service = APIStateNetwork(createDio());
-      // Maan lete hain aapka service single file leta hai,
-      // agar purana hi function use karna hai to [file] pass karein
       final response = await service.uploadImageMultiple([file]);
 
       if (response.code == 0 && response.error == false) {
         log("Image uploaded successfully");
-        // List ka pehla URL return karein string ke roop mein
         return response.data?.first.imageUrl.toString();
       }
       return null;
@@ -808,20 +803,7 @@ class _HomeServiceDetailsPageState
 
                         SizedBox(height: 20.h),
 
-                        /// --- Highlights Row ---
-                        // SingleChildScrollView(
-                        //   scrollDirection: Axis.horizontal,
-                        //   child: Row(
-                        //     children: [
-                        //       _modernChip(Icons.timer_outlined, "60 min"),
-                        //       _modernChip(
-                        //         Icons.verified_user_outlined,
-                        //         "Verified",
-                        //       ),
-                        //       _modernChip(Icons.security_outlined, "Warranty"),
-                        //     ],
-                        //   ),
-                        // ),
+
                         const Divider(height: 40, thickness: 1),
 
                         /// --- Price Section ---

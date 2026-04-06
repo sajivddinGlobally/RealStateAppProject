@@ -372,15 +372,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
         return;
       }
 
-      // final aroundProjects = aroundProjectList
-      //     .map(
-      //       (map) => AroundProject(
-      //         name: map['place']!.text.trim(),
-      //         details: map['details']!.text.trim(),
-      //       ),
-      //     )
-      //     .where((ap) => ap.name?.isNotEmpty == true)
-      //     .toList();
+
       final aroundProjects = aroundProjectList
           .map(
             (map) => createModel.AroundProject(
@@ -391,13 +383,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
           .where((ap) => ap.name?.isNotEmpty == true)
           .toList();
 
-      // final aveneu = AveneuOverView(
-      //   projectArea: _projectAreaController.text.trim(),
-      //   size: _unitSizesController.text.trim(),
-      //   projectSize: _projectSizeController.text.trim(),
-      //   launchDate: _launchDateController.text.trim(),
-      //   possessionStart: _possessionDateController.text.trim(),
-      // );
+
       final aveneu = createModel.AveneuOverView(
         projectArea: _projectAreaController.text.trim(),
         size: _unitSizesController.text.trim(),
@@ -1105,58 +1091,13 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
     );
   }
 
-  // Widget _buildCityDropdown(AsyncValue<CityResponseModel> cityAsync) {
-  //   return cityAsync.when(
-  //     data: (cityRes) {
-  //       final cities = cityRes.data ?? [];
-  //       // ✅ EDIT MODE FIX
-  //       if (isEditMode && selectedCity != null && localityList.isEmpty) {
-  //         final matchedCity = cities
-  //             .where((c) => c.cityName == selectedCity)
-  //             .toList();
-  //         if (matchedCity.isNotEmpty) {
-  //           localityList = matchedCity.first.areas ?? [];
-  //         }
-  //       }
-  //       return _buildDropdown(
-  //         'City',
-  //         selectedCity,
-  //         cities.map((c) => c.cityName ?? "").toList(),
-  //         (v) {
-  //           setState(() {
-  //             selectedCity = v;
-  //             selectedLocality = null;
-  //             // ✅ FIXED LOGIC
-  //             final selectedCityObj = cities
-  //                 .where((c) => c.cityName == v)
-  //                 .toList();
-  //             if (selectedCityObj.isNotEmpty) {
-  //               localityList = selectedCityObj.first.areas ?? [];
-  //             } else {
-  //               localityList = [];
-  //             }
-  //           });
-  //         },
-  //       );
-  //     },
-  //     loading: () =>
-  //         const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-  //     error: (_, __) => const Text(
-  //       "Failed to load cities",
-  //       style: TextStyle(color: Colors.red),
-  //     ),
-  //   );
-  // }
 
   Widget _buildCityDropdown(AsyncValue<CityResponseModel> cityAsync) {
     return cityAsync.when(
       data: (cityRes) {
-        // Get the list of cities from your API response
         final cities = cityRes.data ?? [];
 
-        // logic to sync localityList when data arrives or when city is pre-filled
         if (selectedCity != null && cities.isNotEmpty) {
-          // Find the city object that matches our selectedCity string
           final matchedCity = cities.cast<dynamic>().firstWhere(
             (c) =>
                 (c.cityName ?? "").toString().trim().toLowerCase() ==
@@ -1165,7 +1106,6 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
           );
 
           if (matchedCity != null && matchedCity.areas != null) {
-            // Check if we actually need to update the list to avoid infinite loops
             if (localityList.length != matchedCity.areas!.length) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (mounted) {

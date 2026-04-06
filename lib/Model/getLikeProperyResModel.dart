@@ -1,6 +1,3 @@
-// To parse this JSON data, do
-//
-//     final getLikePropertyResModel = getLikePropertyResModelFromJson(jsonString);
 
 import 'dart:convert';
 

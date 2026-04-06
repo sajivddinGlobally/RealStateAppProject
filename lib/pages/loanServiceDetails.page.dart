@@ -33,9 +33,7 @@ class _LoanServiceDetailsPageState extends State<LoanServiceDetailsPage> {
   final _formKey = GlobalKey<FormState>();
   bool? isBuying;
   bool isLoading = false;
-
   LoanType? selectLoanType;
-
   List<LoanType> loanList = [
     LoanType(label: "Home Loan", value: "home_loan"),
     LoanType(label: "Personal Loan", value: "personal_loan"),
@@ -45,7 +43,6 @@ class _LoanServiceDetailsPageState extends State<LoanServiceDetailsPage> {
     LoanType(label: "Gold Loan", value: "gold_loan"),
     LoanType(label: "Loan Against Property", value: "loan_against_property"),
   ];
-
   String? selectTensure;
   List<String> tensureList = [
     "10 Years",
@@ -55,48 +52,37 @@ class _LoanServiceDetailsPageState extends State<LoanServiceDetailsPage> {
     "30 Years",
   ];
   double interestRate = 0.0;
-
   @override
   void initState() {
     super.initState();
     if (tensureList.isNotEmpty) {
       selectTensure = tensureList.last;
     }
-
     /// ✅ Loan Amount (API)
     loanAmountController.text = widget.item.loandAmount?.toString() ?? "";
-
     /// ✅ Interest Rate (API)
     interestRate = double.tryParse(widget.item.interest ?? "0") ?? 0.0;
 
     /// ✅ Controller में set करो (important)
     interestController.text = interestRate.toStringAsFixed(2);
   }
-
   void updateInterest(double value) {
     interestRate = double.parse(value.toStringAsFixed(2));
     interestController.text = interestRate.toStringAsFixed(2);
-
     /// ✅ Cursor end में रखो
     interestController.selection = TextSelection.fromPosition(
       TextPosition(offset: interestController.text.length),
     );
   }
-
   double emiResult = 0.0;
   double totalInterest = 0.0;
   double totalAmount = 0.0;
   bool showResult = false;
-
   void calculateEMI() {
     double principal = double.tryParse(loanAmountController.text) ?? 0.0;
-
     int years = int.tryParse(selectTensure?.split(" ")[0] ?? "0") ?? 0;
-
     int months = years * 12;
-
     double monthlyRate = interestRate / 12 / 100;
-
     if (principal > 0 && months > 0 && monthlyRate > 0) {
       double emi =
           (principal * monthlyRate * pow(1 + monthlyRate, months)) /
@@ -104,7 +90,6 @@ class _LoanServiceDetailsPageState extends State<LoanServiceDetailsPage> {
 
       double totalPay = emi * months;
       double interestPay = totalPay - principal;
-
       setState(() {
         emiResult = emi;
         totalAmount = totalPay;
@@ -113,12 +98,10 @@ class _LoanServiceDetailsPageState extends State<LoanServiceDetailsPage> {
       });
     }
   }
-
   String principalFormat(String value) {
     double number = double.tryParse(value) ?? 0;
     return number.toStringAsFixed(0);
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

@@ -5,7 +5,6 @@ import '../Model/loanServiceResModel.dart';
 import '../core/network/api.state.dart';
 import '../core/utils/preety.dio.dart';
 
-// Correct Family Provider
 final getPropertyController =
     FutureProvider.family<PropertyGetReponseModel, PropertyListBodyModel>((
       ref,

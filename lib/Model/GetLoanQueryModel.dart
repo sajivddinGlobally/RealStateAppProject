@@ -1,4 +1,3 @@
-// loan_query_model.dart
 class GetLoanQueryModel {
   String? message;
   int? code;

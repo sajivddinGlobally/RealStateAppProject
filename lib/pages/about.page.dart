@@ -48,14 +48,12 @@ class AboutUsPage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // Repeated Mission Card (as in screenshot)
             _buildMissionCard(),
             const SizedBox(height: 16),
-            _buildMissionCard(), // Repeated for exact match
+            _buildMissionCard(),
 
             const SizedBox(height: 24),
 
-            // Vision Section
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(

@@ -12,6 +12,8 @@ import 'package:realstate/core/network/api.state.dart';
 import 'package:realstate/core/utils/preety.dio.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../Model/myBookingServiceRequestResModel.dart';
+
 class MyRequestPage extends ConsumerWidget {
   MyRequestPage({super.key});
 
@@ -33,18 +35,15 @@ class MyRequestPage extends ConsumerWidget {
         return Colors.blueGrey;
     }
   }
-
   final ratingProvider = StateProvider.family<int, String>((ref, id) => 0);
-
   final reviewTextProvider = StateProvider.family<String, String>(
     (ref, id) => "",
   );
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    List<Rating>? ratings;
     const primaryColor = Color(0xFFFF5722);
     final myRequestProvider = ref.watch(myRequestBookingServiceContorller);
-
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
@@ -59,76 +58,74 @@ class MyRequestPage extends ConsumerWidget {
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: RefreshIndicator(
-        backgroundColor: primaryColor,
-        color: Colors.white,
-        onRefresh: () async {
-          ref.invalidate(myRequestBookingServiceContorller);
-        },
-        child: myRequestProvider.when(
-          data: (data) {
-            final list = data.data?.list ?? [];
-            if (list.isEmpty) {
-              return _buildEmptyState();
-            }
-
-            return ListView.builder(
-              padding: EdgeInsets.all(15.w),
-              itemCount: list.length,
-              itemBuilder: (context, index) {
-                final item = list[index];
-                final status = (item.status ?? "pending").toLowerCase();
-
-                return Container(
-                  margin: EdgeInsets.only(bottom: 15.h),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20.r),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      // 1. Header
-                      _buildCardHeader(item, status, primaryColor),
-
-                      // 2. Status Stepper (new chain)
-                      _buildStatusStepper(status, primaryColor),
-
-                      const Divider(height: 1),
-
-                      // 3. Details
-                      _buildDetailsSection(item, status),
-
-                      // 4. Verification & Technician Section
-                      if (status != 'rejected')
-                        _buildVerificationCard(
-                          item,
-                          context,
-                          primaryColor,
-                          ref,
-                          status,
+      body: SafeArea(
+        child: RefreshIndicator(
+          backgroundColor: primaryColor,
+          color: Colors.white,
+          onRefresh: () async {
+            ref.invalidate(myRequestBookingServiceContorller);
+          },
+          child: myRequestProvider.when(
+            data: (data) {
+              final list = data.data?.list ?? [];
+              if (list.isEmpty) {
+                return _buildEmptyState();
+              }
+              return ListView.builder(
+                padding: EdgeInsets.all(15.w),
+                itemCount: list.length,
+                itemBuilder: (context, index) {
+                  final item = list[index];
+                  final status = (item.status ?? "pending").toLowerCase();
+                  return Container(
+                    margin: EdgeInsets.only(bottom: 15.h),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20.r),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 5),
                         ),
-
-                      // 5. Footer
-                      _buildFooter(item, primaryColor),
-                    ],
-                  ),
-                );
-              },
-            );
-          },
-          error: (error, stackTrace) {
-            log(stackTrace.toString());
-            return Center(child: Text("Error: $error"));
-          },
-          loading: () => const Center(
-            child: CircularProgressIndicator(color: Color(0xFFFF5722)),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        _buildCardHeader(item, status, primaryColor),
+                        // 2. Status Stepper (new chain)
+                        _buildStatusStepper(status, primaryColor),
+        
+                        const Divider(height: 1),
+        
+                        // 3. Details
+                        _buildDetailsSection(item, status),
+        
+                        // 4. Verification & Technician Section
+                        if (status != 'rejected')
+                          _buildVerificationCard(
+                            item,
+                            context,
+                            primaryColor,
+                            ref,
+                            status,
+                          ),
+        
+                        // 5. Footer
+                        _buildFooter(item, primaryColor),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+            error: (error, stackTrace) {
+              log(stackTrace.toString());
+              return Center(child: Text("Error: $error"));
+            },
+            loading: () => const Center(
+              child: CircularProgressIndicator(color: Color(0xFFFF5722)),
+            ),
           ),
         ),
       ),
@@ -245,93 +242,7 @@ class MyRequestPage extends ConsumerWidget {
       );
     }
 
-    // final steps = [
-    //   _Step(title: "Pending", active: true),
-    //   _Step(title: "Assigned", active: status != 'pending'),
-    //   _Step(
-    //     title: "On Way",
-    //     active:
-    //         status == 'assigned' ||
-    //         status == 'on_way' ||
-    //         status == 'working' ||
-    //         status == 'complete',
-    //   ),
-    //   _Step(
-    //     title: "Working",
-    //     active: status == 'working' || status == 'complete',
-    //   ),
-    //   _Step(title: "Completed", active: status == 'complete'),
-    // ];
-    // return Padding(
-    //   padding: EdgeInsets.fromLTRB(12.w, 16.h, 12.w, 16.h),
-    //   child: SingleChildScrollView(
-    //     scrollDirection: Axis.horizontal,
-    //     child: Row(
-    //       mainAxisAlignment: MainAxisAlignment.center,
-    //       children: List.generate(steps.length, (i) {
-    //         final step = steps[i];
-    //         final isLast = i == steps.length - 1;
-    //         return Row(
-    //           mainAxisSize: MainAxisSize.min,
-    //           children: [
-    //             Column(
-    //               children: [
-    //                 Container(
-    //                   width: 32.w,
-    //                   height: 32.w,
-    //                   decoration: BoxDecoration(
-    //                     shape: BoxShape.circle,
-    //                     color: step.active
-    //                         ? primaryColor
-    //                         : Colors.grey.shade200,
-    //                     border: Border.all(
-    //                       color: step.active
-    //                           ? primaryColor
-    //                           : Colors.grey.shade400,
-    //                       width: 2.5,
-    //                     ),
-    //                   ),
-    //                   child: Center(
-    //                     child: Text(
-    //                       '${i + 1}',
-    //                       style: TextStyle(
-    //                         color: step.active
-    //                             ? Colors.white
-    //                             : Colors.grey.shade600,
-    //                         fontWeight: FontWeight.bold,
-    //                         fontSize: 15.sp,
-    //                       ),
-    //                     ),
-    //                   ),
-    //                 ),
-    //                 SizedBox(height: 8.h),
-    //                 Text(
-    //                   step.title,
-    //                   style: GoogleFonts.inter(
-    //                     fontSize: 11.sp,
-    //                     color: step.active
-    //                         ? primaryColor
-    //                         : Colors.grey.shade700,
-    //                     fontWeight: step.active
-    //                         ? FontWeight.w600
-    //                         : FontWeight.normal,
-    //                   ),
-    //                 ),
-    //               ],
-    //             ),
-    //             if (!isLast)
-    //               Container(
-    //                 width: 50.w,
-    //                 height: 3.h,
-    //                 margin: EdgeInsets.symmetric(horizontal: 4.w),
-    //                 color: step.active ? primaryColor : Colors.grey.shade300,
-    //               ),
-    //           ],
-    //         );
-    //       }),
-    //     ),
-    //   ),
-    // );
+
 
     int currentStepIndex = 0;
     if (status == 'pending') {
@@ -485,7 +396,22 @@ class MyRequestPage extends ConsumerWidget {
     final technicianName =
         item.serviceBoy?.name ?? "Assigning $serviceCategory...";
     final technicianImage = item.serviceProviderImage ?? "";
+    final existingRating =
+    (item.ratings != null && item.ratings!.isNotEmpty)
+        ? item.ratings!.first
+        : null;
+    final bool isAlreadyRated = existingRating != null;
 
+    /// ✅ AUTO FILL FROM API
+    if (isAlreadyRated) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(ratingProvider(item.id ?? "").notifier).state =
+            existingRating.rating ?? 0;
+
+        ref.read(reviewTextProvider(item.id ?? "").notifier).state =
+            existingRating.review?.toString() ?? "";
+      });
+    }
     final rating = ref.watch(ratingProvider(item.id ?? ""));
     final reviewText = ref.watch(reviewTextProvider(item.id ?? ""));
 
@@ -769,8 +695,26 @@ class MyRequestPage extends ConsumerWidget {
                   SizedBox(height: 10.h),
 
                   // ⭐ STAR RATING
+                  // Row(
+                  //   mainAxisAlignment: MainAxisAlignment.start,
+                  //   children: List.generate(5, (index) {
+                  //     return IconButton(
+                  //       padding: EdgeInsets.zero,
+                  //       constraints: const BoxConstraints(),
+                  //       icon: Icon(
+                  //         index < rating ? Icons.star : Icons.star_border,
+                  //         color: Colors.orange,
+                  //         size: 26.sp,
+                  //       ),
+                  //       onPressed: () {
+                  //         ref.read(ratingProvider(item.id ?? "").notifier).state = index + 1;
+                  //       },
+                  //     );
+                  //   }),
+                  // ),
+
+
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
                     children: List.generate(5, (index) {
                       return IconButton(
                         padding: EdgeInsets.zero,
@@ -780,26 +724,50 @@ class MyRequestPage extends ConsumerWidget {
                           color: Colors.orange,
                           size: 26.sp,
                         ),
-                        onPressed: () {
+                        onPressed: isAlreadyRated
+                            ? null // ❌ Disable click
+                            : () {
                           ref
-                                  .read(ratingProvider(item.id ?? "").notifier)
-                                  .state =
-                              index + 1;
+                              .read(ratingProvider(item.id ?? "").notifier)
+                              .state = index + 1;
                         },
                       );
                     }),
                   ),
-
                   SizedBox(height: 10.h),
 
                   // 📝 REVIEW TEXT
+                  // TextField(
+                  //   maxLines: 3,
+                  //   onChanged: (val) {
+                  //     ref
+                  //             .read(reviewTextProvider(item.id ?? "").notifier)
+                  //             .state =
+                  //         val;
+                  //   },
+                  //   decoration: InputDecoration(
+                  //     hintText: "Write your review...",
+                  //     filled: true,
+                  //     fillColor: Colors.grey.shade100,
+                  //     contentPadding: EdgeInsets.all(10.w),
+                  //     border: OutlineInputBorder(
+                  //       borderRadius: BorderRadius.circular(10.r),
+                  //       borderSide: BorderSide.none,
+                  //     ),
+                  //   ),
+                  // ),
+
+
                   TextField(
+                    controller: TextEditingController(text: reviewText)
+                      ..selection = TextSelection.collapsed(
+                          offset: reviewText.length),
+                    enabled: !isAlreadyRated, // ✅ disable if rated
                     maxLines: 3,
                     onChanged: (val) {
-                      ref
-                              .read(reviewTextProvider(item.id ?? "").notifier)
-                              .state =
-                          val;
+
+                      ref.read(reviewTextProvider(item.id ?? "").notifier).state = val;
+
                     },
                     decoration: InputDecoration(
                       hintText: "Write your review...",
@@ -812,29 +780,56 @@ class MyRequestPage extends ConsumerWidget {
                       ),
                     ),
                   ),
-
                   SizedBox(height: 12.h),
 
-                  // 🚀 SUBMIT BUTTON
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // 👉 API call yaha kare
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        padding: EdgeInsets.symmetric(vertical: 12.h),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10.r),
+                  if (!isAlreadyRated)
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          if (rating == 0) {
+                            Fluttertoast.showToast(msg: "Please give rating");
+                            return;
+                          }
+
+                          final body = {
+                            "serviceBooking": item.id,
+                            "rating": rating,
+                            "review": reviewText,
+                          };
+
+                          try {
+                            final response = await ref.refresh(
+                              createServiceRatingController(body).future,
+                            );
+
+                            Fluttertoast.showToast(msg: response);
+
+                            ref.invalidate(myRequestBookingServiceContorller);
+                          } catch (e) {
+                            Fluttertoast.showToast(msg: "Rating failed");
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          padding: EdgeInsets.symmetric(vertical: 12.h),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.r),
+                          ),
+                        ),
+                        child: Text("Submit Review"),
+                      ),
+                    )
+                  else
+                    Center(
+                      child: Text(
+                        "✅ Review Submitted",
+                        style: TextStyle(
+                          color: Colors.green,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      child: Text(
-                        "Submit Review",
-                        style: TextStyle(fontSize: 13.sp),
-                      ),
                     ),
-                  ),
                 ],
               ),
             ),
