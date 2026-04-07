@@ -58,22 +58,27 @@ class _LoanServiceDetailsPageState extends State<LoanServiceDetailsPage> {
     if (tensureList.isNotEmpty) {
       selectTensure = tensureList.last;
     }
+
     /// ✅ Loan Amount (API)
     loanAmountController.text = widget.item.loandAmount?.toString() ?? "";
+
     /// ✅ Interest Rate (API)
     interestRate = double.tryParse(widget.item.interest ?? "0") ?? 0.0;
 
     /// ✅ Controller में set करो (important)
     interestController.text = interestRate.toStringAsFixed(2);
   }
+
   void updateInterest(double value) {
     interestRate = double.parse(value.toStringAsFixed(2));
     interestController.text = interestRate.toStringAsFixed(2);
+
     /// ✅ Cursor end में रखो
     interestController.selection = TextSelection.fromPosition(
       TextPosition(offset: interestController.text.length),
     );
   }
+
   double emiResult = 0.0;
   double totalInterest = 0.0;
   double totalAmount = 0.0;
@@ -98,10 +103,12 @@ class _LoanServiceDetailsPageState extends State<LoanServiceDetailsPage> {
       });
     }
   }
+
   String principalFormat(String value) {
     double number = double.tryParse(value) ?? 0;
     return number.toStringAsFixed(0);
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -306,6 +313,8 @@ class _LoanServiceDetailsPageState extends State<LoanServiceDetailsPage> {
                               TextFormField(
                                 controller: nameController,
                                 keyboardType: TextInputType.text,
+                                autovalidateMode:
+                                    AutovalidateMode.onUserInteraction,
                                 decoration: InputDecoration(
                                   contentPadding: EdgeInsets.symmetric(
                                     vertical: 10.h,
@@ -337,6 +346,8 @@ class _LoanServiceDetailsPageState extends State<LoanServiceDetailsPage> {
                                 maxLength: 10,
                                 controller: phoneController,
                                 keyboardType: TextInputType.number,
+                                autovalidateMode:
+                                    AutovalidateMode.onUserInteraction,
                                 decoration: InputDecoration(
                                   counterText: "",
                                   contentPadding: EdgeInsets.symmetric(
@@ -351,6 +362,9 @@ class _LoanServiceDetailsPageState extends State<LoanServiceDetailsPage> {
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
                                     return "Mobile Number is required";
+                                  }
+                                  if (value.length < 10) {
+                                    return "Enter valid number";
                                   }
                                   return null;
                                 },
@@ -386,12 +400,15 @@ class _LoanServiceDetailsPageState extends State<LoanServiceDetailsPage> {
                                   }
                                   return null;
                                 },
+                                autovalidateMode:
+                                    AutovalidateMode.onUserInteraction,
                                 decoration: InputDecoration(
                                   contentPadding: EdgeInsets.symmetric(
                                     vertical: 10.h,
                                     horizontal: 10.w,
                                   ),
                                   hintText: "Select Loan Type",
+
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(30.r),
                                   ),
@@ -410,6 +427,8 @@ class _LoanServiceDetailsPageState extends State<LoanServiceDetailsPage> {
                               TextFormField(
                                 controller: cityController,
                                 keyboardType: TextInputType.text,
+                                autovalidateMode:
+                                    AutovalidateMode.onUserInteraction,
                                 decoration: InputDecoration(
                                   contentPadding: EdgeInsets.symmetric(
                                     vertical: 10.h,
@@ -807,17 +826,9 @@ class _LoanServiceDetailsPageState extends State<LoanServiceDetailsPage> {
                           ),
                         ),
                         Container(
-                          padding: EdgeInsets.symmetric(
-                            vertical: 4.h,
-                            horizontal: 10.w,
-                          ),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.black54),
-                            borderRadius: BorderRadius.circular(30.r),
-                          ),
+                          margin: EdgeInsets.only(top: 10.h),
                           child: Row(
                             children: [
-                              /// 🔥 TextField (Editable)
                               Expanded(
                                 child: TextField(
                                   controller: interestController,
@@ -825,9 +836,54 @@ class _LoanServiceDetailsPageState extends State<LoanServiceDetailsPage> {
                                     decimal: true,
                                   ),
                                   decoration: InputDecoration(
-                                    contentPadding: EdgeInsets.zero,
-                                    border: InputBorder.none,
+                                    contentPadding: EdgeInsets.symmetric(
+                                      vertical: 4.h,
+                                      horizontal: 10.w,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(30.r),
+                                      borderSide: BorderSide(
+                                        color: Colors.black54,
+                                      ),
+                                    ),
                                     labelText: "Interest Rate % (P.a.)",
+                                    suffixIcon:
+                                        /// 🔥 Up Down Buttons
+                                        Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            GestureDetector(
+                                              onTap: () {
+                                                setState(() {
+                                                  updateInterest(
+                                                    interestRate + 0.1,
+                                                  );
+                                                });
+                                              },
+                                              child: Icon(
+                                                Icons.keyboard_arrow_up,
+                                                size: 20.sp,
+                                              ),
+                                            ),
+
+                                            GestureDetector(
+                                              onTap: () {
+                                                setState(() {
+                                                  if (interestRate > 0) {
+                                                    updateInterest(
+                                                      interestRate - 0.1,
+                                                    );
+                                                  }
+                                                });
+                                              },
+                                              child: Icon(
+                                                Icons.keyboard_arrow_down,
+                                                size: 20.sp,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                   ),
                                   onChanged: (value) {
                                     /// ❗ invalid input handle
@@ -835,37 +891,6 @@ class _LoanServiceDetailsPageState extends State<LoanServiceDetailsPage> {
                                         double.tryParse(value) ?? interestRate;
                                   },
                                 ),
-                              ),
-
-                              /// 🔥 Up Down Buttons
-                              Column(
-                                children: [
-                                  GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        updateInterest(interestRate + 0.1);
-                                      });
-                                    },
-                                    child: Icon(
-                                      Icons.keyboard_arrow_up,
-                                      size: 20.sp,
-                                    ),
-                                  ),
-
-                                  GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        if (interestRate > 0) {
-                                          updateInterest(interestRate - 0.1);
-                                        }
-                                      });
-                                    },
-                                    child: Icon(
-                                      Icons.keyboard_arrow_down,
-                                      size: 20.sp,
-                                    ),
-                                  ),
-                                ],
                               ),
                             ],
                           ),

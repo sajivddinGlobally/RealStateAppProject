@@ -17,9 +17,13 @@ import 'package:realstate/Controller/likePropertyController.dart';
 import 'package:realstate/Controller/loanServiceController.dart';
 import 'package:realstate/Controller/userProfileController.dart';
 import 'package:realstate/Model/getLikeProperyResModel.dart';
+import 'package:realstate/Model/saveServiceBodyModel.dart';
+import 'package:realstate/core/network/api.state.dart';
+import 'package:realstate/core/utils/preety.dio.dart';
 import 'package:realstate/pages/homeServiceDetails.page.dart';
 import 'package:realstate/pages/loanServiceDetails.page.dart';
 import 'package:realstate/pages/myPropertyDetals.page.dart';
+import 'package:realstate/pages/pricePlan.page.dart';
 import 'package:realstate/pages/propertyCat.page.dart';
 import 'package:realstate/pages/savedDetails.page.dart';
 import 'package:shimmer/shimmer.dart';
@@ -725,7 +729,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
                   color: const Color(0xffFF6A2A),
                   child: Marquee(
                     text:
-                        "CALL US TODAY AT +91-8899556644 FOR PROPERTY INQUERY",
+                        "CALL US TODAY AT +91-9171719060 FOR PROPERTY INQUERY",
                     style: GoogleFonts.inter(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w400,
@@ -934,7 +938,6 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
             ),
           ),
 
-
           SizedBox(height: 50.h),
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -992,13 +995,20 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
                               borderRadius: BorderRadius.circular(30.r),
                             ),
                           ),
-                          onPressed: () async {
-                            String phone = "9171719060";
-                            final Uri url = Uri.parse("tel:$phone");
+                          // onPressed: () async {
+                          //   String phone = "9171719060";
+                          //   final Uri url = Uri.parse("tel:$phone");
 
-                            if (await canLaunchUrl(url)) {
-                              await launchUrl(url);
-                            }
+                          //   if (await canLaunchUrl(url)) {
+                          //     await launchUrl(url);
+                          //   }
+                          // },
+                          onPressed: () async {
+                            final Uri url = Uri(
+                              scheme: 'tel',
+                              path: '9171719060',
+                            );
+                            await launchUrl(url);
                           },
                           icon: Icon(
                             Icons.call,
@@ -1029,13 +1039,22 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
                               borderRadius: BorderRadius.circular(30.r),
                             ),
                           ),
-                          onPressed: () async {
-                            String phone = "9171719060";
-                            final Uri url = Uri.parse("https://wa.me/$phone");
+                          // onPressed: () async {
+                          //   String phone = "9171719060";
+                          //   final Uri url = Uri.parse("https://wa.me/$phone");
 
-                            if (await canLaunchUrl(url)) {
-                              await launchUrl(url);
-                            }
+                          //   if (await canLaunchUrl(url)) {
+                          //     await launchUrl(url);
+                          //   }
+                          // },
+                          onPressed: () async {
+                            final Uri url = Uri.parse(
+                              "https://wa.me/9171719060",
+                            );
+                            await launchUrl(
+                              url,
+                              mode: LaunchMode.externalApplication,
+                            );
                           },
                           icon: Icon(
                             Icons.chat,
@@ -1783,6 +1802,413 @@ class _HomeServiceState extends ConsumerState<HomeService> {
     }, // Duplicate in screenshot, adjust if needed
   ];
 
+  void openBottomSheet(BuildContext context) {
+    final emailController = TextEditingController();
+    final phoneController = TextEditingController();
+    final nameController = TextEditingController();
+
+    final _formKey = GlobalKey<FormState>();
+
+    bool isLoading = false;
+
+    String selectedExpertise = "Select Your Expertise";
+    final homeServiceProvider = ref.watch(homeServiceCategoryController);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Color(0xffF4F6F9),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+                ),
+                child: SingleChildScrollView(
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Align(
+                          alignment: Alignment.topRight,
+                          child: IconButton(
+                            style: IconButton.styleFrom(
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            onPressed: () => Navigator.pop(context),
+                            icon: Icon(Icons.close),
+                          ),
+                        ),
+
+                        Text(
+                          "Registration",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+
+                        SizedBox(height: 5),
+
+                        Text(
+                          "Fill in your details below",
+                          style: TextStyle(color: Colors.grey),
+                        ),
+
+                        SizedBox(height: 20),
+
+                        /// NAME
+                        fieldTitle("Full Name"),
+                        buildField(
+                          controller: nameController,
+                          hint: "Enter full name",
+                          keyboard: TextInputType.name,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Name is required";
+                            }
+                            return null;
+                          },
+                        ),
+
+                        SizedBox(height: 15),
+
+                        /// EMAIL
+                        fieldTitle("EMAIL ADDRESS"),
+                        buildField(
+                          controller: emailController,
+                          hint: "Enter email",
+                          keyboard: TextInputType.emailAddress,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Email is required";
+                            }
+                            if (!RegExp(
+                              r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                            ).hasMatch(value)) {
+                              return "Enter valid email";
+                            }
+                            return null;
+                          },
+                        ),
+
+                        SizedBox(height: 15),
+
+                        /// PHONE
+                        fieldTitle("WHATSAPP / MOBILE"),
+                        buildField(
+                          controller: phoneController,
+                          hint: "Enter phone number",
+                          keyboard: TextInputType.phone,
+                          counterText: "",
+                          maxLength: 10,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Phone number required";
+                            }
+                            if (value.length < 10) {
+                              return "Enter valid number";
+                            }
+                            return null;
+                          },
+                        ),
+
+                        SizedBox(height: 15),
+
+                        /// DROPDOWN
+                        fieldTitle("YOUR EXPERTISE"),
+                        FormField(
+                          validator: (value) {
+                            if (selectedExpertise == null ||
+                                selectedExpertise == "Select Your Expertise") {
+                              return "Expertise is required";
+                            }
+                            return null;
+                          },
+                          builder: (FormFieldState<String> state) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                GestureDetector(
+                                  onTap: () async {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      builder: (context) {
+                                        return homeServiceProvider.when(
+                                          data: (data) {
+                                            return ListView.builder(
+                                              itemCount:
+                                                  data.data!.list!.length,
+                                              itemBuilder: (context, index) {
+                                                return ListTile(
+                                                  title: Text(
+                                                    data
+                                                            .data!
+                                                            .list![index]
+                                                            .name ??
+                                                        "N/A",
+                                                  ),
+                                                  onTap: () {
+                                                    setState(() {
+                                                      selectedExpertise =
+                                                          data
+                                                              .data!
+                                                              .list![index]
+                                                              .id ??
+                                                          "N/A";
+                                                    });
+                                                    Navigator.pop(context);
+                                                  },
+                                                );
+                                              },
+                                            );
+                                          },
+                                          error: (error, stackTrace) {
+                                            return Center(
+                                              child: Text(error.toString()),
+                                            );
+                                          },
+                                          loading: () => Center(
+                                            child: CircularProgressIndicator(),
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  },
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 15,
+                                      vertical: 16,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: state.hasError
+                                            ? Colors.red
+                                            : Colors.transparent,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          selectedExpertise ??
+                                              "Select Your Expertise",
+                                          style: TextStyle(
+                                            color: selectedExpertise == null
+                                                ? Colors.grey
+                                                : Colors.grey.shade400,
+                                          ),
+                                        ),
+                                        Icon(Icons.keyboard_arrow_down),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+
+                                /// ERROR TEXT
+                                if (state.hasError)
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                      top: 5,
+                                      left: 5,
+                                    ),
+                                    child: Text(
+                                      state.errorText!,
+                                      style: TextStyle(
+                                        color: Colors.red,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            );
+                          },
+                        ),
+
+                        SizedBox(height: 25),
+
+                        /// BUTTON
+                        SizedBox(
+                          width: double.infinity,
+                          height: 55,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color(0xffFF6A2A),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+
+                            onPressed: isLoading
+                                ? null
+                                : () async {
+                                    if (!_formKey.currentState!.validate())
+                                      return;
+
+                                    setState(() {
+                                      isLoading = true;
+                                    });
+
+                                    final body = SaveServiceBodyModel(
+                                      email: emailController.text.trim(),
+                                      phone: phoneController.text.trim(),
+                                      name: nameController.text.trim(),
+                                      serviceType: selectedExpertise,
+                                    );
+
+                                    try {
+                                      final service = APIStateNetwork(
+                                        createDio(),
+                                      );
+                                      final response = await service
+                                          .saveService(body);
+
+                                      if (response.code == 0 &&
+                                          response.error == false) {
+                                        Navigator.of(context).pop();
+
+                                        // ✅ fir toast dikhao (thoda delay safe hai)
+                                        Future.delayed(
+                                          Duration(milliseconds: 200),
+                                          () {
+                                            Fluttertoast.showToast(
+                                              msg:
+                                                  response.message ??
+                                                  "Register Success",
+                                            );
+                                          },
+                                        );
+                                      } else {
+                                        Fluttertoast.showToast(
+                                          msg:
+                                              response.message ??
+                                              "Something went wrong",
+                                        );
+                                      }
+                                    } catch (e) {
+                                      Fluttertoast.showToast(
+                                        msg: "Something went wrong",
+                                      );
+                                    } finally {
+                                      if (context.mounted) {
+                                        setState(() {
+                                          isLoading = false;
+                                        });
+                                      }
+                                    }
+                                  },
+                            child: isLoading
+                                ? SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 1.5,
+                                    ),
+                                  )
+                                : Text(
+                                    "SUBMIT REGISTRATION",
+                                    style: GoogleFonts.inter(
+                                      fontSize: 15.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                          ),
+                        ),
+
+                        SizedBox(height: 10),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget fieldTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 12,
+          color: Colors.grey,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget buildField({
+    required TextEditingController controller,
+    required String hint,
+    TextInputType keyboard = TextInputType.text,
+    String? Function(String?)? validator,
+    int? maxLength,
+    String? counterText,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboard,
+      validator: validator,
+      maxLength: maxLength,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      decoration: InputDecoration(
+        errorStyle: TextStyle(
+          color: Colors.red, // ✅ match with dropdown
+          fontSize: 12,
+        ),
+        counterText: counterText,
+        hintText: hint,
+        hintStyle: TextStyle(color: Colors.grey.shade400),
+        filled: true,
+        fillColor: Colors.white,
+
+        contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 16),
+
+        // 👇 ADD THIS (important)
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Color(0xffFF6A2A), width: 1.5),
+        ),
+
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.red),
+        ),
+
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.red, width: 1.5),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final homeServiceProvider = ref.watch(homeServiceCategoryController);
@@ -1791,6 +2217,73 @@ class _HomeServiceState extends ConsumerState<HomeService> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 27.w),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          CupertinoPageRoute(
+                            builder: (context) => PricePlanPage(),
+                          ),
+                        );
+                      },
+                      child: SizedBox(
+                        height: 40.h,
+                        child: Container(
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Color(0xffFF6A2A)),
+                            borderRadius: BorderRadius.circular(10.r),
+                          ),
+                          child: Text(
+                            'PRICING PLANS',
+                            textAlign: TextAlign.center,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.inter(
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w400,
+                              color: Color(0xffFF6A2A),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: InkWell(
+                      onTap: () {
+                        openBottomSheet(context);
+                      },
+                      child: SizedBox(
+                        height: 40.h, // ✅ same height
+                        child: Container(
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: Color(0xffFF6A2A),
+                            borderRadius: BorderRadius.circular(10.r),
+                          ),
+                          child: Text(
+                            '+ Vendor Registration form',
+                            textAlign: TextAlign.center,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.inter(
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w400,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             // Categories Grid
             GridView.builder(
               shrinkWrap: true,
