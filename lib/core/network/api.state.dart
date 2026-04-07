@@ -24,9 +24,12 @@ import 'package:realstate/Model/loanQueryResModel.dart';
 import 'package:realstate/Model/loanServiceResModel.dart';
 import 'package:realstate/Model/loginWithPhoneBodyModel.dart';
 import 'package:realstate/Model/myBookingServiceRequestResModel.dart';
+import 'package:realstate/Model/planResModel.dart';
 import 'package:realstate/Model/registerResModel.dart';
 import 'package:realstate/Model/saveContactInPropertyBodyModel.dart';
 import 'package:realstate/Model/saveContactInPropertyResModel.dart';
+import 'package:realstate/Model/saveServiceBodyModel.dart';
+import 'package:realstate/Model/saveServiceResModel.dart';
 import 'package:realstate/Model/uploadImageResModel.dart';
 import 'package:realstate/Model/userProfileResModel.dart';
 import 'package:realstate/Model/verfiyServiceAgenetBodyModel.dart';
@@ -162,7 +165,11 @@ abstract class APIStateNetwork {
   );
 
   @POST("/user/createServiceRating")
-  Future<dynamic> createServiceRating(
-      @Body() Map<String, dynamic> body,
-      );
+  Future<dynamic> createServiceRating(@Body() Map<String, dynamic> body);
+
+  @POST("/user/serviceSave")
+  Future<SaveServiceResModel> saveService(@Body() SaveServiceBodyModel body);
+
+  @POST("/user/subscriptionList")
+  Future<PlanResModel> pricingPlan();
 }
