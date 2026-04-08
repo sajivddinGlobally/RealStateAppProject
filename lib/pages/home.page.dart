@@ -1811,7 +1811,8 @@ class _HomeServiceState extends ConsumerState<HomeService> {
 
     bool isLoading = false;
 
-    String selectedExpertise = "Select Your Expertise";
+    String? selectedExpertise;
+    String? selectedExpertiseId;
     final homeServiceProvider = ref.watch(homeServiceCategoryController);
 
     showModalBottomSheet(
@@ -1963,8 +1964,13 @@ class _HomeServiceState extends ConsumerState<HomeService> {
                                                           data
                                                               .data!
                                                               .list![index]
-                                                              .id ??
+                                                              .name ??
                                                           "N/A";
+                                                      selectedExpertiseId = data
+                                                          .data!
+                                                          .list![index]
+                                                          .id
+                                                          .toString();
                                                     });
                                                     Navigator.pop(context);
                                                   },
@@ -2008,7 +2014,7 @@ class _HomeServiceState extends ConsumerState<HomeService> {
                                           style: TextStyle(
                                             color: selectedExpertise == null
                                                 ? Colors.grey
-                                                : Colors.grey.shade400,
+                                                : Colors.black,
                                           ),
                                         ),
                                         Icon(Icons.keyboard_arrow_down),
@@ -2065,7 +2071,7 @@ class _HomeServiceState extends ConsumerState<HomeService> {
                                       email: emailController.text.trim(),
                                       phone: phoneController.text.trim(),
                                       name: nameController.text.trim(),
-                                      serviceType: selectedExpertise,
+                                      serviceType: selectedExpertiseId,
                                     );
 
                                     try {
