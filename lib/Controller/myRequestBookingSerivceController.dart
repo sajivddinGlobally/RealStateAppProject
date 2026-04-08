@@ -16,21 +16,18 @@ final myRequestBookingServiceContorller =
       return await service.MyRequestBookingService();
     });
 
-
-final myLoanServiceContorller =
-FutureProvider.autoDispose<GetLoanQueryModel>((ref) async {
+final myLoanServiceContorller = FutureProvider.autoDispose<GetLoanQueryModel>((
+  ref,
+) async {
   final service = APIStateNetwork(createDio());
   return await service.myLoanQuery();
 });
 
+// final createServiceRatingController = FutureProvider.family
+//     .autoDispose<dynamic, Map<String, dynamic>>((ref, body) async {
+//       final service = APIStateNetwork(createDio());
 
+//       final response = await service.createServiceRating(body);
 
-final createServiceRatingController =
-FutureProvider.family.autoDispose<dynamic, Map<String, dynamic>>(
-        (ref, body) async {
-      final service = APIStateNetwork(createDio());
-
-      final response = await service.createServiceRating(body);
-
-      return response;
-    });
+//       return response;
+//     });
