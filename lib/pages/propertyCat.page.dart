@@ -266,6 +266,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:realstate/pages/about.page.dart';
 import 'package:realstate/pages/perticulerProperty.page.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../Controller/getPropertyController.dart';
 import '../Model/Body/PropertyListBodyModel.dart';
@@ -479,11 +480,9 @@ class _PropertyPageCatState extends ConsumerState<PropertyPageCat> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(40.r),
         ),
-        onPressed: () {
-          // Navigator.push(
-          //   context,
-          //   CupertinoPageRoute(builder: (context) => const AboutUsPage()),
-          // );
+        onPressed: () async {
+          final Uri url = Uri.parse("https://wa.me/9171719060");
+          await launchUrl(url, mode: LaunchMode.externalApplication);
         },
         icon: SvgPicture.asset("assets/Svg/whatsapp.svg"),
         label: Text(
