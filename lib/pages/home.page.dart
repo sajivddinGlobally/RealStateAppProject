@@ -5,17 +5,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:marquee/marquee.dart';
+import 'package:realstate/Controller/contactUsController.dart';
 import 'package:realstate/Controller/getCityListController.dart';
 import 'package:realstate/Controller/getMyPropertyController.dart';
 import 'package:realstate/Controller/homeServiceCategoryController.dart';
 import 'package:realstate/Controller/likePropertyController.dart';
 import 'package:realstate/Controller/loanServiceController.dart';
 import 'package:realstate/Controller/userProfileController.dart';
+import 'package:realstate/Model/contactUsBodyModel.dart';
 import 'package:realstate/Model/getLikeProperyResModel.dart';
 import 'package:realstate/Model/saveServiceBodyModel.dart';
 import 'package:realstate/core/network/api.state.dart';
@@ -916,7 +919,6 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
       top: false,
       child: Column(
         children: [
-          // Orange App Bar (same as others)
           Container(
             height: 90.h,
             padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -937,158 +939,845 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
               ),
             ),
           ),
-
-          SizedBox(height: 50.h),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              /// Icon
-              Container(
-                width: 110.w,
-                height: 110.w,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.orange.withOpacity(0.1),
-                ),
-                child: Icon(
-                  Icons.support_agent,
-                  color: const Color(0xffFF6A2A),
-                  size: 55.sp,
-                ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
               ),
-              SizedBox(height: 25.h),
-
-              /// Title
-              Text(
-                "Need Help?",
-                style: GoogleFonts.inter(
-                  fontSize: 22.sp,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 8.h),
-
-              /// Subtitle
-              Text(
-                "Our support team is here to help you.\nContact us via Call or WhatsApp.",
-                textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
-                  fontSize: 14.sp,
-                  color: Colors.grey.shade600,
-                ),
-              ),
-              SizedBox(height: 35.h),
-
-              /// Buttons Row
-              Padding(
-                padding: EdgeInsets.only(left: 20.w, right: 20.w),
-                child: Row(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    /// Call Button
-                    Expanded(
-                      child: SizedBox(
-                        height: 50.h,
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xffFF6A2A),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30.r),
-                            ),
-                          ),
-                          // onPressed: () async {
-                          //   String phone = "9171719060";
-                          //   final Uri url = Uri.parse("tel:$phone");
-
-                          //   if (await canLaunchUrl(url)) {
-                          //     await launchUrl(url);
-                          //   }
-                          // },
-                          onPressed: () async {
-                            final Uri url = Uri(
-                              scheme: 'tel',
-                              path: '9171719060',
-                            );
-                            await launchUrl(url);
-                          },
-                          icon: Icon(
-                            Icons.call,
-                            size: 20.sp,
-                            color: Colors.white,
-                          ),
-                          label: Text(
-                            "Call",
-                            style: GoogleFonts.inter(
-                              fontSize: 15.sp,
+                    /// TITLE
+                    RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: "Send us a ",
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 22.sp,
                               fontWeight: FontWeight.w600,
-                              color: Colors.white,
                             ),
                           ),
-                        ),
+                          TextSpan(
+                            text: "Message",
+                            style: TextStyle(
+                              color: Colors.orange,
+                              fontSize: 22.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    SizedBox(width: 12.w),
 
-                    /// WhatsApp Button
-                    Expanded(
-                      child: SizedBox(
-                        height: 50.h,
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xff25D366),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30.r),
-                            ),
-                          ),
-                          // onPressed: () async {
-                          //   String phone = "9171719060";
-                          //   final Uri url = Uri.parse("https://wa.me/$phone");
+                    SizedBox(height: 6.h),
 
-                          //   if (await canLaunchUrl(url)) {
-                          //     await launchUrl(url);
-                          //   }
-                          // },
-                          onPressed: () async {
-                            final Uri url = Uri.parse(
-                              "https://wa.me/9171719060",
-                            );
-                            await launchUrl(
-                              url,
-                              mode: LaunchMode.externalApplication,
-                            );
-                          },
-                          icon: Icon(
-                            Icons.chat,
-                            size: 20.sp,
-                            color: Colors.white,
-                          ),
-                          label: Text(
-                            "WhatsApp",
-                            style: GoogleFonts.inter(
-                              fontSize: 15.sp,
+                    /// SUBTITLE
+                    Text(
+                      "Find our contact info to reach out to us",
+                      style: TextStyle(color: Colors.black54, fontSize: 13.sp),
+                    ),
+
+                    SizedBox(height: 16.h),
+
+                    /// CARD
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(16.w),
+                      decoration: BoxDecoration(
+                        color: const Color(0xffE8D6CC),
+                        borderRadius: BorderRadius.circular(16.r),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          /// WHERE WE WORK
+                          Text(
+                            "WHERE WE WORK FROM",
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              letterSpacing: 1,
                               fontWeight: FontWeight.w600,
-                              color: Colors.white,
                             ),
                           ),
-                        ),
+
+                          SizedBox(height: 10.h),
+
+                          Text(
+                            "PropertyLe Innovation – One Call, One Click, Anytime.",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 13.sp,
+                            ),
+                          ),
+
+                          SizedBox(height: 8.h),
+
+                          /// ✅ FIXED ALIGNMENT
+                          Text(
+                            "B Raj Dhaakad: 66 Kailash Vihar City Centre",
+                            style: TextStyle(fontSize: 13.sp, height: 1.4),
+                          ),
+                          Text(
+                            "Gwalior, Madhya Pradesh",
+                            style: TextStyle(fontSize: 13.sp, height: 1.4),
+                          ),
+                          Text(
+                            "Pin 474012",
+                            style: TextStyle(fontSize: 13.sp, height: 1.4),
+                          ),
+
+                          SizedBox(height: 16.h),
+
+                          /// CALL + EMAIL
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              /// CALL
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () async {
+                                    final Uri url = Uri(
+                                      scheme: 'tel',
+                                      path: '9171719060',
+                                    );
+                                    await launchUrl(url);
+                                  },
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "CALL / TEXT",
+                                        style: TextStyle(
+                                          fontSize: 12.sp,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      SizedBox(height: 4.h),
+                                      Text(
+                                        "+91-9171719060",
+                                        style: TextStyle(fontSize: 13.sp),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+
+                              SizedBox(width: 20.w),
+
+                              /// EMAIL
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "EMAIL US",
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4.h),
+                                    Text(
+                                      "Info@property.com",
+                                      style: TextStyle(fontSize: 13.sp),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          SizedBox(height: 16.h),
+
+                          /// SOCIALS
+                          Text(
+                            "OUR SOCIALS",
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+
+                          SizedBox(height: 10.h),
+
+                          Row(
+                            children: [
+                              /// INSTAGRAM
+                              GestureDetector(
+                                onTap: () async {
+                                  final url =
+                                      "https://www.instagram.com/propertyleindia?igsh=MWJ4eG8yendnODg1Mw%3D%3D&utm_source=qr";
+                                  await launchUrl(
+                                    Uri.parse(url),
+                                    mode: LaunchMode.externalApplication,
+                                  );
+                                },
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: EdgeInsets.all(10.w),
+                                      decoration: const BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        gradient: LinearGradient(
+                                          colors: [Colors.pink, Colors.orange],
+                                        ),
+                                      ),
+                                      child: Image.asset(
+                                        "assets/insta.png",
+                                        height: 18.h,
+                                        width: 18.w,
+                                      ),
+                                    ),
+                                    SizedBox(width: 8.w),
+                                    Text(
+                                      "Instagram",
+                                      style: TextStyle(fontSize: 13.sp),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              SizedBox(width: 20.w),
+
+                              /// WHATSAPP
+                              GestureDetector(
+                                onTap: () async {
+                                  final Uri url = Uri.parse(
+                                    "https://wa.me/9171719060",
+                                  );
+                                  await launchUrl(
+                                    url,
+                                    mode: LaunchMode.externalApplication,
+                                  );
+                                },
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: EdgeInsets.all(10.w),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.green,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.call,
+                                        color: Colors.white,
+                                        size: 18.sp,
+                                      ),
+                                    ),
+                                    SizedBox(width: 8.w),
+                                    Text(
+                                      "WhatsApp",
+                                      style: TextStyle(fontSize: 13.sp),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 15.h),
+                    Form(
+                      key: _formKeyContactUs,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Send Enquiry",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xff0E1A35),
+                            ),
+                          ),
+                          SizedBox(height: 15.h),
+                          const Text(
+                            "Enter Your Email",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xff0E1A35),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          TextFormField(
+                            controller: emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            decoration: InputDecoration(
+                              prefixIcon: Icon(
+                                Icons.mail_outline,
+                                color: Colors.grey,
+                              ),
+                              hintStyle: TextStyle(fontSize: 14.sp),
+                              hintText: "Email",
+                              filled: true,
+                              fillColor: Colors.white,
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.red.shade300,
+                                ),
+                              ),
+                              focusedErrorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.red.shade300,
+                                ),
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return "Email is required";
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 15),
+                          const Text(
+                            "Enter Your Name",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xff0E1A35),
+                            ),
+                          ),
+
+                          const SizedBox(height: 10),
+
+                          TextFormField(
+                            controller: nameController,
+                            keyboardType: TextInputType.name,
+
+                            decoration: InputDecoration(
+                              prefixIcon: Icon(
+                                Icons.person,
+                                color: Colors.grey,
+                              ),
+                              hintStyle: TextStyle(fontSize: 14.sp),
+                              hintText: "Name",
+                              filled: true,
+                              fillColor: Colors.white,
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.red.shade300,
+                                ),
+                              ),
+                              focusedErrorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.red.shade300,
+                                ),
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return "Name is required";
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 15),
+                          const Text(
+                            "Mobile Number",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xff0E1A35),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          TextFormField(
+                            maxLength: 10,
+                            controller: phoneController,
+                            keyboardType: TextInputType.number,
+
+                            decoration: InputDecoration(
+                              prefixIcon: Icon(
+                                Icons.call_outlined,
+                                color: Colors.grey,
+                              ),
+                              counterText: "",
+                              hintStyle: TextStyle(fontSize: 14.sp),
+                              hintText: "Mobile Number",
+                              filled: true,
+                              fillColor: Colors.white,
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.red.shade300,
+                                ),
+                              ),
+                              focusedErrorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.red.shade300,
+                                ),
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return "Mobile Number is required";
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 15),
+                          const Text(
+                            "Subject",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xff0E1A35),
+                            ),
+                          ),
+
+                          const SizedBox(height: 10),
+
+                          TextFormField(
+                            controller: subjectController,
+                            keyboardType: TextInputType.text,
+
+                            decoration: InputDecoration(
+                              prefixIcon: Icon(
+                                Icons.subject_outlined,
+                                color: Colors.grey,
+                              ),
+                              hintStyle: TextStyle(fontSize: 14.sp),
+                              hintText: "Subject",
+                              filled: true,
+                              fillColor: Colors.white,
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.red.shade300,
+                                ),
+                              ),
+                              focusedErrorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.red.shade300,
+                                ),
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return "Subject is required";
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 15),
+                          const Text(
+                            "Message",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xff0E1A35),
+                            ),
+                          ),
+
+                          const SizedBox(height: 10),
+
+                          TextFormField(
+                            controller: messageController,
+                            keyboardType: TextInputType.text,
+
+                            decoration: InputDecoration(
+                              prefixIcon: Icon(
+                                Icons.messenger_outline,
+                                color: Colors.grey,
+                              ),
+                              filled: true,
+                              fillColor: Colors.white,
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.red.shade300,
+                                ),
+                              ),
+                              focusedErrorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.red.shade300,
+                                ),
+                              ),
+                              hintStyle: TextStyle(fontSize: 14.sp),
+                              hintText: "Message",
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return "Message is required";
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 15),
+                          const Text(
+                            "Location",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xff0E1A35),
+                            ),
+                          ),
+
+                          const SizedBox(height: 10),
+
+                          SizedBox(width: 10),
+                          TextFormField(
+                            controller: locationController,
+                            keyboardType: TextInputType.text,
+
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: Colors.white,
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.red.shade300,
+                                ),
+                              ),
+                              hintStyle: TextStyle(fontSize: 14.sp),
+                              hintText: "Location",
+                              prefixIcon: Icon(
+                                Icons.location_on_outlined,
+                                color: Colors.grey,
+                              ),
+                              focusedErrorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.red.shade300,
+                                ),
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return "Location is required";
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 20),
+
+                          /// ==== SIGN IN BUTTON ====
+                          Center(
+                            child: GestureDetector(
+                              onTap: isLoading
+                                  ? null
+                                  : () async {
+                                      if (!_formKeyContactUs.currentState!
+                                          .validate()) {
+                                        return;
+                                      }
+                                      setState(() {
+                                        isLoading = true;
+                                      });
+                                      final body = ContactUsBodyModel(
+                                        email: emailController.text,
+                                        name: nameController.text,
+                                        phone: phoneController.text,
+                                        subject: subjectController.text,
+                                        message: messageController.text,
+                                        location: locationController.text,
+                                      );
+                                      try {
+                                        final response = await ref.read(
+                                          contactUsController(body).future,
+                                        );
+                                        if (response.code == 0 ||
+                                            response.error == false) {
+                                          Fluttertoast.showToast(
+                                            msg: response.message,
+                                          );
+
+                                          emailController.clear();
+                                          nameController.clear();
+                                          phoneController.clear();
+                                          subjectController.clear();
+                                          messageController.clear();
+                                          locationController.clear();
+                                        } else {
+                                          Fluttertoast.showToast(
+                                            msg: response.message,
+                                          );
+                                        }
+                                      } catch (e) {
+                                        log(e.toString());
+                                      } finally {
+                                        setState(() {
+                                          isLoading = false;
+                                        });
+                                      }
+                                    },
+                              child: Container(
+                                height: 50,
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: Color(0xffE86A34),
+                                  borderRadius: BorderRadius.circular(40),
+                                ),
+                                child: Center(
+                                  child: isLoading
+                                      ? Center(
+                                          child: SizedBox(
+                                            height: 20,
+                                            width: 20,
+                                            child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        )
+                                      : Text(
+                                          "Submit",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 17.sp,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 10.h),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
-
-              SizedBox(height: 25.h),
-
-              /// Phone Text
-              Text(
-                "Support: +91 9171719060",
-                style: GoogleFonts.inter(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey.shade700,
-                ),
-              ),
-            ],
+            ),
           ),
+          // Column(
+          //   mainAxisAlignment: MainAxisAlignment.center,
+          //   children: [
+          //     /// Icon
+          //     Container(
+          //       width: 110.w,
+          //       height: 110.w,
+          //       decoration: BoxDecoration(
+          //         shape: BoxShape.circle,
+          //         color: Colors.orange.withOpacity(0.1),
+          //       ),
+          //       child: Icon(
+          //         Icons.support_agent,
+          //         color: const Color(0xffFF6A2A),
+          //         size: 55.sp,
+          //       ),
+          //     ),
+          //     SizedBox(height: 25.h),
+          //     /// Title
+          //     Text(
+          //       "Need Help?",
+          //       style: GoogleFonts.inter(
+          //         fontSize: 22.sp,
+          //         fontWeight: FontWeight.bold,
+          //       ),
+          //     ),
+          //     SizedBox(height: 8.h),
+          //     /// Subtitle
+          //     Text(
+          //       "Our support team is here to help you.\nContact us via Call or WhatsApp.",
+          //       textAlign: TextAlign.center,
+          //       style: GoogleFonts.inter(
+          //         fontSize: 14.sp,
+          //         color: Colors.grey.shade600,
+          //       ),
+          //     ),
+          //     SizedBox(height: 35.h),
+          //     /// Buttons Row
+          //     Padding(
+          //       padding: EdgeInsets.only(left: 20.w, right: 20.w),
+          //       child: Row(
+          //         children: [
+          //           /// Call Button
+          //           Expanded(
+          //             child: SizedBox(
+          //               height: 50.h,
+          //               child: ElevatedButton.icon(
+          //                 style: ElevatedButton.styleFrom(
+          //                   backgroundColor: const Color(
+          //                     0xffFF6A2A,
+          //                   ),
+          //                   shape: RoundedRectangleBorder(
+          //                     borderRadius: BorderRadius.circular(
+          //                       30.r,
+          //                     ),
+          //                   ),
+          //                 ),
+          //                 // onPressed: () async {
+          //                 //   String phone = "9171719060";
+          //                 //   final Uri url = Uri.parse("tel:$phone");
+          //                 //   if (await canLaunchUrl(url)) {
+          //                 //     await launchUrl(url);
+          //                 //   }
+          //                 // },
+          //                 onPressed: () async {
+          //                   final Uri url = Uri(
+          //                     scheme: 'tel',
+          //                     path: '9171719060',
+          //                   );
+          //                   await launchUrl(url);
+          //                 },
+          //                 icon: Icon(
+          //                   Icons.call,
+          //                   size: 20.sp,
+          //                   color: Colors.white,
+          //                 ),
+          //                 label: Text(
+          //                   "Call",
+          //                   style: GoogleFonts.inter(
+          //                     fontSize: 15.sp,
+          //                     fontWeight: FontWeight.w600,
+          //                     color: Colors.white,
+          //                   ),
+          //                 ),
+          //               ),
+          //             ),
+          //           ),
+          //           SizedBox(width: 12.w),
+          //           /// WhatsApp Button
+          //           Expanded(
+          //             child: SizedBox(
+          //               height: 50.h,
+          //               child: ElevatedButton.icon(
+          //                 style: ElevatedButton.styleFrom(
+          //                   backgroundColor: const Color(
+          //                     0xff25D366,
+          //                   ),
+          //                   shape: RoundedRectangleBorder(
+          //                     borderRadius: BorderRadius.circular(
+          //                       30.r,
+          //                     ),
+          //                   ),
+          //                 ),
+          //                 // onPressed: () async {
+          //                 //   String phone = "9171719060";
+          //                 //   final Uri url = Uri.parse("https://wa.me/$phone");
+          //                 //   if (await canLaunchUrl(url)) {
+          //                 //     await launchUrl(url);
+          //                 //   }
+          //                 // },
+          //                 onPressed: () async {
+          //                   final Uri url = Uri.parse(
+          //                     "https://wa.me/9171719060",
+          //                   );
+          //                   await launchUrl(
+          //                     url,
+          //                     mode:
+          //                         LaunchMode.externalApplication,
+          //                   );
+          //                 },
+          //                 icon: Icon(
+          //                   Icons.chat,
+          //                   size: 20.sp,
+          //                   color: Colors.white,
+          //                 ),
+          //                 label: Text(
+          //                   "WhatsApp",
+          //                   style: GoogleFonts.inter(
+          //                     fontSize: 15.sp,
+          //                     fontWeight: FontWeight.w600,
+          //                     color: Colors.white,
+          //                   ),
+          //                 ),
+          //               ),
+          //             ),
+          //           ),
+          //         ],
+          //       ),
+          //     ),
+          //     SizedBox(height: 25.h),
+          //     /// Phone Text
+          //     Text(
+          //       "Support: +91 9171719060",
+          //       style: GoogleFonts.inter(
+          //         fontSize: 14.sp,
+          //         fontWeight: FontWeight.w500,
+          //         color: Colors.grey.shade700,
+          //       ),
+          //     ),
+          //   ],
+          // ),
         ],
       ),
     );
@@ -2224,7 +2913,7 @@ class _HomeServiceState extends ConsumerState<HomeService> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 27.w),
+              padding: EdgeInsets.symmetric(horizontal: 22.w),
               child: Row(
                 children: [
                   Expanded(
@@ -2237,23 +2926,21 @@ class _HomeServiceState extends ConsumerState<HomeService> {
                           ),
                         );
                       },
-                      child: SizedBox(
+                      child: Container(
                         height: 40.h,
-                        child: Container(
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Color(0xffFF6A2A)),
-                            borderRadius: BorderRadius.circular(10.r),
-                          ),
-                          child: Text(
-                            'PRICING PLANS',
-                            textAlign: TextAlign.center,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.inter(
-                              fontSize: 10.sp,
-                              fontWeight: FontWeight.w400,
-                              color: Color(0xffFF6A2A),
-                            ),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Color(0xffFF6A2A)),
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
+                        child: Text(
+                          'PRICING PLANS',
+                          textAlign: TextAlign.center,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            fontSize: 9.sp,
+                            fontWeight: FontWeight.w400,
+                            color: Color(0xffFF6A2A),
                           ),
                         ),
                       ),
@@ -2265,23 +2952,21 @@ class _HomeServiceState extends ConsumerState<HomeService> {
                       onTap: () {
                         openBottomSheet(context);
                       },
-                      child: SizedBox(
-                        height: 40.h, // ✅ same height
-                        child: Container(
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: Color(0xffFF6A2A),
-                            borderRadius: BorderRadius.circular(10.r),
-                          ),
-                          child: Text(
-                            '+ Vendor Registration form',
-                            textAlign: TextAlign.center,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.inter(
-                              fontSize: 10.sp,
-                              fontWeight: FontWeight.w400,
-                              color: Colors.white,
-                            ),
+                      child: Container(
+                        height: 40.h,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: Color(0xffFF6A2A),
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
+                        child: Text(
+                          'VENDOR REGISTRATION FORM',
+                          textAlign: TextAlign.center,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            fontSize: 9.sp,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.white,
                           ),
                         ),
                       ),
@@ -2294,7 +2979,7 @@ class _HomeServiceState extends ConsumerState<HomeService> {
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(14),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 3,
                 childAspectRatio: 0.75,
@@ -2481,7 +3166,9 @@ class _HomeServiceState extends ConsumerState<HomeService> {
                     ],
                   ),
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      openBottomSheet(context);
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.orange,
                     ),
@@ -2502,15 +3189,10 @@ class _HomeServiceState extends ConsumerState<HomeService> {
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
-                children: const [
-                  Icon(Icons.price_check, size: 40, color: Colors.orange),
-                  Text(
-                    'Affordable Pricing',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    'Quality service doesn\'t have to be costly. We offer transparent, fair pricing on every job.',
-                  ),
+                children: [
+                  pricingCard(),
+                  const SizedBox(height: 16),
+                  pricingCard(),
                 ],
               ),
             ),
@@ -2525,18 +3207,19 @@ class _HomeServiceState extends ConsumerState<HomeService> {
                     'Featured Projects',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                  TextButton(
-                    onPressed: () {},
-                    child: const Text(
-                      'See Full Gallery >',
-                      style: TextStyle(color: Colors.orange),
-                    ),
-                  ),
+                  // TextButton(
+                  //   onPressed: () {},
+                  //   child: const Text(
+                  //     'See Full Gallery >',
+                  //     style: TextStyle(color: Colors.orange),
+                  //   ),
+                  // ),
                 ],
               ),
             ),
 
-            SizedBox(
+            Container(
+              margin: EdgeInsets.only(top: 10.h),
               height: 200,
               child: ListView(
                 scrollDirection: Axis.horizontal,
@@ -2753,6 +3436,43 @@ class _HomeServiceState extends ConsumerState<HomeService> {
   }
 }
 
+Widget pricingCard() {
+  return Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: const Color(0xff111111),
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white24),
+          ),
+          child: Text("\$", style: TextStyle(color: Colors.white)),
+        ),
+        SizedBox(height: 10),
+        Text(
+          'Affordable Pricing',
+          style: TextStyle(
+            color: Colors.orange,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        SizedBox(height: 6),
+        Text(
+          'Quality service doesn’t have to be costly; we offer transparent, fair pricing on every job.',
+          style: TextStyle(color: Colors.white70),
+        ),
+      ],
+    ),
+  );
+}
+
 class ServiceCard extends StatelessWidget {
   final String title;
   final String desc;
@@ -2849,13 +3569,6 @@ class FeaturedProject extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.end,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                  ),
-                  child: Text(title),
-                ),
                 Text(
                   subtitle,
                   style: const TextStyle(color: Colors.white, fontSize: 12),
