@@ -4,6 +4,7 @@ import 'package:realstate/Model/Body/CreatePropertyBodyModel.dart';
 import 'package:realstate/Model/Body/UpdatePropertyBodyModel.dart';
 import 'package:realstate/Model/Body/checkSlotBodyModel.dart';
 import 'package:realstate/Model/Body/homeGerServiceCategoryByIdModel.dart';
+import 'package:realstate/Model/Body/serviceRatingBodyModel.dart';
 import 'package:realstate/Model/Body/userResister.dart';
 import 'package:realstate/Model/checkSlotResModel.dart';
 import 'package:realstate/Model/contactUsBodyModel.dart';
@@ -30,6 +31,7 @@ import 'package:realstate/Model/saveContactInPropertyBodyModel.dart';
 import 'package:realstate/Model/saveContactInPropertyResModel.dart';
 import 'package:realstate/Model/saveServiceBodyModel.dart';
 import 'package:realstate/Model/saveServiceResModel.dart';
+import 'package:realstate/Model/serviceRatingResModel.dart';
 import 'package:realstate/Model/uploadImageResModel.dart';
 import 'package:realstate/Model/userProfileResModel.dart';
 import 'package:realstate/Model/verfiyServiceAgenetBodyModel.dart';
@@ -165,7 +167,7 @@ abstract class APIStateNetwork {
   );
 
   @POST("/user/createServiceRating")
-  Future<dynamic> createServiceRating(@Body() Map<String, dynamic> body);
+  Future<ServiceRatingResModel> createServiceRating(@Body() ServiceRatingBodyModel body);
 
   @POST("/user/serviceSave")
   Future<SaveServiceResModel> saveService(@Body() SaveServiceBodyModel body);

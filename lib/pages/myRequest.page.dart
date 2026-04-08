@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:realstate/Controller/myRequestBookingSerivceController.dart';
+import 'package:realstate/Model/Body/serviceRatingBodyModel.dart';
 import 'package:realstate/Model/verfiyServiceAgenetBodyModel.dart';
 import 'package:realstate/core/network/api.state.dart';
 import 'package:realstate/core/utils/preety.dio.dart';
@@ -35,6 +36,7 @@ class MyRequestPage extends ConsumerWidget {
         return Colors.blueGrey;
     }
   }
+
   final ratingProvider = StateProvider.family<int, String>((ref, id) => 0);
   final reviewTextProvider = StateProvider.family<String, String>(
     (ref, id) => "",
@@ -95,12 +97,12 @@ class MyRequestPage extends ConsumerWidget {
                         _buildCardHeader(item, status, primaryColor),
                         // 2. Status Stepper (new chain)
                         _buildStatusStepper(status, primaryColor),
-        
+
                         const Divider(height: 1),
-        
+
                         // 3. Details
                         _buildDetailsSection(item, status),
-        
+
                         // 4. Verification & Technician Section
                         if (status != 'rejected')
                           _buildVerificationCard(
@@ -110,7 +112,7 @@ class MyRequestPage extends ConsumerWidget {
                             ref,
                             status,
                           ),
-        
+
                         // 5. Footer
                         _buildFooter(item, primaryColor),
                       ],
@@ -241,8 +243,6 @@ class MyRequestPage extends ConsumerWidget {
         ),
       );
     }
-
-
 
     int currentStepIndex = 0;
     if (status == 'pending') {
@@ -396,8 +396,7 @@ class MyRequestPage extends ConsumerWidget {
     final technicianName =
         item.serviceBoy?.name ?? "Assigning $serviceCategory...";
     final technicianImage = item.serviceProviderImage ?? "";
-    final existingRating =
-    (item.ratings != null && item.ratings!.isNotEmpty)
+    final existingRating = (item.ratings != null && item.ratings!.isNotEmpty)
         ? item.ratings!.first
         : null;
     final bool isAlreadyRated = existingRating != null;
@@ -712,8 +711,6 @@ class MyRequestPage extends ConsumerWidget {
                   //     );
                   //   }),
                   // ),
-
-
                   Row(
                     children: List.generate(5, (index) {
                       return IconButton(
@@ -727,10 +724,15 @@ class MyRequestPage extends ConsumerWidget {
                         onPressed: isAlreadyRated
                             ? null // ❌ Disable click
                             : () {
-                          ref
-                              .read(ratingProvider(item.id ?? "").notifier)
-                              .state = index + 1;
-                        },
+                                ref
+                                        .read(
+                                          ratingProvider(
+                                            item.id ?? "",
+                                          ).notifier,
+                                        )
+                                        .state =
+                                    index + 1;
+                              },
                       );
                     }),
                   ),
@@ -756,18 +758,18 @@ class MyRequestPage extends ConsumerWidget {
                   //     ),
                   //   ),
                   // ),
-
-
                   TextField(
                     controller: TextEditingController(text: reviewText)
                       ..selection = TextSelection.collapsed(
-                          offset: reviewText.length),
+                        offset: reviewText.length,
+                      ),
                     enabled: !isAlreadyRated, // ✅ disable if rated
                     maxLines: 3,
                     onChanged: (val) {
-
-                      ref.read(reviewTextProvider(item.id ?? "").notifier).state = val;
-
+                      ref
+                              .read(reviewTextProvider(item.id ?? "").notifier)
+                              .state =
+                          val;
                     },
                     decoration: InputDecoration(
                       hintText: "Write your review...",
@@ -792,22 +794,39 @@ class MyRequestPage extends ConsumerWidget {
                             return;
                           }
 
-                          final body = {
-                            "serviceBooking": item.id,
-                            "rating": rating,
-                            "review": reviewText,
-                          };
+                          // final body = {
+                          //   "serviceBooking": item.id,
+                          //   "rating": rating,
+                          //   "review": reviewText,
+                          // };
+                          final body = ServiceRatingBodyModel(
+                            serviceBooking: item.id,
+                            rating: rating,
+                            review: reviewText,
+                          );
 
                           try {
-                            final response = await ref.refresh(
-                              createServiceRatingController(body).future,
+                            // final response = await ref.refresh(
+                            //   createServiceRatingController(body).future,
+                            // );
+                            final serivce = APIStateNetwork(createDio());
+                            final resposne = await serivce.createServiceRating(
+                              body,
                             );
-
-                            Fluttertoast.showToast(msg: response);
-
-                            ref.invalidate(myRequestBookingServiceContorller);
-                          } catch (e) {
-                            Fluttertoast.showToast(msg: "Rating failed");
+                            if (resposne.code == 0 && resposne.error == false) {
+                              Fluttertoast.showToast(
+                                msg: resposne.message ?? "Sucess",
+                              );
+                              ref.invalidate(myRequestBookingServiceContorller);
+                            } else {
+                              Fluttertoast.showToast(
+                                msg: resposne.message ?? "Error",
+                              );
+                            }
+                          } catch (e, st) {
+                            log(st.toString());
+                            log(e.toString());
+                            Fluttertoast.showToast(msg: "Rating failed $e");
                           }
                         },
                         style: ElevatedButton.styleFrom(
