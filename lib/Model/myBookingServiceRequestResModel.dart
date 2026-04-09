@@ -4,9 +4,13 @@
 
 import 'dart:convert';
 
-MyBookingServiceRequestResModel myBookingServiceRequestResModelFromJson(String str) => MyBookingServiceRequestResModel.fromJson(json.decode(str));
+MyBookingServiceRequestResModel myBookingServiceRequestResModelFromJson(
+  String str,
+) => MyBookingServiceRequestResModel.fromJson(json.decode(str));
 
-String myBookingServiceRequestResModelToJson(MyBookingServiceRequestResModel data) => json.encode(data.toJson());
+String myBookingServiceRequestResModelToJson(
+  MyBookingServiceRequestResModel data,
+) => json.encode(data.toJson());
 
 class MyBookingServiceRequestResModel {
   String? message;
@@ -21,12 +25,13 @@ class MyBookingServiceRequestResModel {
     this.data,
   });
 
-  factory MyBookingServiceRequestResModel.fromJson(Map<String, dynamic> json) => MyBookingServiceRequestResModel(
-    message: json["message"],
-    code: json["code"],
-    error: json["error"],
-    data: json["data"] == null ? null : Data.fromJson(json["data"]),
-  );
+  factory MyBookingServiceRequestResModel.fromJson(Map<String, dynamic> json) =>
+      MyBookingServiceRequestResModel(
+        message: json["message"],
+        code: json["code"],
+        error: json["error"],
+        data: json["data"] == null ? null : Data.fromJson(json["data"]),
+      );
 
   Map<String, dynamic> toJson() => {
     "message": message,
@@ -40,18 +45,21 @@ class Data {
   List<ListElement>? list;
   int? total;
 
-  Data({
-    this.list,
-    this.total,
-  });
+  Data({this.list, this.total});
 
   factory Data.fromJson(Map<String, dynamic> json) => Data(
-    list: json["list"] == null ? [] : List<ListElement>.from(json["list"]!.map((x) => ListElement.fromJson(x))),
+    list: json["list"] == null
+        ? []
+        : List<ListElement>.from(
+            json["list"]!.map((x) => ListElement.fromJson(x)),
+          ),
     total: json["total"],
   );
 
   Map<String, dynamic> toJson() => {
-    "list": list == null ? [] : List<dynamic>.from(list!.map((x) => x.toJson())),
+    "list": list == null
+        ? []
+        : List<dynamic>.from(list!.map((x) => x.toJson())),
     "total": total,
   };
 }
@@ -108,10 +116,14 @@ class ListElement {
   factory ListElement.fromJson(Map<String, dynamic> json) => ListElement(
     id: json["_id"],
     address: json["address"],
-    serviceDate: json["serviceDate"] == null ? null : DateTime.parse(json["serviceDate"]),
+    serviceDate: json["serviceDate"] == null
+        ? null
+        : DateTime.parse(json["serviceDate"]),
     serviceTimeSlot: json["serviceTimeSlot"],
     problemImgae: json["problemImgae"],
-    serviceType: json["serviceType"] == null ? null : ServiceType.fromJson(json["serviceType"]),
+    serviceType: json["serviceType"] == null
+        ? null
+        : ServiceType.fromJson(json["serviceType"]),
     message: json["message"],
     status: json["status"],
     serviceFee: json["serviceFee"],
@@ -125,8 +137,12 @@ class ListElement {
     updatedAt: json["updatedAt"],
     bookingId: json["bookingId"],
     v: json["__v"],
-    ratings: json["ratings"] == null ? [] : List<Rating>.from(json["ratings"]!.map((x) => Rating.fromJson(x))),
-    serviceBoy: json["serviceBoy"] == null ? null : ServiceBoy.fromJson(json["serviceBoy"]),
+    ratings: json["ratings"] == null
+        ? []
+        : List<Rating>.from(json["ratings"]!.map((x) => Rating.fromJson(x))),
+    serviceBoy: json["serviceBoy"] == null
+        ? null
+        : ServiceBoy.fromJson(json["serviceBoy"]),
     serviceProviderImage: json["serviceProviderImage"],
   );
 
@@ -150,7 +166,9 @@ class ListElement {
     "updatedAt": updatedAt,
     "bookingId": bookingId,
     "__v": v,
-    "ratings": ratings == null ? [] : List<dynamic>.from(ratings!.map((x) => x.toJson())),
+    "ratings": ratings == null
+        ? []
+        : List<dynamic>.from(ratings!.map((x) => x.toJson())),
     "serviceBoy": serviceBoy?.toJson(),
     "serviceProviderImage": serviceProviderImage,
   };
@@ -161,19 +179,15 @@ class Rating {
   String? userId;
   int? rating;
   dynamic review;
-
-  Rating({
-    this.id,
-    this.userId,
-    this.rating,
-    this.review,
-  });
+  String? image;
+  Rating({this.id, this.userId, this.rating, this.review,this.image});
 
   factory Rating.fromJson(Map<String, dynamic> json) => Rating(
     id: json["_id"],
     userId: json["userId"],
     rating: json["rating"],
     review: json["review"],
+    image: json["image"],
   );
 
   Map<String, dynamic> toJson() => {
@@ -181,6 +195,7 @@ class Rating {
     "userId": userId,
     "rating": rating,
     "review": review,
+    "image": image,
   };
 }
 
@@ -189,23 +204,12 @@ class ServiceBoy {
   String? name;
   String? phone;
 
-  ServiceBoy({
-    this.id,
-    this.name,
-    this.phone,
-  });
+  ServiceBoy({this.id, this.name, this.phone});
 
-  factory ServiceBoy.fromJson(Map<String, dynamic> json) => ServiceBoy(
-    id: json["_id"],
-    name: json["name"],
-    phone: json["phone"],
-  );
+  factory ServiceBoy.fromJson(Map<String, dynamic> json) =>
+      ServiceBoy(id: json["_id"], name: json["name"], phone: json["phone"]);
 
-  Map<String, dynamic> toJson() => {
-    "_id": id,
-    "name": name,
-    "phone": phone,
-  };
+  Map<String, dynamic> toJson() => {"_id": id, "name": name, "phone": phone};
 }
 
 class ServiceType {
@@ -213,21 +217,10 @@ class ServiceType {
   String? name;
   String? image;
 
-  ServiceType({
-    this.id,
-    this.name,
-    this.image,
-  });
+  ServiceType({this.id, this.name, this.image});
 
-  factory ServiceType.fromJson(Map<String, dynamic> json) => ServiceType(
-    id: json["_id"],
-    name: json["name"],
-    image: json["image"],
-  );
+  factory ServiceType.fromJson(Map<String, dynamic> json) =>
+      ServiceType(id: json["_id"], name: json["name"], image: json["image"]);
 
-  Map<String, dynamic> toJson() => {
-    "_id": id,
-    "name": name,
-    "image": image,
-  };
+  Map<String, dynamic> toJson() => {"_id": id, "name": name, "image": image};
 }

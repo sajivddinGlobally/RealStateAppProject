@@ -304,7 +304,7 @@ class _HomeServiceDetailsPageState
                                       Navigator.pushReplacement(
                                         context,
                                         CupertinoPageRoute(
-                                          builder: (context) => MyRequestPage(),
+                                          builder: (context) => MyrequestPage(),
                                         ),
                                       );
                                       ref.invalidate(
@@ -802,7 +802,6 @@ class _HomeServiceDetailsPageState
                         ),
 
                         SizedBox(height: 20.h),
-
 
                         const Divider(height: 40, thickness: 1),
 

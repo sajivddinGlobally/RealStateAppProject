@@ -1,9 +1,12 @@
 import 'dart:developer';
+import 'dart:io';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:realstate/Controller/myRequestBookingSerivceController.dart';
@@ -15,9 +18,14 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../Model/myBookingServiceRequestResModel.dart';
 
-class MyRequestPage extends ConsumerWidget {
-  MyRequestPage({super.key});
+class MyrequestPage extends ConsumerStatefulWidget {
+  const MyrequestPage({super.key});
 
+  @override
+  ConsumerState<MyrequestPage> createState() => _MyrequestPageState();
+}
+
+class _MyrequestPageState extends ConsumerState<MyrequestPage> {
   Color getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'pending':
@@ -41,8 +49,55 @@ class MyRequestPage extends ConsumerWidget {
   final reviewTextProvider = StateProvider.family<String, String>(
     (ref, id) => "",
   );
+
+  File? problemSolvePhtot;
+  String existingImage = "";
+
+  final ImagePicker _picker = ImagePicker();
+
+  /// Pick image (Camera / Gallery)
+  Future<void> pickImage(ImageSource source) async {
+    final XFile? pickedFile = await _picker.pickImage(
+      source: source,
+      imageQuality: 70,
+    );
+
+    if (pickedFile != null) {
+      setState(() {
+        problemSolvePhtot = File(pickedFile.path);
+      });
+    }
+  }
+
+  /// Bottom sheet for image picker
+  void showImagePicker() {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) {
+        return CupertinoActionSheet(
+          actions: [
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(context);
+                pickImage(ImageSource.camera);
+              },
+              child: const Text("Camera"),
+            ),
+            CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(context);
+                pickImage(ImageSource.gallery);
+              },
+              child: const Text("Gallery"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     List<Rating>? ratings;
     const primaryColor = Color(0xFFFF5722);
     final myRequestProvider = ref.watch(myRequestBookingServiceContorller);
@@ -101,7 +156,7 @@ class MyRequestPage extends ConsumerWidget {
                         const Divider(height: 1),
 
                         // 3. Details
-                        _buildDetailsSection(item, status),
+                        // _buildDetailsSection(item, status),
 
                         // 4. Verification & Technician Section
                         if (status != 'rejected')
@@ -133,10 +188,6 @@ class MyRequestPage extends ConsumerWidget {
       ),
     );
   }
-
-  // ────────────────────────────────────────────────
-  //  SUB WIDGETS
-  // ────────────────────────────────────────────────
 
   Widget _buildEmptyState() {
     return Center(
@@ -170,41 +221,169 @@ class MyRequestPage extends ConsumerWidget {
   }
 
   Widget _buildCardHeader(dynamic item, String status, Color primaryColor) {
+    final lowerStatus = status.toLowerCase();
+
+    final bool isPending = lowerStatus == 'pending';
+    final bool isAssigned = lowerStatus == 'in_progress';
+    // final bool isOnWay = lowerStatus == 'on_way';
+    final bool isWorking = lowerStatus == 'working';
+    final bool isCompleted = lowerStatus == 'complete';
+
     return Padding(
       padding: EdgeInsets.all(12.w),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: EdgeInsets.all(8.w),
-            decoration: BoxDecoration(
-              color: primaryColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Image.network(
-              item.serviceType?.image ?? "",
-              width: 40.w,
-              height: 40.w,
-              errorBuilder: (c, e, s) =>
-                  Icon(Icons.build, color: primaryColor, size: 30.sp),
-            ),
-          ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.serviceType?.name ?? "Service",
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15.sp,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: EdgeInsets.all(5.w),
+                decoration: BoxDecoration(
+                  color: primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Text(
+                  "ID:${(item.bookingId ?? "")}",
+                  style: TextStyle(color: primaryColor, fontSize: 10.sp),
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.all(5.w),
+                decoration: BoxDecoration(
+                  color: isCompleted
+                      ? Colors.green.shade50
+                      : isWorking
+                      ? Colors.blue.shade50
+                      : isAssigned
+                      ? Colors.blue.shade50
+                      : Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Text(
+                  "${(item.status ?? "")}",
+                  style: TextStyle(
+                    color: isCompleted
+                        ? Colors.green
+                        : isWorking
+                        ? Colors.blue
+                        : isAssigned
+                        ? Colors.blue
+                        : Colors.orange,
+                    fontSize: 10.sp,
                   ),
                 ),
-                Text(
-                  "ID: #${(item.id ?? "").substring((item.id ?? "").length - 8)}",
-                  style: TextStyle(color: Colors.grey, fontSize: 11.sp),
+              ),
+            ],
+          ),
+          SizedBox(height: 15.h),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: EdgeInsets.all(8.w),
+                decoration: BoxDecoration(
+                  color: primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12.r),
                 ),
-              ],
+                child: Image.network(
+                  item.serviceType?.image ?? "",
+                  width: 40.w,
+                  height: 40.w,
+                  errorBuilder: (c, e, s) =>
+                      Icon(Icons.build, color: primaryColor, size: 30.sp),
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.serviceType?.name ?? "Service",
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15.sp,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        _buildDetailChip(
+                          icon: Icons.calendar_month,
+                          text: DateFormat(
+                            'd MMM yyyy',
+                          ).format(DateTime.parse(item.serviceDate.toString())),
+                          iconColor: Colors.orange,
+                        ),
+                        SizedBox(width: 5.w),
+                        _buildDetailChip(
+                          icon: Icons.access_time_filled,
+                          text: item.serviceTimeSlot,
+                          iconColor: Colors.orange,
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 5.h),
+                    Row(
+                      children: [
+                        _buildDetailChip(
+                          icon: Icons.location_on,
+                          text: item.address,
+                          iconColor: Colors.orange,
+                        ),
+                        Container(
+                          padding: EdgeInsets.only(
+                            left: 5.w,
+                            right: 5.w,
+                            top: 4.h,
+                            bottom: 4.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.green.shade50,
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          child: Text(
+                            "₹${(item.serviceFee ?? "")}",
+                            style: TextStyle(
+                              color: Colors.green,
+                              fontSize: 10.sp,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailChip({
+    required IconData icon,
+    required String text,
+    required Color iconColor,
+  }) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 5.h),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F9FB),
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 10.sp, color: iconColor),
+          SizedBox(width: 5.w),
+          Text(
+            text,
+            style: GoogleFonts.roboto(
+              fontSize: 10.sp,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF37474F),
             ),
           ),
         ],
@@ -396,6 +575,7 @@ class MyRequestPage extends ConsumerWidget {
     final technicianName =
         item.serviceBoy?.name ?? "Assigning $serviceCategory...";
     final technicianImage = item.serviceProviderImage ?? "";
+
     final existingRating = (item.ratings != null && item.ratings!.isNotEmpty)
         ? item.ratings!.first
         : null;
@@ -411,6 +591,13 @@ class MyRequestPage extends ConsumerWidget {
             existingRating.review?.toString() ?? "";
       });
     }
+    final hasRating = item.ratings != null && item.ratings.isNotEmpty;
+    // 2. Agar rating hai, to uski image nikalo (maan lo pehle index par hai)
+    final String? apiImage = hasRating ? item.ratings[0].image : null;
+
+    // 3. UI logic check: Nayi photo pick hui ho OR API se purani photo aa rahi ho
+    final bool showImage =
+        problemSolvePhtot != null || (apiImage != null && apiImage.isNotEmpty);
     final rating = ref.watch(ratingProvider(item.id ?? ""));
     final reviewText = ref.watch(reviewTextProvider(item.id ?? ""));
 
@@ -693,24 +880,6 @@ class MyRequestPage extends ConsumerWidget {
 
                   SizedBox(height: 10.h),
 
-                  // ⭐ STAR RATING
-                  // Row(
-                  //   mainAxisAlignment: MainAxisAlignment.start,
-                  //   children: List.generate(5, (index) {
-                  //     return IconButton(
-                  //       padding: EdgeInsets.zero,
-                  //       constraints: const BoxConstraints(),
-                  //       icon: Icon(
-                  //         index < rating ? Icons.star : Icons.star_border,
-                  //         color: Colors.orange,
-                  //         size: 26.sp,
-                  //       ),
-                  //       onPressed: () {
-                  //         ref.read(ratingProvider(item.id ?? "").notifier).state = index + 1;
-                  //       },
-                  //     );
-                  //   }),
-                  // ),
                   Row(
                     children: List.generate(5, (index) {
                       return IconButton(
@@ -722,7 +891,7 @@ class MyRequestPage extends ConsumerWidget {
                           size: 26.sp,
                         ),
                         onPressed: isAlreadyRated
-                            ? null // ❌ Disable click
+                            ? null
                             : () {
                                 ref
                                         .read(
@@ -737,33 +906,12 @@ class MyRequestPage extends ConsumerWidget {
                     }),
                   ),
                   SizedBox(height: 10.h),
-
-                  // 📝 REVIEW TEXT
-                  // TextField(
-                  //   maxLines: 3,
-                  //   onChanged: (val) {
-                  //     ref
-                  //             .read(reviewTextProvider(item.id ?? "").notifier)
-                  //             .state =
-                  //         val;
-                  //   },
-                  //   decoration: InputDecoration(
-                  //     hintText: "Write your review...",
-                  //     filled: true,
-                  //     fillColor: Colors.grey.shade100,
-                  //     contentPadding: EdgeInsets.all(10.w),
-                  //     border: OutlineInputBorder(
-                  //       borderRadius: BorderRadius.circular(10.r),
-                  //       borderSide: BorderSide.none,
-                  //     ),
-                  //   ),
-                  // ),
                   TextField(
                     controller: TextEditingController(text: reviewText)
                       ..selection = TextSelection.collapsed(
                         offset: reviewText.length,
                       ),
-                    enabled: !isAlreadyRated, // ✅ disable if rated
+                    enabled: !isAlreadyRated,
                     maxLines: 3,
                     onChanged: (val) {
                       ref
@@ -778,12 +926,69 @@ class MyRequestPage extends ConsumerWidget {
                       contentPadding: EdgeInsets.all(10.w),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10.r),
-                        borderSide: BorderSide.none,
+                        borderSide: BorderSide(),
                       ),
                     ),
                   ),
                   SizedBox(height: 12.h),
-
+                  Center(
+                    child: Container(
+                      width: double.infinity,
+                      height: 180.h,
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20.r),
+                        gradient: LinearGradient(
+                          colors: [
+                            const Color(0xffE86A34).withOpacity(0.5),
+                            Colors.transparent,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(18.r),
+                          image: showImage
+                              ? DecorationImage(
+                                  fit: BoxFit.cover,
+                                  image: problemSolvePhtot != null
+                                      ? FileImage(problemSolvePhtot!)
+                                      : NetworkImage(apiImage!)
+                                            as ImageProvider,
+                                )
+                              : null,
+                        ),
+                        child: !showImage
+                            ? InkWell(
+                                onTap: () => showImagePicker(),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.cloud_upload_outlined,
+                                      size: 40.sp,
+                                      color: Colors.grey.shade400,
+                                    ),
+                                    SizedBox(height: 8.h),
+                                    Text(
+                                      "Upload Solve Photo",
+                                      style: TextStyle(
+                                        color: Colors.grey.shade500,
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : null,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 12.h),
                   if (!isAlreadyRated)
                     SizedBox(
                       width: double.infinity,
@@ -793,23 +998,29 @@ class MyRequestPage extends ConsumerWidget {
                             Fluttertoast.showToast(msg: "Please give rating");
                             return;
                           }
-
-                          // final body = {
-                          //   "serviceBooking": item.id,
-                          //   "rating": rating,
-                          //   "review": reviewText,
-                          // };
+                          final serivce = APIStateNetwork(createDio());
+                          if (problemSolvePhtot != null) {
+                            final imgResponse = await serivce.uploadImage(
+                              problemSolvePhtot!,
+                            );
+                            if (imgResponse.code == 0 &&
+                                imgResponse.error == false) {
+                              existingImage = imgResponse.data!.imageUrl
+                                  .toString();
+                            } else {
+                              Fluttertoast.showToast(
+                                msg: "Image upload failed, trying again.",
+                              );
+                            }
+                          }
                           final body = ServiceRatingBodyModel(
                             serviceBooking: item.id,
                             rating: rating,
                             review: reviewText,
+                            image: existingImage,
                           );
 
                           try {
-                            // final response = await ref.refresh(
-                            //   createServiceRatingController(body).future,
-                            // );
-                            final serivce = APIStateNetwork(createDio());
                             final resposne = await serivce.createServiceRating(
                               body,
                             );
@@ -1039,11 +1250,4 @@ class MyRequestPage extends ConsumerWidget {
       ],
     );
   }
-}
-
-class _Step {
-  final String title;
-  final bool active;
-
-  _Step({required this.title, required this.active});
 }
