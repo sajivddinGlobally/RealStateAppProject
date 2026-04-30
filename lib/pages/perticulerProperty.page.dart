@@ -91,6 +91,7 @@ class _PerticulerPropertyPageState
       sortOrder: 'desc',
     );
   }
+
   double isValue = 0.0;
   List<String> items = [
     "1 BHK",
@@ -127,7 +128,7 @@ class _PerticulerPropertyPageState
     bool agreeToContact = false;
     bool interestedHomeLoan = false; // Ye optional rahega
     bool isLoading = false;
-    const primaryColor = Color(0xffFF6A2A);
+    const primaryColor = Color(0xFF24ADD7);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -270,7 +271,6 @@ class _PerticulerPropertyPageState
                       ),
                     ),
 
-
                     const SizedBox(height: 20),
 
                     // --- SUBMIT BUTTON ---
@@ -307,8 +307,10 @@ class _PerticulerPropertyPageState
                                       isValid = false;
                                     }
                                     // 3. Phone Validation
-                                    if (phoneController.text.trim().length < 10) {
-                                      phoneError = "Enter 10 digit phone number";
+                                    if (phoneController.text.trim().length <
+                                        10) {
+                                      phoneError =
+                                          "Enter 10 digit phone number";
                                       isValid = false;
                                     }
                                     // 4. Checkbox Validation (Important!)
@@ -331,7 +333,9 @@ class _PerticulerPropertyPageState
                                       // Aapka API agar homeLoan support karta hai toh yaha bhej sakte hain
                                     );
 
-                                    final service = APIStateNetwork(createDio());
+                                    final service = APIStateNetwork(
+                                      createDio(),
+                                    );
                                     final response = await service
                                         .saveContactInProperty(body);
 
@@ -374,8 +378,6 @@ class _PerticulerPropertyPageState
                         ),
                       ),
                     ),
-
-
                   ],
                 ),
               ),
@@ -412,7 +414,7 @@ class _PerticulerPropertyPageState
         title: Text(
           'Particular Property',
           style: TextStyle(
-            color: Colors.orange,
+            color: Color(0xFF24ADD7),
             fontWeight: FontWeight.bold,
             fontSize: 22.sp,
           ),
@@ -560,7 +562,7 @@ class _PerticulerPropertyPageState
             //   width: double.infinity,
             //   padding: const EdgeInsets.all(8),
             //   decoration: BoxDecoration(
-            //     color: Color(0xffFF6A2A),
+            //     color: Color(0xFF24ADD7),
             //     borderRadius: BorderRadius.only(
             //       topLeft: Radius.circular(20.r),
             //       topRight: Radius.circular(20.r),
@@ -607,7 +609,7 @@ class _PerticulerPropertyPageState
             //           min: 0,
             //           max: 100,
             //           divisions: 10,
-            //           activeColor: const Color(0xffFF6A2A),
+            //           activeColor: const Color(0xFF24ADD7),
             //           inactiveColor: Colors.grey.shade300,
             //           label: '${isValue.round()}',
             //           onChanged: (value) {
@@ -628,7 +630,7 @@ class _PerticulerPropertyPageState
             //             style: ElevatedButton.styleFrom(
             //               elevation: 0,
             //               backgroundColor: Colors.white,
-            //               foregroundColor: const Color(0xffFF6A2A),
+            //               foregroundColor: const Color(0xFF24ADD7),
             //               fixedSize: Size.fromHeight(
             //                 45.h,
             //               ), // <-- यहीं height set करो
@@ -638,7 +640,7 @@ class _PerticulerPropertyPageState
             //               shape: RoundedRectangleBorder(
             //                 borderRadius: BorderRadius.circular(30.r),
             //                 side: const BorderSide(
-            //                   color: Color(0xffFF6A2A),
+            //                   color: Color(0xFF24ADD7),
             //                   width: 1.2,
             //                 ),
             //               ),
@@ -659,13 +661,13 @@ class _PerticulerPropertyPageState
             //             style: ElevatedButton.styleFrom(
             //               elevation: 0,
             //               backgroundColor: Colors.white,
-            //               foregroundColor: const Color(0xffFF6A2A),
+            //               foregroundColor: const Color(0xFF24ADD7),
             //               fixedSize: Size.fromHeight(45.h), // <-- height 45.h
             //               padding: EdgeInsets.symmetric(horizontal: 20.w),
             //               shape: RoundedRectangleBorder(
             //                 borderRadius: BorderRadius.circular(30.r),
             //                 side: const BorderSide(
-            //                   color: Color(0xffFF6A2A),
+            //                   color: Color(0xFF24ADD7),
             //                   width: 1.2,
             //                 ),
             //               ),
@@ -714,7 +716,7 @@ class _PerticulerPropertyPageState
             //               children: [
             //                 Checkbox(
             //                   value: selected[index],
-            //                   activeColor: const Color(0xffFF6A2A),
+            //                   activeColor: const Color(0xFF24ADD7),
             //                   onChanged: (value) {
             //                     setState(() {
             //                       selected[index] = value!;
@@ -803,7 +805,7 @@ class _PerticulerPropertyPageState
             //               children: [
             //                 Checkbox(
             //                   value: selected[index],
-            //                   activeColor: const Color(0xffFF6A2A),
+            //                   activeColor: const Color(0xFF24ADD7),
             //                   onChanged: (value) {
             //                     setState(() {
             //                       selected[index] = value!;
@@ -831,7 +833,7 @@ class _PerticulerPropertyPageState
             //             height: 50.h,
             //             width: double.infinity,
             //             decoration: BoxDecoration(
-            //               color: const Color(0xffFF6A2A),
+            //               color: const Color(0xFF24ADD7),
             //               borderRadius: BorderRadius.circular(40.r),
             //             ),
             //             child: Row(
@@ -895,7 +897,8 @@ class _PerticulerPropertyPageState
                   child: InkWell(
                     onTap: () {
                       String slug = widget.data.slug ?? "";
-                      String baseUrl = "https://propertyleinnovation.com/property";
+                      String baseUrl =
+                          "https://propertyleinnovation.com/property";
 
                       String finalUrl = slug.startsWith('/')
                           ? "$baseUrl$slug"
@@ -1058,7 +1061,7 @@ class _PerticulerPropertyPageState
                 controller: _pageController,
                 count: photos.isEmpty ? 1 : photos.length,
                 effect: ExpandingDotsEffect(
-                  activeDotColor: Colors.deepOrange,
+                  activeDotColor: Color(0xFF24ADD7),
                   dotColor: Colors.grey,
                   dotHeight: 8,
                   dotWidth: 8,
@@ -1144,14 +1147,15 @@ class _PerticulerPropertyPageState
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w500,
-                      color: Color(0xFFFF6725),
+                      color: Color(0xFF24ADD7),
                     ),
                   ),
                   SizedBox(height: 12.h),
+
                   /// 🔹 EMI Button
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFFFF6725),
+                      backgroundColor: Color(0xFF24ADD7),
                       minimumSize: Size(150.w, 45.h),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30.r),
@@ -1243,6 +1247,7 @@ class _PerticulerPropertyPageState
                     ),
                   ),
                   SizedBox(height: 20.h),
+
                   /// 🔹 Overview
                   Text(
                     "Avenue Overview",
@@ -1347,6 +1352,7 @@ class _PerticulerPropertyPageState
                     ],
                   ),
                   SizedBox(height: 20.h),
+
                   /// 🔹 Amenities
                   Text(
                     "Project Amenities",
@@ -1489,6 +1495,7 @@ class _PerticulerPropertyPageState
                     ],
                   ),
                   SizedBox(height: 20.h),
+
                   /// 🔹 Description
                   Text(
                     "Property Description",
@@ -1541,11 +1548,10 @@ class _PerticulerPropertyPageState
               },
             ),
 
-
             SizedBox(height: 10.h),
             paginationBar(),
 
-          /*  SafeArea(
+            /*  SafeArea(
               top: false,           // ← Top safe area ignore karo (header already handle karta hai)
               minimum: EdgeInsets.zero,
               child: Padding(
@@ -1604,8 +1610,6 @@ class _PerticulerPropertyPageState
                 ),
               ),
             ),*/
-
-
             SizedBox(height: 60.h),
           ],
         ),
@@ -1693,8 +1697,6 @@ class _PerticulerPropertyPageState
   }
 }
 
-
-
 /*
 
 class PropertyCard extends StatefulWidget {
@@ -1728,7 +1730,7 @@ class _PropertyCardState extends State<PropertyCard> {
     bool agreeToContact = false;
     bool interestedHomeLoan = false; // Ye optional rahega
     bool isLoading = false;
-    const primaryColor = Color(0xffFF6A2A);
+    const primaryColor = Color(0xFF24ADD7);
 
     showModalBottomSheet(
       context: context,
@@ -2154,10 +2156,6 @@ class _PropertyCardState extends State<PropertyCard> {
 }
 */
 
-
-
-
-
 class PropertyCard extends StatelessWidget {
   final ListElement property;
 
@@ -2173,20 +2171,25 @@ class PropertyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = (property.uploadedPhotos != null && property.uploadedPhotos!.isNotEmpty)
+    final imageUrl =
+        (property.uploadedPhotos != null && property.uploadedPhotos!.isNotEmpty)
         ? property.uploadedPhotos!.first
         : "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800";
 
     return GestureDetector(
-      onTap: () {
-
-      },
+      onTap: () {},
       child: Container(
         margin: EdgeInsets.symmetric(vertical: 4.h),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14.r),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 12, offset: const Offset(0, 6))],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -2206,45 +2209,59 @@ class PropertyCard extends StatelessWidget {
               ),
             ),
             Padding(
-                padding: EdgeInsets.all(10.w),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "${int.tryParse(property.bedRoom ?? '0') ?? '?'} BHK ${property.propertyType ?? ""}",
-                              style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 10.sp),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            SizedBox(height: 4.h),
-                            Text(
-                              "${property.localityArea ?? ""}, ${property.city ?? ""}",
-                              style: GoogleFonts.inter(fontSize: 8.sp, color: Colors.grey[700]),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),]),
+              padding: EdgeInsets.all(10.w),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "${int.tryParse(property.bedRoom ?? '0') ?? '?'} BHK ${property.propertyType ?? ""}",
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 10.sp,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        SizedBox(height: 4.h),
+                        Text(
+                          "${property.localityArea ?? ""}, ${property.city ?? ""}",
+                          style: GoogleFonts.inter(
+                            fontSize: 8.sp,
+                            color: Colors.grey[700],
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
+                  ),
 
-                    Text(
-                      "₹ ${_formatPrice(property.price)}",
-                      style: GoogleFonts.inter(color: const Color(0xffFF6A2A), fontWeight: FontWeight.bold, fontSize: 10.sp),
+                  Text(
+                    "₹ ${_formatPrice(property.price)}",
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF24ADD7),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 10.sp,
                     ),
-
-                  ],
-                )),
+                  ),
+                ],
+              ),
+            ),
 
             Container(
-              margin: EdgeInsets.only(left: 10.w,),
+              margin: EdgeInsets.only(left: 10.w),
               child: Row(
-
                 children: [
                   Text(
                     "Listed by Owner",
-                    style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 10.sp),
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 10.sp,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -2253,23 +2270,24 @@ class PropertyCard extends StatelessWidget {
             ),
             SizedBox(height: 6.h),
             Container(
-              padding: EdgeInsets.only(left: 10.w,right: 10.w),
+              padding: EdgeInsets.only(left: 10.w, right: 10.w),
               child: Row(
                 children: [
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(30),
-                          color: Color(0xff8A38F5)
+                        borderRadius: BorderRadius.circular(30),
+                        color: Color(0xff8A38F5),
                       ),
                       height: 25.h,
-                      child:
-                      Center(
+                      child: Center(
                         child: Text(
                           '${property.bedRoom} BHK',
                           // "3 BHK",
-                          style: GoogleFonts.inter(color: Colors.white, fontSize: 8.sp),
-
+                          style: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontSize: 8.sp,
+                          ),
                         ),
                       ),
                     ),
@@ -2278,17 +2296,18 @@ class PropertyCard extends StatelessWidget {
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(30),
-                          color: Color(0xff8A38F5)
+                        borderRadius: BorderRadius.circular(30),
+                        color: Color(0xff8A38F5),
                       ),
                       height: 25.h,
-                      child:
-                      Center(
+                      child: Center(
                         child: Text(
                           '${property.propertyType}',
                           // "Apartment",
-                          style: GoogleFonts.inter(color: Colors.white, fontSize: 8.sp),
-
+                          style: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontSize: 8.sp,
+                          ),
                         ),
                       ),
                     ),
@@ -2300,31 +2319,34 @@ class PropertyCard extends StatelessWidget {
             SizedBox(height: 12.h),
 
             Container(
-              padding: EdgeInsets.only(left: 10.w,right: 10.w),
+              padding: EdgeInsets.only(left: 10.w, right: 10.w),
               child: Row(
                 children: [
-
-
                   Expanded(
                     child: InkWell(
-                      onTap: (){
-
-                        Navigator.push(context, MaterialPageRoute(builder: (context)=>PerticulerPropertyPage(data:property ,)));
-
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                PerticulerPropertyPage(data: property),
+                          ),
+                        );
                       },
                       child: Container(
                         decoration: BoxDecoration(
-                          border: Border.all(color:Colors.grey[400]! ),
+                          border: Border.all(color: Colors.grey[400]!),
                           borderRadius: BorderRadius.circular(10),
                           // color: Color(0xff8A38F5)
                         ),
                         height: 30.h,
-                        child:
-                        Center(
+                        child: Center(
                           child: Text(
                             "View",
-                            style: GoogleFonts.inter(color: Colors.black, fontSize: 8.sp),
-
+                            style: GoogleFonts.inter(
+                              color: Colors.black,
+                              fontSize: 8.sp,
+                            ),
                           ),
                         ),
                       ),
@@ -2334,26 +2356,29 @@ class PropertyCard extends StatelessWidget {
 
                   Expanded(
                     child: InkWell(
-                      onTap: (){
-
-                        Navigator.push(context,
-                            MaterialPageRoute(builder: (context)=>
-                                PerticulerPropertyPage( data:property, )));
-
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                PerticulerPropertyPage(data: property),
+                          ),
+                        );
                       },
                       child: Container(
                         decoration: BoxDecoration(
                           // border: Border.all(color:Colors.grey[400]! ),
                           borderRadius: BorderRadius.circular(10),
-                          color:const Color(0xffFF6A2A),
+                          color: const Color(0xFF24ADD7),
                         ),
                         height: 30.h,
-                        child:
-                        Center(
+                        child: Center(
                           child: Text(
                             "Contact",
-                            style: GoogleFonts.inter(color: Colors.white, fontSize: 8.sp),
-
+                            style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontSize: 8.sp,
+                            ),
                           ),
                         ),
                       ),
@@ -2362,16 +2387,9 @@ class PropertyCard extends StatelessWidget {
                 ],
               ),
             ),
-
-
-
           ],
         ),
       ),
-
-
     );
   }
 }
-
-

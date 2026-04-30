@@ -334,7 +334,7 @@ class _SearchPropertyPageState extends ConsumerState<SearchPropertyPage> {
                   margin: EdgeInsets.symmetric(horizontal: 25.w),
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: const Color(0xffFF6A2A),
+                    color: const Color(0xFF24ADD7),
                     borderRadius: BorderRadius.only(topLeft: Radius.circular(20.r), topRight: Radius.circular(20.r)),
                   ),
                   child: Align(
@@ -412,7 +412,7 @@ class _SearchPropertyPageState extends ConsumerState<SearchPropertyPage> {
                           min: 0,
                           max: 7000000,
                           divisions: 70,
-                          activeColor: const Color(0xffFF6A2A),
+                          activeColor: const Color(0xFF24ADD7),
                           inactiveColor: Colors.grey.shade300,
                           labels: RangeLabels(
                             _formatPrice(_priceRange.start),
@@ -448,7 +448,7 @@ class _SearchPropertyPageState extends ConsumerState<SearchPropertyPage> {
                             children: [
                               Checkbox(
                                 value: selected[index],
-                                activeColor: const Color(0xffFF6A2A),
+                                activeColor: const Color(0xFF24ADD7),
                                 onChanged: (value) {
                                   setState(() {
                                     selected[index] = value!;
@@ -480,7 +480,7 @@ class _SearchPropertyPageState extends ConsumerState<SearchPropertyPage> {
                           itemBuilder: (context, index) {
                             return CheckboxListTile(
                               value: selectedCities[index],
-                              activeColor: const Color(0xffFF6A2A),
+                              activeColor: const Color(0xFF24ADD7),
                               title: Text(cityOptions[index], style: GoogleFonts.inter(fontSize: 14.sp)),
                               dense: true,
                               contentPadding: EdgeInsets.zero,
@@ -502,7 +502,7 @@ class _SearchPropertyPageState extends ConsumerState<SearchPropertyPage> {
                           icon: const Icon(Icons.search, color: Colors.white),
                           label: Text("Apply Filters", style: GoogleFonts.inter(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.w600)),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xffFF6A2A),
+                            backgroundColor: const Color(0xFF24ADD7),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.r)),
                           ),
                           onPressed: _applyFilters,
@@ -703,7 +703,7 @@ class PropertyCard extends StatelessWidget {
                   ),
                   Text(
                     "₹ ${_formatPrice(property.price)}",
-                    style: GoogleFonts.inter(color: const Color(0xffFF6A2A), fontWeight: FontWeight.bold, fontSize: 10.sp),
+                    style: GoogleFonts.inter(color: const Color(0xFF24ADD7), fontWeight: FontWeight.bold, fontSize: 10.sp),
                   ),
                 ],
               ),
@@ -804,7 +804,7 @@ class PropertyCard extends StatelessWidget {
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
-                          color: const Color(0xffFF6A2A),
+                          color: const Color(0xFF24ADD7),
                         ),
                         height: 30.h,
                         child: Center(
@@ -1027,7 +1027,7 @@ class _SearchPropertyPageState extends ConsumerState<SearchPropertyPage> {
                       icon: const Icon(Icons.filter_alt, color: Colors.white),
                       label: Text("Apply Price/BHK/City Filters", style: GoogleFonts.inter(color: Colors.white)),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xffFF6A2A),
+                        backgroundColor: const Color(0xFF24ADD7),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.r)),
                       ),
                       onPressed: _applyStrictFilters,
@@ -1305,7 +1305,7 @@ class _SearchPropertyPageState extends ConsumerState<SearchPropertyPage> {
         title: Text(
           pageTitle,
           style: TextStyle(
-            color: Colors.orange,
+            color: Color(0xFF24ADD7),
             fontWeight: FontWeight.bold,
             fontSize: 22.sp,
           ),
@@ -1402,7 +1402,7 @@ class _SearchPropertyPageState extends ConsumerState<SearchPropertyPage> {
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xffFF6A2A),
+                        backgroundColor: const Color(0xFF24ADD7),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30.r),
                         ),

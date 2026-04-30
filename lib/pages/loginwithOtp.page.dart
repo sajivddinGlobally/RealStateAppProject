@@ -273,7 +273,31 @@ class _LoginPageWithOtpState extends State<LoginPageWithOtp> {
                       children: [
                         /// LOGO
                         Center(
-                          child: Image.asset("assets/logo.png", width: 160),
+                          child: Container(
+                            height: 110,
+                            width: 140,
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.08),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
+                              border: Border.all(color: Colors.grey.shade200),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(14),
+                              child: Image.asset(
+                                "assets/png/real_logo.png",
+                                fit: BoxFit
+                                    .contain, // 👉 image stretch nahi hogi
+                              ),
+                            ),
+                          ),
                         ),
 
                         const SizedBox(height: 25),
@@ -335,7 +359,7 @@ class _LoginPageWithOtpState extends State<LoginPageWithOtp> {
                           children: [
                             Checkbox(
                               value: isChecked,
-                              activeColor: const Color(0xffE86A34),
+                              activeColor: const Color(0xFF24ADD7),
                               onChanged: (v) {
                                 setState(() {
                                   isChecked = v ?? false;
@@ -362,7 +386,7 @@ class _LoginPageWithOtpState extends State<LoginPageWithOtp> {
                             decoration: BoxDecoration(
                               color: isLoading
                                   ? Colors.grey
-                                  : const Color(0xffE86A34),
+                                  : const Color(0xFF24ADD7),
                               borderRadius: BorderRadius.circular(30),
                             ),
                             child: const Center(

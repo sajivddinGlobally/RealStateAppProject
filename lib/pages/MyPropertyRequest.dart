@@ -376,7 +376,7 @@ class MyListedPropertiesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    const primaryColor = Color(0xFFFF5722);
+    const primaryColor = Color(0xFF24ADD7);
     final propertiesAsync = ref.watch(getMyPropertyContantListController);
 
     return Scaffold(
@@ -389,13 +389,13 @@ class MyListedPropertiesScreen extends ConsumerWidget {
             fontSize: 18.5.sp,
           ),
         ),
-        backgroundColor: primaryColor,
+        backgroundColor: Color(0xFF24ADD7),
         foregroundColor: Colors.white,
         elevation: 0,
       ),
       body: RefreshIndicator(
         color: Colors.white,
-        backgroundColor: primaryColor,
+        backgroundColor: Color(0xFF24ADD7),
         onRefresh: () async =>
             ref.invalidate(getMyPropertyContantListController),
         child: propertiesAsync.when(

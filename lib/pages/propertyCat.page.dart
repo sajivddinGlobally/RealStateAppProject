@@ -325,7 +325,7 @@ class _PropertyPageCatState extends ConsumerState<PropertyPageCat> {
         title: Text(
           "${widget.property} for ${isBuy ? 'Buy' : 'Rent'}",
           style: const TextStyle(
-            color: Color(0xFFFF6725),
+            color: Color(0xFF24ADD7),
             fontSize: 22,
             fontWeight: FontWeight.bold,
           ),
@@ -346,7 +346,7 @@ class _PropertyPageCatState extends ConsumerState<PropertyPageCat> {
                   child: Container(
                     height: 50.h,
                     decoration: BoxDecoration(
-                      color: isBuy ? const Color(0xFFFF6725) : Colors.grey[200],
+                      color: isBuy ? const Color(0xFF24ADD7) : Colors.grey[200],
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Center(
@@ -373,7 +373,7 @@ class _PropertyPageCatState extends ConsumerState<PropertyPageCat> {
                     height: 50.h,
                     decoration: BoxDecoration(
                       color: !isBuy
-                          ? const Color(0xFFFF6725)
+                          ? const Color(0xFF24ADD7)
                           : Colors.grey[200],
                       borderRadius: BorderRadius.circular(12),
                     ),

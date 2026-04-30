@@ -73,8 +73,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         password: password,
       );
 
-
-
       final registerService = APIStateNetwork(createDio());
       final response = await registerService.userRegister(userData);
       if (response.code == 0 || response.error == false) {
@@ -257,7 +255,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       decoration: BoxDecoration(
                         color: _isLoading
                             ? Colors.grey
-                            : const Color(0xffE86A34),
+                            : const Color(0xFF24ADD7),
                         borderRadius: BorderRadius.circular(40.r),
                       ),
                       child: Center(
@@ -296,7 +294,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                             TextSpan(
                               text: "Sign In",
                               style: TextStyle(
-                                color: Color(0xffE86A34),
+                                color: Color(0xFF24ADD7),
                                 fontWeight: FontWeight.w600,
                               ),
                             ),

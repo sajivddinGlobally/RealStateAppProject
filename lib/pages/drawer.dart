@@ -1,4 +1,3 @@
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,7 +26,7 @@ class AppDrawer extends ConsumerStatefulWidget {
 
 class _AppDrawerState extends ConsumerState<AppDrawer> {
   Future<void> showLogoutDialog() async {
-    const primaryColor = Color(0xffFF6A2A);
+    const primaryColor = Color(0xFF24ADD7);
     await showDialog(
       context: context,
       barrierDismissible: false,
@@ -143,7 +142,6 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
             child: ListView(
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
               children: [
-
                 _drawerItem(
                   icon: Icons.support_agent,
                   label: 'My Services Request',
@@ -197,7 +195,6 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
             ),
           ),
 
-
           SafeArea(
             top: false,
             minimum: EdgeInsets.zero,
@@ -250,7 +247,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
         right: 20.w,
       ),
       decoration: const BoxDecoration(
-        color: Color(0xffFF6A2A),
+        color: Color(0xFF24ADD7),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(30),
           bottomRight: Radius.circular(30),
@@ -278,7 +275,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                       if (loadingProgress == null) return child;
                       return Center(
                         child: CircularProgressIndicator(
-                          color: Color(0xFFFF5722),
+                          color: Color(0xFF24ADD7),
                           strokeWidth: 1,
                         ),
                       );
@@ -364,7 +361,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
       ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.r)),
       selected: isSelected,
-      selectedTileColor: const Color(0xffFF6A2A).withOpacity(0.1),
+      selectedTileColor: const Color(0xFF24ADD7).withOpacity(0.1),
     );
   }
 }

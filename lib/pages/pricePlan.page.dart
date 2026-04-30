@@ -18,7 +18,7 @@ class _PricePlanPageState extends ConsumerState<PricePlanPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Color(0xffFF6A2A),
+        backgroundColor: Color(0xFF24ADD7),
         foregroundColor: Colors.white,
       ),
       body: pricingPlanState.when(
@@ -232,7 +232,7 @@ class _PricePlanPageState extends ConsumerState<PricePlanPage> {
           return Center(child: Text(error.toString()));
         },
         loading: () =>
-            Center(child: CircularProgressIndicator(color: Color(0xffFF6A2A))),
+            Center(child: CircularProgressIndicator(color: Color(0xFF24ADD7))),
       ),
     );
   }

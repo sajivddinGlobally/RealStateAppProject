@@ -48,7 +48,7 @@ class MyLoanRequestsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    const primaryColor = Color(0xFFFF5722);
+    const primaryColor = Color(0xFF24ADD7);
     final loanProvider = ref.watch(myLoanRequestsProvider);
 
     return Scaffold(
@@ -61,12 +61,12 @@ class MyLoanRequestsPage extends ConsumerWidget {
             fontSize: 18.sp,
           ),
         ),
-        backgroundColor: primaryColor,
+        backgroundColor: Color(0xFF24ADD7),
         foregroundColor: Colors.white,
         elevation: 0,
       ),
       body: RefreshIndicator(
-        backgroundColor: primaryColor,
+        backgroundColor: Color(0xFF24ADD7),
         color: Colors.white,
         onRefresh: () async => ref.invalidate(myLoanRequestsProvider),
         child: loanProvider.when(
@@ -74,14 +74,12 @@ class MyLoanRequestsPage extends ConsumerWidget {
             if (loans.isEmpty) {
               return _buildEmptyState();
             }
-
             return ListView.builder(
               padding: EdgeInsets.all(15.w),
               itemCount: loans.length,
               itemBuilder: (context, index) {
                 final item = loans[index];
                 final status = item.status?.toLowerCase() ?? 'pending';
-
                 return Container(
                   margin: EdgeInsets.only(bottom: 16.h),
                   decoration: BoxDecoration(
@@ -159,9 +157,7 @@ class MyLoanRequestsPage extends ConsumerWidget {
                         ),
                       ),
                       _buildStatusStepper(status, primaryColor),
-
                       const Divider(height: 1),
-
                       // Details
                       Padding(
                         padding: EdgeInsets.all(14.w),

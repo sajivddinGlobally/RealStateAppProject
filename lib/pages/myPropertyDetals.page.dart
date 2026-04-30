@@ -19,7 +19,7 @@ class _MyPropertyDetalsPageState extends ConsumerState<MyPropertyDetalsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final primary = const Color(0xFFFF5722);
+    final primary = const Color(0xFF24ADD7);
     final myPropertyDetailProvider = ref.watch(
       getMyPropertyDetailsController(widget.propetyId),
     );

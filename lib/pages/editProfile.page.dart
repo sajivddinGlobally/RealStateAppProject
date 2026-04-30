@@ -1,5 +1,3 @@
-
-
 import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
@@ -134,7 +132,6 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
       }
 
       final body = EditProfileBodyModel(
-
         name: nameController.text.trim(),
         email: emailController.text.trim(),
         address: addressController.text.trim(),
@@ -148,9 +145,13 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
       if (response.code == 0 || response.error == false) {
         Navigator.pop(context);
         ref.invalidate(userProfileController);
-        Fluttertoast.showToast(msg: response.message ?? "Profile updated successfully");
+        Fluttertoast.showToast(
+          msg: response.message ?? "Profile updated successfully",
+        );
       } else {
-        Fluttertoast.showToast(msg: response.message ?? "Failed to update profile");
+        Fluttertoast.showToast(
+          msg: response.message ?? "Failed to update profile",
+        );
       }
     } catch (e) {
       log("Update profile error: $e");
@@ -170,7 +171,11 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         backgroundColor: const Color(0xffF2F5FA),
         appBar: AppBar(
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black, size: 20),
+            icon: const Icon(
+              Icons.arrow_back_ios_new,
+              color: Colors.black,
+              size: 20,
+            ),
             onPressed: () => Navigator.pop(context),
           ),
           title: Text(
@@ -200,7 +205,10 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: LinearGradient(
-                          colors: [const Color(0xffE86A34).withOpacity(0.5), Colors.transparent],
+                          colors: [
+                            const Color(0xFF24ADD7).withOpacity(0.5),
+                            Colors.transparent,
+                          ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
@@ -214,10 +222,11 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                           backgroundImage: profileImage != null
                               ? FileImage(profileImage!)
                               : (existingImage.isNotEmpty
-                              ? NetworkImage(existingImage)
-                              : const NetworkImage(
-                            "https://t4.ftcdn.net/jpg/16/74/69/27/240_F_1674692759_KcsTyCBrF888fdlD7eDFrGRyEUbniWXj.jpg",
-                          )) as ImageProvider,
+                                        ? NetworkImage(existingImage)
+                                        : const NetworkImage(
+                                            "https://t4.ftcdn.net/jpg/16/74/69/27/240_F_1674692759_KcsTyCBrF888fdlD7eDFrGRyEUbniWXj.jpg",
+                                          ))
+                                    as ImageProvider,
                         ),
                       ),
                     ),
@@ -230,7 +239,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                           height: 36.h,
                           width: 36.h,
                           decoration: BoxDecoration(
-                            color: const Color(0xffE86A34),
+                            color: const Color(0xFF24ADD7),
                             shape: BoxShape.circle,
                             border: Border.all(color: Colors.white, width: 2),
                             boxShadow: [
@@ -241,7 +250,11 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                               ),
                             ],
                           ),
-                          child: const Icon(Icons.edit_rounded, color: Colors.white, size: 18),
+                          child: const Icon(
+                            Icons.edit_rounded,
+                            color: Colors.white,
+                            size: 18,
+                          ),
                         ),
                       ),
                     ),
@@ -282,7 +295,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                       controller: emailController,
                       icon: Icons.email_rounded,
                       isReadOnly: false,
-                      onTap: () => Fluttertoast.showToast(msg: "Email cannot be updated"),
+                      onTap: () => Fluttertoast.showToast(
+                        msg: "Email cannot be updated",
+                      ),
                     ),
                     SizedBox(height: 20.h),
 
@@ -291,7 +306,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                       controller: phoneController,
                       icon: Icons.phone_android_rounded,
                       isReadOnly: true,
-                      onTap: () => Fluttertoast.showToast(msg: "Phone cannot be updated"),
+                      onTap: () => Fluttertoast.showToast(
+                        msg: "Phone cannot be updated",
+                      ),
                     ),
                     SizedBox(height: 20.h),
 
@@ -331,11 +348,18 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                       padding: EdgeInsets.only(top: 12.h, left: 4.w),
                       child: Row(
                         children: [
-                          Icon(Icons.info_outline, size: 14.sp, color: Colors.grey),
+                          Icon(
+                            Icons.info_outline,
+                            size: 14.sp,
+                            color: Colors.grey,
+                          ),
                           SizedBox(width: 6.w),
                           Text(
                             "Contact details are verified and locked.",
-                            style: TextStyle(fontSize: 11.sp, color: Colors.grey),
+                            style: TextStyle(
+                              fontSize: 11.sp,
+                              color: Colors.grey,
+                            ),
                           ),
                         ],
                       ),
@@ -359,12 +383,15 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                       gradient: LinearGradient(
                         colors: isLoading
                             ? [Colors.grey, Colors.grey]
-                            : [const Color(0xffE86A34), const Color(0xffFF8C5A)],
+                            : [
+                                const Color(0xFF24ADD7),
+                                const Color(0xFF24ADD7),
+                              ],
                       ),
                       boxShadow: [
                         if (!isLoading)
                           BoxShadow(
-                            color: const Color(0xffE86A34).withOpacity(0.3),
+                            color: const Color(0xFF24ADD7).withOpacity(0.3),
                             blurRadius: 15,
                             offset: const Offset(0, 8),
                           ),
@@ -372,16 +399,18 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                     ),
                     child: Center(
                       child: isLoading
-                          ? const CupertinoActivityIndicator(color: Colors.white)
+                          ? const CupertinoActivityIndicator(
+                              color: Colors.white,
+                            )
                           : Text(
-                        "Update Profile",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
+                              "Update Profile",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
                     ),
                   ),
                 ),
@@ -426,20 +455,26 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             color: isReadOnly ? Colors.grey.shade600 : const Color(0xff0E1A35),
           ),
           decoration: InputDecoration(
-            prefixIcon: Icon(icon, color: const Color(0xffE86A34), size: 20),
+            prefixIcon: Icon(icon, color: const Color(0xFF24ADD7), size: 20),
             suffixIcon: isReadOnly
                 ? null
                 : const Icon(Icons.edit_outlined, size: 18, color: Colors.grey),
             filled: true,
             fillColor: isReadOnly ? const Color(0xffF9FAFB) : Colors.white,
-            contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 16.w,
+              vertical: 16.h,
+            ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.r),
               borderSide: BorderSide(color: Colors.grey.shade200),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.r),
-              borderSide: const BorderSide(color: Color(0xffE86A34), width: 1.5),
+              borderSide: const BorderSide(
+                color: Color(0xffE86A34),
+                width: 1.5,
+              ),
             ),
           ),
         ),

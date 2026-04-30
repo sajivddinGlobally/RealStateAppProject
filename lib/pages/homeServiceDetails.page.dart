@@ -12,7 +12,6 @@ import 'package:realstate/Controller/homeServiceCategoryByIdController.dart';
 import 'package:realstate/Controller/myRequestBookingSerivceController.dart';
 import 'package:realstate/Model/Body/checkSlotBodyModel.dart';
 import 'package:realstate/Model/homeBookingServiceBodyModel.dart';
-import 'package:realstate/Model/homeGetServiceCateogryModel.dart';
 import 'package:realstate/core/network/api.state.dart';
 import 'package:realstate/core/utils/preety.dio.dart';
 import 'package:realstate/pages/myRequest.page.dart';
@@ -30,7 +29,7 @@ class _HomeServiceDetailsPageState
     extends ConsumerState<HomeServiceDetailsPage> {
   String? serviceType;
   String? Id;
-  static const primaryColor = Color(0xFFFF5722);
+  static const primaryColor = Color(0xFF24ADD7);
   static const darkBlue = Color(0xff0E1A35);
 
   File? selectedImage;
@@ -364,7 +363,7 @@ class _HomeServiceDetailsPageState
             style: TextStyle(
               fontSize: 20.sp,
               fontWeight: FontWeight.bold,
-              color: Colors.deepOrange,
+              color: Color(0xFF24ADD7),
             ),
           ),
           SizedBox(height: 10.h),
@@ -470,17 +469,17 @@ class _HomeServiceDetailsPageState
                       child: Container(
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: isSelected ? Colors.deepOrange : Colors.white,
+                          color: isSelected ? Color(0xFF24ADD7) : Colors.white,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
                             color: isSelected
-                                ? Colors.deepOrange
+                                ? Color(0xFF24ADD7)
                                 : Colors.grey.shade400,
                           ),
                           boxShadow: isSelected
                               ? [
                                   BoxShadow(
-                                    color: Colors.orange.withOpacity(0.3),
+                                    color: Color(0xFF24ADD7).withOpacity(0.3),
                                     blurRadius: 5,
                                     offset: const Offset(0, 3),
                                   ),
@@ -502,7 +501,7 @@ class _HomeServiceDetailsPageState
           ElevatedButton(
             onPressed: isLoading ? null : onNext,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF111827), // Dark Navy
+              backgroundColor: const Color(0xFF24ADD7), // Dark Navy
               minimumSize: Size(double.infinity, 55.h),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15),
@@ -817,7 +816,7 @@ class _HomeServiceDetailsPageState
                         /// --- Trust Section ---
                         _whyChooseUs(),
 
-                        SizedBox(height: 100.h), // Space for bottom button
+                        SizedBox(height: 100.h),
                       ],
                     ),
                   ),
@@ -830,8 +829,14 @@ class _HomeServiceDetailsPageState
       error: (error, stackTrace) {
         return Center(child: Text(error.toString()));
       },
-      loading: () =>
-          Center(child: CircularProgressIndicator(color: Colors.deepOrange)),
+      loading: () => Container(
+        width: double.infinity,
+        height: MediaQuery.of(context).size.height,
+        decoration: BoxDecoration(color: Colors.white),
+        child: Center(
+          child: CircularProgressIndicator(color: Color(0xFF24ADD7)),
+        ),
+      ),
     );
   }
 

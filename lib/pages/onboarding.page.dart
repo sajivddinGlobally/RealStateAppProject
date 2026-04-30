@@ -73,8 +73,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       margin: EdgeInsets.symmetric(horizontal: 5.w),
       decoration: BoxDecoration(
         color: _currentPage == index
-            ? const Color(0xffE86A34)
-            : const Color(0xffF2C3A5),
+            ? const Color(0xFF24ADD7)
+            : const Color(0xFF24ADD7).withOpacity(0.3),
         shape: BoxShape.circle,
       ),
     );
@@ -125,7 +125,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           style: TextStyle(
                             fontSize: 25.sp,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xffE86A34),
+                            color: const Color(0xFF24ADD7),
                             height: 1.3,
                           ),
                         ),
@@ -169,7 +169,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       height: 50.h,
                       width: 50.w,
                       decoration: const BoxDecoration(
-                        color: Color(0xffE86A34),
+                        color: Color(0xFF24ADD7),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -195,7 +195,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     "Skip",
                     style: TextStyle(
                       fontSize: 16.sp,
-                      color: const Color(0xffE86A34),
+                      color: const Color(0xFF24ADD7),
                       fontWeight: FontWeight.w500,
                     ),
                   ),

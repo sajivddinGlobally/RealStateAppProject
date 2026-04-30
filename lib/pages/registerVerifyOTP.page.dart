@@ -152,7 +152,7 @@ class _RegisterVerifyOtpPageState extends State<RegisterVerifyOtpPage> {
                         decoration: BoxDecoration(
                           color: isVerify
                               ? Colors.grey
-                              : const Color(0xffE86A34),
+                              : const Color(0xFF24ADD7),
                           borderRadius: BorderRadius.circular(40),
                         ),
                         child: Center(

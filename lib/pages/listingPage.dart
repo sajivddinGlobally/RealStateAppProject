@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -170,7 +169,6 @@ class _ListingPageState extends ConsumerState<ListingPage> {
           ),
         ),
         data: (cityResponse) {
-
           if (!_citiesLoaded && cityResponse?.data != null) {
             cityOptions = cityResponse.data!
                 .map((d) => d.cityName ?? "")
@@ -281,7 +279,7 @@ class _ListingPageState extends ConsumerState<ListingPage> {
                         ),
                         prefixIcon: const Icon(
                           Icons.search,
-                          color: Color(0xffFF6A2A),
+                          color: Color(0xFF24ADD7),
                         ),
                         contentPadding: EdgeInsets.symmetric(vertical: 14.h),
                         border: InputBorder.none,
@@ -351,7 +349,7 @@ class _ListingPageState extends ConsumerState<ListingPage> {
                   margin: EdgeInsets.symmetric(horizontal: 25.w),
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: const Color(0xffFF6A2A),
+                    color: const Color(0xFF24ADD7),
                     borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(20.r),
                       topRight: Radius.circular(20.r),
@@ -458,7 +456,7 @@ class _ListingPageState extends ConsumerState<ListingPage> {
                           min: 0,
                           max: 7000000,
                           divisions: 70,
-                          activeColor: const Color(0xffFF6A2A),
+                          activeColor: const Color(0xFF24ADD7),
                           inactiveColor: Colors.grey.shade300,
                           labels: RangeLabels(
                             _formatPrice(_priceRange.start),
@@ -502,7 +500,7 @@ class _ListingPageState extends ConsumerState<ListingPage> {
                             children: [
                               Checkbox(
                                 value: selected[index],
-                                activeColor: const Color(0xffFF6A2A),
+                                activeColor: const Color(0xFF24ADD7),
                                 onChanged: (value) {
                                   setState(() {
                                     selected[index] = value!;
@@ -540,7 +538,7 @@ class _ListingPageState extends ConsumerState<ListingPage> {
                           itemBuilder: (context, index) {
                             return CheckboxListTile(
                               value: selectedCities[index],
-                              activeColor: const Color(0xffFF6A2A),
+                              activeColor: const Color(0xFF24ADD7),
                               title: Text(
                                 cityOptions[index],
                                 style: GoogleFonts.inter(fontSize: 14.sp),
@@ -570,7 +568,7 @@ class _ListingPageState extends ConsumerState<ListingPage> {
                             ),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xffFF6A2A),
+                            backgroundColor: const Color(0xFF24ADD7),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30.r),
                             ),
@@ -836,7 +834,7 @@ class PropertyCard extends StatelessWidget {
                   Text(
                     "₹ ${_formatPrice(property.price)}",
                     style: GoogleFonts.inter(
-                      color: const Color(0xffFF6A2A),
+                      color: const Color(0xFF24ADD7),
                       fontWeight: FontWeight.bold,
                       fontSize: 10.sp,
                     ),
@@ -954,7 +952,7 @@ class PropertyCard extends StatelessWidget {
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
-                          color: const Color(0xffFF6A2A),
+                          color: const Color(0xFF24ADD7),
                         ),
                         height: 30.h,
                         child: Center(

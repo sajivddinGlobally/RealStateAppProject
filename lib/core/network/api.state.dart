@@ -167,7 +167,9 @@ abstract class APIStateNetwork {
   );
 
   @POST("/user/createServiceRating")
-  Future<ServiceRatingResModel> createServiceRating(@Body() ServiceRatingBodyModel body);
+  Future<ServiceRatingResModel> createServiceRating(
+    @Body() ServiceRatingBodyModel body,
+  );
 
   @POST("/user/serviceSave")
   Future<SaveServiceResModel> saveService(@Body() SaveServiceBodyModel body);

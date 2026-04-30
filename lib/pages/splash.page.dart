@@ -11,7 +11,6 @@ class PropertyIntroPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-
         decoration: BoxDecoration(
           color: const Color.fromARGB(255, 255, 255, 255),
         ),
@@ -71,13 +70,26 @@ class PropertyIntroPage extends StatelessWidget {
               right: 0,
               child: Center(
                 child: Container(
-                  height: 100,
-                  width: 130,
+                  height: 110,
+                  width: 140,
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                    image: const DecorationImage(
-                      image: AssetImage("assets/logo.png"),
-                      fit: BoxFit.cover,
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 12,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: Image.asset(
+                      "assets/png/real_logo.png",
+                      fit: BoxFit.contain, // 👉 image stretch nahi hogi
                     ),
                   ),
                 ),
@@ -91,7 +103,7 @@ class PropertyIntroPage extends StatelessWidget {
                 height: 45,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xffF37A33),
+                    backgroundColor: Color(0xFF24ADD7),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(45),
                     ),

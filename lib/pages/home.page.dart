@@ -259,6 +259,33 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
     "assets/home (3).png",
   ];
   int currentBannerIndex = 0;
+  final List<String> propertyImages = [
+    "assets/property1.jpg",
+    "assets/property2.jfif",
+    "assets/property3.jfif",
+  ];
+
+  final List<String> homeServiceImages = [
+    "assets/home1.webp",
+    "assets/home2.jfif",
+    "assets/home3.jfif",
+  ];
+
+  final List<String> loanImages = [
+    "assets/loan1.jpg",
+    "assets/loan2.jfif",
+    "assets/loan3.jpg",
+  ];
+
+  List<String> get currentImages {
+    if (selectIndex == 0) {
+      return propertyImages;
+    } else if (selectIndex == 1) {
+      return homeServiceImages;
+    } else {
+      return loanImages;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -329,7 +356,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
           width: 46.w,
           child: FloatingActionButton(
             elevation: 6,
-            backgroundColor: const Color(0xffFF6A2A),
+            backgroundColor: const Color(0xFF24ADD7),
             shape: const CircleBorder(),
             onPressed: () {
               setState(() {
@@ -401,7 +428,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
                     padding: EdgeInsets.all(5.r),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? const Color(0xffFF6A2A)
+                          ? const Color(0xFF24ADD7)
                           : Colors.transparent,
                       shape: BoxShape.circle,
                     ),
@@ -447,7 +474,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
                     top: 8.h,
                     bottom: 8.h,
                   ),
-                  color: const Color(0xffFF6A2A),
+                  color: const Color(0xFF24ADD7),
                   child: SafeArea(
                     bottom: false,
                     child: Row(
@@ -533,7 +560,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
                                 vertical: 2.h,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.orange.shade100,
+                                color: Colors.white,
                                 borderRadius: BorderRadius.circular(20.r),
                               ),
                               child: DropdownButtonHideUnderline(
@@ -542,14 +569,14 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
                                   value: selectedCity,
                                   icon: Icon(
                                     Icons.keyboard_arrow_down,
-                                    color: Colors.orange,
+                                    color: Color(0xFF24ADD7),
                                     size: 18.sp,
                                   ),
                                   isDense: true,
                                   dropdownColor: Colors.white,
                                   style: TextStyle(
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.orange,
+                                    color: Color(0xFF24ADD7),
                                     fontSize: 13.sp,
                                   ),
 
@@ -562,7 +589,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
                                               Icon(
                                                 Icons.location_on,
                                                 size: 14.sp,
-                                                color: Colors.orange,
+                                                color: Color(0xFF24ADD7),
                                               ),
                                               SizedBox(width: 4.w),
                                               Text(value.cityName.toString()),
@@ -603,28 +630,146 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
                     ),
                   ),
                 ),
-                CarouselSlider(
-                  options: CarouselOptions(
-                    height: 260.h,
-                    viewportFraction: 1,
-                    autoPlay: true,
-                    autoPlayInterval: const Duration(seconds: 3),
-                    autoPlayAnimationDuration: const Duration(
-                      milliseconds: 800,
-                    ),
-                    enlargeCenterPage: false,
-                    onPageChanged: (index, reason) {
-                      setState(() {
-                        currentBannerIndex = index;
-                      });
-                    },
-                  ),
-                  items: bannerImages.map((image) {
-                    return Builder(
-                      builder: (BuildContext context) {
+
+                // CarouselSlider(
+                //   options: CarouselOptions(
+                //     height: 260.h,
+                //     viewportFraction: 1,
+                //     autoPlay: true,
+                //     autoPlayInterval: const Duration(seconds: 3),
+                //     autoPlayAnimationDuration: const Duration(
+                //       milliseconds: 800,
+                //     ),
+                //     enlargeCenterPage: false,
+                //     onPageChanged: (index, reason) {
+                //       setState(() {
+                //         currentBannerIndex = index;
+                //       });
+                //     },
+                //   ),
+                //   items: bannerImages.map((image) {
+                //     return Builder(
+                //       builder: (BuildContext context) {
+                //         return Stack(
+                //           children: [
+                //             /// Image
+                //             Image.asset(
+                //               image,
+                //               height: 260.h,
+                //               width: double.infinity,
+                //               fit: BoxFit.cover,
+                //             ),
+                //             /// Gradient
+                //             Container(
+                //               height: 260.h,
+                //               decoration: BoxDecoration(
+                //                 gradient: LinearGradient(
+                //                   colors: [
+                //                     Colors.black.withOpacity(0.6),
+                //                     Colors.transparent,
+                //                   ],
+                //                   begin: Alignment.bottomCenter,
+                //                   end: Alignment.topCenter,
+                //                 ),
+                //               ),
+                //             ),
+                //             /// Text Content
+                //             Positioned(
+                //               left: 16.w,
+                //               bottom: 20.h,
+                //               right: 16.w,
+                //               child: Column(
+                //                 crossAxisAlignment: CrossAxisAlignment.start,
+                //                 children: [
+                //                   Chip(
+                //                     label: const Text("Top rated"),
+                //                     backgroundColor: const Color.fromARGB(
+                //                       178,
+                //                       255,
+                //                       255,
+                //                       255,
+                //                     ),
+                //                     shape: RoundedRectangleBorder(
+                //                       borderRadius: BorderRadius.circular(40.r),
+                //                     ),
+                //                   ),
+                //                   SizedBox(height: 6.h),
+                //                   Text(
+                //                     "Sea Facing Villa, Miami\nBeach Property",
+                //                     style: TextStyle(
+                //                       color: Colors.white,
+                //                       fontSize: 18.sp,
+                //                       fontWeight: FontWeight.bold,
+                //                     ),
+                //                   ),
+                //                   SizedBox(height: 4.h),
+                //                   Text(
+                //                     "24 XYZ, Miami Beach, Florida",
+                //                     style: TextStyle(
+                //                       color: Colors.white70,
+                //                       fontSize: 13.sp,
+                //                     ),
+                //                   ),
+                //                 ],
+                //               ),
+                //             ),
+                //             Positioned(
+                //               right: 0,
+                //               left: 0,
+                //               bottom: 6,
+                //               child: Row(
+                //                 mainAxisAlignment: MainAxisAlignment.center,
+                //                 children: List.generate(
+                //                   bannerImages.length,
+                //                   (index) => AnimatedContainer(
+                //                     duration: const Duration(milliseconds: 300),
+                //                     margin: EdgeInsets.symmetric(
+                //                       horizontal: 4.w,
+                //                     ),
+                //                     width: currentBannerIndex == index
+                //                         ? 12.w
+                //                         : 8.w,
+                //                     height: currentBannerIndex == index
+                //                         ? 12.h
+                //                         : 8.h,
+                //                     decoration: BoxDecoration(
+                //                       color: currentBannerIndex == index
+                //                           ? const Color(0xFF24ADD7)
+                //                           : Colors.white,
+                //                       shape: BoxShape.circle,
+                //                     ),
+                //                   ),
+                //                 ),
+                //               ),
+                //             ),
+                //           ],
+                //         );
+                //       },
+                //     );
+                //   }).toList(),
+                // ),
+                Stack(
+                  children: [
+                    /// 🔥 IMAGE SLIDER
+                    CarouselSlider(
+                      options: CarouselOptions(
+                        height: 260.h,
+                        viewportFraction: 1,
+                        autoPlay: true,
+                        autoPlayInterval: const Duration(seconds: 3),
+                        autoPlayAnimationDuration: const Duration(
+                          milliseconds: 800,
+                        ),
+
+                        onPageChanged: (index, reason) {
+                          setState(() {
+                            currentBannerIndex = index;
+                          });
+                        },
+                      ),
+                      items: currentImages.map((image) {
                         return Stack(
                           children: [
-                            /// Image
                             Image.asset(
                               image,
                               height: 260.h,
@@ -647,29 +792,36 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
                               ),
                             ),
 
-                            /// Text Content
+                            /// TEXT CONTENT
                             Positioned(
                               left: 16.w,
-                              bottom: 20.h,
+                              bottom: 30.h,
                               right: 16.w,
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Chip(
-                                    label: const Text("Top rated"),
-                                    backgroundColor: const Color.fromARGB(
-                                      178,
-                                      255,
-                                      255,
-                                      255,
+                                    labelPadding: EdgeInsets.zero,
+                                    label: Text(
+                                      selectIndex == 0
+                                          ? "Top Property"
+                                          : selectIndex == 1
+                                          ? "Best Service"
+                                          : "Easy Loan",
                                     ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(40.r),
+                                    backgroundColor: Colors.white.withOpacity(
+                                      0.8,
                                     ),
                                   ),
+
                                   SizedBox(height: 6.h),
+
                                   Text(
-                                    "Sea Facing Villa, Miami\nBeach Property",
+                                    selectIndex == 0
+                                        ? "Find Your Dream Property"
+                                        : selectIndex == 1
+                                        ? "Best Home Services"
+                                        : "Get Instant Loan",
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 18.sp,
@@ -680,7 +832,11 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
                                   SizedBox(height: 4.h),
 
                                   Text(
-                                    "24 XYZ, Miami Beach, Florida",
+                                    selectIndex == 0
+                                        ? "Buy, Rent & Sell properties"
+                                        : selectIndex == 1
+                                        ? "Cleaning, Plumbing, Electrician & more"
+                                        : "Home, Personal & Business Loan Available",
                                     style: TextStyle(
                                       color: Colors.white70,
                                       fontSize: 13.sp,
@@ -689,47 +845,43 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
                                 ],
                               ),
                             ),
-                            Positioned(
-                              right: 0,
-                              left: 0,
-                              bottom: 6,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: List.generate(
-                                  bannerImages.length,
-                                  (index) => AnimatedContainer(
-                                    duration: const Duration(milliseconds: 300),
-                                    margin: EdgeInsets.symmetric(
-                                      horizontal: 4.w,
-                                    ),
-                                    width: currentBannerIndex == index
-                                        ? 12.w
-                                        : 8.w,
-                                    height: currentBannerIndex == index
-                                        ? 12.h
-                                        : 8.h,
-                                    decoration: BoxDecoration(
-                                      color: currentBannerIndex == index
-                                          ? const Color(0xffFF6A2A)
-                                          : Colors.white,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
                           ],
                         );
-                      },
-                    );
-                  }).toList(),
+                      }).toList(),
+                    ),
+
+                    /// 🔥 FIXED DOT INDICATOR (ALWAYS SAME POSITION)
+                    Positioned(
+                      bottom: 10.h,
+                      left: 0,
+                      right: 0,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(
+                          currentImages.length,
+                          (index) => AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            margin: EdgeInsets.symmetric(horizontal: 4.w),
+                            width: currentBannerIndex == index ? 12.w : 8.w,
+                            height: currentBannerIndex == index ? 12.h : 8.h,
+                            decoration: BoxDecoration(
+                              color: currentBannerIndex == index
+                                  ? const Color(0xFF24ADD7)
+                                  : Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
 
                 // MARQUEE
                 Container(
                   width: double.infinity,
                   height: 40.h,
-                  color: const Color(0xffFF6A2A),
+                  color: const Color(0xFF24ADD7),
                   child: Marquee(
                     text:
                         "CALL US TODAY AT +91-9171719060 FOR PROPERTY INQUERY",
@@ -810,7 +962,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
           Container(
             height: 90.h,
             padding: EdgeInsets.symmetric(horizontal: 16.w),
-            color: const Color(0xffFF6A2A),
+            color: const Color(0xFF24ADD7),
             child: Padding(
               padding: EdgeInsets.only(top: 25.h),
               child: Row(
@@ -829,6 +981,8 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
           ),
           Expanded(
             child: RefreshIndicator(
+              backgroundColor: Color(0xFF24ADD7),
+              color: Colors.white,
               onRefresh: () async {
                 // सबसे साफ तरीका
                 await ref.refresh(getMyPropertyController.future);
@@ -922,7 +1076,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
           Container(
             height: 90.h,
             padding: EdgeInsets.symmetric(horizontal: 16.w),
-            color: const Color(0xffFF6A2A),
+            color: const Color(0xFF24ADD7),
             child: Padding(
               padding: EdgeInsets.only(top: 25.h),
               child: Row(
@@ -1592,7 +1746,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
                                 height: 50,
                                 width: double.infinity,
                                 decoration: BoxDecoration(
-                                  color: Color(0xffE86A34),
+                                  color: Color(0xFF24ADD7),
                                   borderRadius: BorderRadius.circular(40),
                                 ),
                                 child: Center(
@@ -1640,7 +1794,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
           //       ),
           //       child: Icon(
           //         Icons.support_agent,
-          //         color: const Color(0xffFF6A2A),
+          //         color: const Color(0xFF24ADD7),
           //         size: 55.sp,
           //       ),
           //     ),
@@ -1676,7 +1830,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
           //               child: ElevatedButton.icon(
           //                 style: ElevatedButton.styleFrom(
           //                   backgroundColor: const Color(
-          //                     0xffFF6A2A,
+          //                     0xFF24ADD7,
           //                   ),
           //                   shape: RoundedRectangleBorder(
           //                     borderRadius: BorderRadius.circular(
@@ -1792,7 +1946,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
           Container(
             height: 90.h,
             padding: EdgeInsets.symmetric(horizontal: 16.w),
-            color: const Color(0xffFF6A2A),
+            color: const Color(0xFF24ADD7),
             child: Padding(
               padding: EdgeInsets.only(top: 25.h),
               child: Row(
@@ -1811,6 +1965,8 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
           ),
           Expanded(
             child: RefreshIndicator(
+              backgroundColor: Color(0xFF24ADD7),
+              color: Colors.white,
               onRefresh: () async {
                 // सबसे साफ तरीका
                 await ref.refresh(likePropertyController.future);
@@ -1869,7 +2025,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
                                 style: TextStyle(color: Colors.white),
                               ),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFFF5722),
+                                backgroundColor: const Color(0xFF24ADD7),
                                 padding: EdgeInsets.symmetric(
                                   horizontal: 24.w,
                                   vertical: 12.h,
@@ -1914,20 +2070,21 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
       onTap: () {
         setState(() {
           selectIndex = index;
+          currentBannerIndex = 0;
         });
       },
       child: Container(
         margin: EdgeInsets.only(right: 10.w),
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
         decoration: BoxDecoration(
-          color: select ? const Color(0xffFF6A2A) : Colors.white,
+          color: select ? const Color(0xFF24ADD7) : Colors.white,
           borderRadius: BorderRadius.circular(20.r),
-          border: Border.all(color: const Color(0xffFF6A2A)),
+          border: Border.all(color: const Color(0xFF24ADD7)),
         ),
         child: Text(
           title,
           style: GoogleFonts.inter(
-            color: select ? Colors.white : const Color(0xffFF6A2A),
+            color: select ? Colors.white : const Color(0xFF24ADD7),
             fontSize: 13.sp,
           ),
         ),
@@ -2016,7 +2173,7 @@ class PropertyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = const Color(0xFFFF5722);
+    final primary = const Color(0xFF24ADD7);
 
     return Container(
       margin: EdgeInsets.only(bottom: 16.h),
@@ -2240,7 +2397,7 @@ class PropertyCardSaved extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xffFF6A2A);
+    const primaryColor = Color(0xFF24ADD7);
 
     return Container(
       margin: EdgeInsets.only(bottom: 16.h),
@@ -2740,7 +2897,7 @@ class _HomeServiceState extends ConsumerState<HomeService> {
                           height: 55,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xffFF6A2A),
+                              backgroundColor: Color(0xFF24ADD7),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14),
                               ),
@@ -2888,7 +3045,7 @@ class _HomeServiceState extends ConsumerState<HomeService> {
 
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Color(0xffFF6A2A), width: 1.5),
+          borderSide: BorderSide(color: Color(0xFF24ADD7), width: 1.5),
         ),
 
         errorBorder: OutlineInputBorder(
@@ -2930,7 +3087,7 @@ class _HomeServiceState extends ConsumerState<HomeService> {
                         height: 40.h,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          border: Border.all(color: Color(0xffFF6A2A)),
+                          border: Border.all(color: Color(0xFF24ADD7)),
                           borderRadius: BorderRadius.circular(10.r),
                         ),
                         child: Text(
@@ -2940,7 +3097,7 @@ class _HomeServiceState extends ConsumerState<HomeService> {
                           style: GoogleFonts.inter(
                             fontSize: 9.sp,
                             fontWeight: FontWeight.w400,
-                            color: Color(0xffFF6A2A),
+                            color: Color(0xFF24ADD7),
                           ),
                         ),
                       ),
@@ -2956,7 +3113,7 @@ class _HomeServiceState extends ConsumerState<HomeService> {
                         height: 40.h,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: Color(0xffFF6A2A),
+                          color: Color(0xFF24ADD7),
                           borderRadius: BorderRadius.circular(10.r),
                         ),
                         child: Text(
@@ -3170,9 +3327,12 @@ class _HomeServiceState extends ConsumerState<HomeService> {
                       openBottomSheet(context);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
+                      backgroundColor: Color(0xFF24ADD7),
                     ),
-                    child: const Text('Hire Experts'),
+                    child: const Text(
+                      'Hire Experts',
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
                 ],
               ),
@@ -3677,7 +3837,7 @@ class _LoanServiceState extends ConsumerState<LoanService> {
                             height: 28.h,
                             width: double.infinity,
                             decoration: BoxDecoration(
-                              color: Color(0xFFFF6725),
+                              color: Color(0xFF24ADD7),
                               borderRadius: BorderRadius.circular(6.r),
                             ),
                             child: Center(

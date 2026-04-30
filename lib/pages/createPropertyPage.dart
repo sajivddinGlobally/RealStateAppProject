@@ -47,6 +47,8 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
   String? selectedPropertySubType;
   String? selectedCity;
 
+  bool get isCitySelected => selectedCity != null && selectedCity!.isNotEmpty;
+
   final List<String> allAmenities = [
     "Swimming Pool",
     "Gym",
@@ -110,6 +112,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
   // Controllers
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _bedroomsController = TextEditingController();
+  final TextEditingController _kitchenController = TextEditingController();
   final TextEditingController _bathroomsController = TextEditingController();
   final TextEditingController _areaController = TextEditingController();
   final TextEditingController _permitNoController = TextEditingController();
@@ -530,6 +533,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
   }
 
   // Check if it's the last step
+  String? _selectedBhk, _selectBathroom, _selectkitchen;
   bool get _isLastStep => _currentStep == _stepTitles.length - 1;
 
   // Handle Next Step
@@ -554,6 +558,9 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
     }
   }
 
+  final TextEditingController localityController = TextEditingController();
+  bool? isBroker;
+
   @override
   Widget build(BuildContext context) {
     final cityAsync = ref.watch(getCityController);
@@ -561,7 +568,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        backgroundColor: Color(0xffFF6A2A),
+        backgroundColor: Color(0xFF24ADD7),
         foregroundColor: Colors.white,
         elevation: 1,
         title: Text(
@@ -577,858 +584,6 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
             : null,
       ),
 
-      // body: Form(
-      //   key: _formKey,
-      //   child: SingleChildScrollView(
-      //     padding: const EdgeInsets.all(16),
-      //     child: Column(
-      //       crossAxisAlignment: CrossAxisAlignment.start,
-      //       children: [
-      //         _buildSectionTitle("Basic Details"),
-      //         const SizedBox(height: 12),
-      //         _buildCard(
-      //           child: Column(
-      //             crossAxisAlignment: CrossAxisAlignment.start,
-      //             children: [
-      //               Text(
-      //                 "Listing Purpose",
-      //                 style: TextStyle(
-      //                   fontSize: 13.5.sp,
-      //                   color: Colors.grey,
-      //                   fontWeight: FontWeight.w500,
-      //                 ),
-      //               ),
-      //               FormField(
-      //                 validator: (value) {
-      //                   if (selectedType == null) {
-      //                     return "Listing Category is Required";
-      //                   }
-      //                   return null;
-      //                 },
-      //                 builder: (FormFieldState<int> state) {
-      //                   return Column(
-      //                     crossAxisAlignment: CrossAxisAlignment.start,
-      //                     children: [
-      //                       Container(
-      //                         margin: EdgeInsets.only(top: 10.h),
-      //                         height: 45.h,
-      //                         decoration: BoxDecoration(
-      //                           color: const Color(0xFFF1F3F5),
-      //                           borderRadius: BorderRadius.circular(12.r),
-      //                         ),
-      //                         child: Row(
-      //                           children: [
-      //                             Expanded(
-      //                               child: GestureDetector(
-      //                                 onTap: () =>
-      //                                     setState(() => selectedType = 1),
-      //                                 child: Container(
-      //                                   alignment: Alignment.center,
-      //                                   decoration: BoxDecoration(
-      //                                     borderRadius: BorderRadius.circular(
-      //                                       12.r,
-      //                                     ),
-      //                                     color: selectedType == 1
-      //                                         ? const Color(0xFFFF5722)
-      //                                         : Colors.transparent,
-      //                                   ),
-      //                                   child: Text(
-      //                                     'SELL',
-      //                                     style: TextStyle(
-      //                                       color: selectedType == 1
-      //                                           ? Colors.white
-      //                                           : Colors.grey,
-      //                                       fontWeight: FontWeight.bold,
-      //                                       fontSize: 14.sp,
-      //                                     ),
-      //                                   ),
-      //                                 ),
-      //                               ),
-      //                             ),
-      //                             /// RENT
-      //                             Expanded(
-      //                               child: GestureDetector(
-      //                                 onTap: () =>
-      //                                     setState(() => selectedType = 2),
-      //                                 child: Container(
-      //                                   alignment: Alignment.center,
-      //                                   decoration: BoxDecoration(
-      //                                     borderRadius: BorderRadius.circular(
-      //                                       12.r,
-      //                                     ),
-      //                                     color: selectedType == 2
-      //                                         ? const Color(0xFFFF5722)
-      //                                         : Colors.transparent,
-      //                                   ),
-      //                                   child: Text(
-      //                                     'RENT OUT',
-      //                                     style: TextStyle(
-      //                                       color: selectedType == 2
-      //                                           ? Colors.white
-      //                                           : Colors.grey,
-      //                                       fontWeight: FontWeight.bold,
-      //                                       fontSize: 14.sp,
-      //                                     ),
-      //                                   ),
-      //                                 ),
-      //                               ),
-      //                             ),
-      //                           ],
-      //                         ),
-      //                       ),
-      //                       /// ERROR TEXT
-      //                       if (state.hasError)
-      //                         Padding(
-      //                           padding: const EdgeInsets.only(top: 5, left: 5),
-      //                           child: Text(
-      //                             state.errorText!,
-      //                             style: TextStyle(
-      //                               color: Colors.red,
-      //                               fontSize: 12,
-      //                             ),
-      //                           ),
-      //                         ),
-      //                     ],
-      //                   );
-      //                 },
-      //               ),
-      //               // _buildDropdown(
-      //               //   'Listing Category',
-      //               //   selectedListingCategory,
-      //               //   ['Rent', 'Sell'],
-      //               //   (v) => setState(() => selectedListingCategory = v),
-      //               //   isRequired: true,
-      //               // ),
-      //               const SizedBox(height: 12),
-      //               _buildDropdown(
-      //                 'Property',
-      //                 selectedPropertyType,
-      //                 ["Residential", "Commercial"],
-      //                 (v) => setState(() => selectedPropertyType = v),
-      //                 isRequired: true,
-      //               ),
-      //               const SizedBox(height: 12),
-      //               // _buildDropdown(
-      //               //   'Property Type',
-      //               //   selectedPropertySubType,
-      //               //   selectedPropertyType == "Residential"
-      //               //       ? [
-      //               //           "apartment",
-      //               //           "townhouse",
-      //               //           "villa-compound",
-      //               //           "land",
-      //               //           "villa",
-      //               //           "penthouse",
-      //               //           "studio",
-      //               //         ]
-      //               //       : [
-      //               //           "office",
-      //               //           "warehouse",
-      //               //           "showroom",
-      //               //           "shop",
-      //               //           "factory",
-      //               //           "other-commercial",
-      //               //         ],
-      //               //   (v) => setState(() => selectedPropertySubType = v),
-      //               //   isRequired: true,
-      //               // ),
-      //               if (selectedPropertyType != null)
-      //                 FormField<String>(
-      //                   validator: (value) {
-      //                     if (selectedPropertySubType == null ||
-      //                         selectedPropertySubType!.isEmpty) {
-      //                       return "Property type is required";
-      //                     }
-      //                     return null;
-      //                   },
-      //                   builder: (FormFieldState<String> state) {
-      //                     return Column(
-      //                       crossAxisAlignment: CrossAxisAlignment.start,
-      //                       children: [
-      //                         Text(
-      //                           "Specific Property Type",
-      //                           style: TextStyle(
-      //                             fontWeight: FontWeight.bold,
-      //                             letterSpacing: 1,
-      //                             fontSize: 14.sp,
-      //                           ),
-      //                         ),
-      //                         SizedBox(height: 12.h),
-      //                         Container(
-      //                           decoration: BoxDecoration(
-      //                             borderRadius: BorderRadius.circular(14.r),
-      //                           ),
-      //                           child: GridView.builder(
-      //                             shrinkWrap: true,
-      //                             physics: NeverScrollableScrollPhysics(),
-      //                             itemCount:
-      //                                 (selectedPropertyType == "Residential"
-      //                                         ? [
-      //                                             "apartment",
-      //                                             "townhouse",
-      //                                             "villa-compound",
-      //                                             "land",
-      //                                             "building",
-      //                                             "villa",
-      //                                             "penthouse",
-      //                                             "hotel-apartment",
-      //                                             "floor",
-      //                                             "studio",
-      //                                           ]
-      //                                         : [
-      //                                             "office",
-      //                                             "warehouse",
-      //                                             "showroom",
-      //                                             "shop",
-      //                                             "factory",
-      //                                             "other-commercial",
-      //                                           ])
-      //                                     .length,
-      //                             gridDelegate:
-      //                                 SliverGridDelegateWithFixedCrossAxisCount(
-      //                                   crossAxisCount: 2,
-      //                                   mainAxisSpacing: 10.h,
-      //                                   crossAxisSpacing: 10.w,
-      //                                   mainAxisExtent: 45.h,
-      //                                 ),
-      //                             itemBuilder: (context, index) {
-      //                               final options =
-      //                                   selectedPropertyType == "Residential"
-      //                                   ? [
-      //                                       "apartment",
-      //                                       "townhouse",
-      //                                       "villa-compound",
-      //                                       "land",
-      //                                       "building",
-      //                                       "villa",
-      //                                       "penthouse",
-      //                                       "hotel-apartment",
-      //                                       "floor",
-      //                                       "studio",
-      //                                     ]
-      //                                   : [
-      //                                       "office",
-      //                                       "warehouse",
-      //                                       "showroom",
-      //                                       "shop",
-      //                                       "factory",
-      //                                       "other-commercial",
-      //                                     ];
-      //                               final item = options[index];
-      //                               final isSelected =
-      //                                   selectedPropertySubType == item;
-      //                               return GestureDetector(
-      //                                 onTap: () {
-      //                                   setState(
-      //                                     () => selectedPropertySubType = item,
-      //                                   );
-      //                                   state.didChange(item);
-      //                                 },
-      //                                 child: AnimatedContainer(
-      //                                   duration: const Duration(
-      //                                     milliseconds: 200,
-      //                                   ),
-      //                                   alignment: Alignment.center,
-      //                                   padding: EdgeInsets.symmetric(
-      //                                     horizontal: 8.w,
-      //                                   ),
-      //                                   decoration: BoxDecoration(
-      //                                     color: isSelected
-      //                                         ? const Color(0xffFF6A2A)
-      //                                         : const Color(0xFFF1F3F5),
-      //                                     borderRadius: BorderRadius.circular(
-      //                                       14.r,
-      //                                     ),
-      //                                     border: Border.all(
-      //                                       color: isSelected
-      //                                           ? const Color(0xffFF6A2A)
-      //                                           : Colors.grey.shade300,
-      //                                     ),
-      //                                   ),
-      //                                   child: Text(
-      //                                     item
-      //                                         .replaceAll("-", " ")
-      //                                         .toUpperCase(),
-      //                                     textAlign: TextAlign.center,
-      //                                     maxLines: 2,
-      //                                     overflow: TextOverflow.ellipsis,
-      //                                     style: TextStyle(
-      //                                       fontWeight: FontWeight.w600,
-      //                                       fontSize: 12.sp,
-      //                                       color: isSelected
-      //                                           ? Colors.white
-      //                                           : const Color(0xFF344054),
-      //                                     ),
-      //                                   ),
-      //                                 ),
-      //                               );
-      //                             },
-      //                           ),
-      //                         ),
-      //                         /// ERROR TEXT
-      //                         if (state.hasError)
-      //                           Padding(
-      //                             padding: EdgeInsets.only(
-      //                               top: 10.h,
-      //                               left: 5.w,
-      //                             ),
-      //                             child: Text(
-      //                               state.errorText!,
-      //                               style: TextStyle(
-      //                                 color: Colors.red,
-      //                                 fontSize: 12.sp,
-      //                               ),
-      //                             ),
-      //                           ),
-      //                       ],
-      //                     );
-      //                   },
-      //                 ),
-      //               const SizedBox(height: 12),
-      //               SizedBox(
-      //                 width: double.infinity,
-      //                 height: 50.h,
-      //                 child: ElevatedButton(
-      //                   onPressed: () {
-      //                     if (_formKey.currentState!.validate()) {
-      //                       return;
-      //                     }
-      //                     log("Submit");
-      //                   },
-      //                   style: ElevatedButton.styleFrom(
-      //                     backgroundColor: const Color(
-      //                       0xFFFF5722,
-      //                     ), // Matching your orange theme
-      //                     foregroundColor: Colors.white,
-      //                     elevation: 2,
-      //                     shape: RoundedRectangleBorder(
-      //                       borderRadius: BorderRadius.circular(12),
-      //                     ),
-      //                   ),
-      //                   child: Text(
-      //                     'SAVE & CONTINUE',
-      //                     style: TextStyle(
-      //                       fontSize: 14.sp,
-      //                       fontWeight: FontWeight.bold,
-      //                     ),
-      //                   ),
-      //                 ),
-      //               ),
-      //               const SizedBox(height: 12),
-      //               _buildSectionTitle("Property Location"),
-      //               const SizedBox(height: 10),
-      //               _buildCityDropdown(cityAsync),
-      //               const SizedBox(height: 12),
-      //               _buildDropdown(
-      //                 'Locality / Area',
-      //                 selectedLocality,
-      //                 localityList,
-      //                 (v) {
-      //                   setState(() {
-      //                     selectedLocality = v;
-      //                   });
-      //                 },
-      //               ),
-      //               const SizedBox(height: 12),
-      //               _buildTextField(
-      //                 'Property  Address',
-      //                 _propertyAddressController,
-      //                 maxLines: 2,
-      //                 isRequired: true,
-      //               ),
-      //               const SizedBox(height: 12),
-      //               Row(
-      //                 children: [
-      //                   /// BACK (small width)
-      //                   Expanded(
-      //                     flex: 1, // ✅ smaller
-      //                     child: SizedBox(
-      //                       height: 50.h,
-      //                       child: ElevatedButton(
-      //                         onPressed: () {
-      //                           Navigator.pop(context);
-      //                         },
-      //                         style: ElevatedButton.styleFrom(
-      //                           backgroundColor:
-      //                               Colors.transparent, // ❌ no fill
-      //                           foregroundColor: const Color(0xFFFF5722),
-      //                           elevation: 0,
-      //                           side: const BorderSide(
-      //                             color: Color(0xFFFF5722),
-      //                           ), // ✅ border
-      //                           shape: RoundedRectangleBorder(
-      //                             borderRadius: BorderRadius.circular(12.r),
-      //                           ),
-      //                         ),
-      //                         child: Text(
-      //                           'BACK',
-      //                           style: TextStyle(
-      //                             fontSize: 14.sp,
-      //                             fontWeight: FontWeight.bold,
-      //                           ),
-      //                         ),
-      //                       ),
-      //                     ),
-      //                   ),
-      //                   SizedBox(width: 12.w),
-      //                   /// SAVE & CONTINUE (bigger width)
-      //                   Expanded(
-      //                     flex: 2, // ✅ bigger
-      //                     child: SizedBox(
-      //                       height: 50.h,
-      //                       child: ElevatedButton(
-      //                         onPressed: () {
-      //                           if (!_formKey.currentState!.validate()) return;
-      //                           log("Submit");
-      //                         },
-      //                         style: ElevatedButton.styleFrom(
-      //                           backgroundColor: const Color(0xFFFF5722),
-      //                           foregroundColor: Colors.white,
-      //                           elevation: 2,
-      //                           shape: RoundedRectangleBorder(
-      //                             borderRadius: BorderRadius.circular(12.r),
-      //                           ),
-      //                         ),
-      //                         child: Text(
-      //                           'SAVE & CONTINUE',
-      //                           style: TextStyle(
-      //                             fontSize: 14.sp,
-      //                             fontWeight: FontWeight.bold,
-      //                           ),
-      //                         ),
-      //                       ),
-      //                     ),
-      //                   ),
-      //                 ],
-      //               ),
-      //               const SizedBox(height: 12),
-      //               _buildSectionTitle("Specification"),
-      //               const SizedBox(height: 12),
-      //               _buildTextField(
-      //                 'Price (₹)',
-      //                 _priceController,
-      //                 type: TextInputType.number,
-      //                 isRequired: true,
-      //               ),
-      //               const SizedBox(height: 12),
-      //               Row(
-      //                 children: [
-      //                   Expanded(
-      //                     child: _buildTextField(
-      //                       'BHK',
-      //                       _bedroomsController,
-      //                       type: TextInputType.number,
-      //                       isRequired: true,
-      //                     ),
-      //                   ),
-      //                   const SizedBox(width: 12),
-      //                   Expanded(
-      //                     child: _buildTextField(
-      //                       'Bathrooms',
-      //                       _bathroomsController,
-      //                       type: TextInputType.number,
-      //                       isRequired: true,
-      //                     ),
-      //                   ),
-      //                 ],
-      //               ),
-      //               const SizedBox(height: 12),
-      //               _buildTextField(
-      //                 'Area (sq.ft)',
-      //                 _areaController,
-      //                 type: TextInputType.number,
-      //                 isRequired: true,
-      //               ),
-      //               const SizedBox(height: 12),
-      //               Row(
-      //                 children: [
-      //                   /// BACK (small width)
-      //                   Expanded(
-      //                     flex: 1, // ✅ smaller
-      //                     child: SizedBox(
-      //                       height: 50.h,
-      //                       child: ElevatedButton(
-      //                         onPressed: () {
-      //                           Navigator.pop(context);
-      //                         },
-      //                         style: ElevatedButton.styleFrom(
-      //                           backgroundColor:
-      //                               Colors.transparent, // ❌ no fill
-      //                           foregroundColor: const Color(0xFFFF5722),
-      //                           elevation: 0,
-      //                           side: const BorderSide(
-      //                             color: Color(0xFFFF5722),
-      //                           ), // ✅ border
-      //                           shape: RoundedRectangleBorder(
-      //                             borderRadius: BorderRadius.circular(12.r),
-      //                           ),
-      //                         ),
-      //                         child: Text(
-      //                           'BACK',
-      //                           style: TextStyle(
-      //                             fontSize: 14.sp,
-      //                             fontWeight: FontWeight.bold,
-      //                           ),
-      //                         ),
-      //                       ),
-      //                     ),
-      //                   ),
-      //                   SizedBox(width: 12.w),
-      //                   /// SAVE & CONTINUE (bigger width)
-      //                   Expanded(
-      //                     flex: 2, // ✅ bigger
-      //                     child: SizedBox(
-      //                       height: 50.h,
-      //                       child: ElevatedButton(
-      //                         onPressed: () {
-      //                           if (!_formKey.currentState!.validate()) return;
-      //                           log("Submit");
-      //                         },
-      //                         style: ElevatedButton.styleFrom(
-      //                           backgroundColor: const Color(0xFFFF5722),
-      //                           foregroundColor: Colors.white,
-      //                           elevation: 2,
-      //                           shape: RoundedRectangleBorder(
-      //                             borderRadius: BorderRadius.circular(12.r),
-      //                           ),
-      //                         ),
-      //                         child: Text(
-      //                           'SAVE & CONTINUE',
-      //                           style: TextStyle(
-      //                             fontSize: 14.sp,
-      //                             fontWeight: FontWeight.bold,
-      //                           ),
-      //                         ),
-      //                       ),
-      //                     ),
-      //                   ),
-      //                 ],
-      //               ),
-      //             ],
-      //           ),
-      //         ),
-      //         const SizedBox(height: 12),
-      //         _buildSectionTitle("Amenities & Legel"),
-      //         _buildCard(child: _buildMultiSelectAmenities()),
-      //         const SizedBox(height: 24),
-      //         _buildSectionTitle("Around The Project"),
-      //         const SizedBox(height: 12),
-      //         _buildCard(
-      //           child: Column(
-      //             children: [
-      //               ...aroundProjectList.asMap().entries.map((entry) {
-      //                 final idx = entry.key;
-      //                 final ctrls = entry.value;
-      //                 return Padding(
-      //                   padding: const EdgeInsets.only(bottom: 16),
-      //                   child: Stack(
-      //                     children: [
-      //                       Column(
-      //                         children: [
-      //                           _buildTextField(
-      //                             'Place Name',
-      //                             ctrls['place']!,
-      //                             isRequired: false,
-      //                           ),
-      //                           const SizedBox(height: 12),
-      //                           _buildTextField(
-      //                             'Details',
-      //                             ctrls['details']!,
-      //                             isRequired: false,
-      //                           ),
-      //                         ],
-      //                       ),
-      //                       if (aroundProjectList.length > 1)
-      //                         Positioned(
-      //                           top: -14,
-      //                           right: -8,
-      //                           child: IconButton(
-      //                             icon: Icon(
-      //                               Icons.close,
-      //                               color: Colors.red,
-      //                               size: 25,
-      //                             ),
-      //                             onPressed: () => removeAroundProjectRow(idx),
-      //                           ),
-      //                         ),
-      //                     ],
-      //                   ),
-      //                 );
-      //               }),
-      //               Align(
-      //                 alignment: Alignment.centerLeft,
-      //                 child: TextButton.icon(
-      //                   onPressed: addAroundProjectRow,
-      //                   icon: const Icon(Icons.add, color: Color(0xFFFF5722)),
-      //                   label: const Text(
-      //                     'Add More Nearby Place',
-      //                     style: TextStyle(color: Color(0xFFFF5722)),
-      //                   ),
-      //                 ),
-      //               ),
-      //               _buildTextField(
-      //                 'RERA Number',
-      //                 _reraController,
-      //                 hint: '',
-      //                 type: TextInputType.number,
-      //                 isRequired: true,
-      //               ),
-      //               const SizedBox(height: 12),
-      //               _buildDropdown(
-      //                 'Furnishing',
-      //                 selectedFurnishing,
-      //                 ["Furnished", "Semi-Furnished", "Unfurnished"],
-      //                 (v) => setState(() => selectedFurnishing = v),
-      //                 isRequired: true,
-      //               ),
-      //               const SizedBox(height: 12),
-      //               Row(
-      //                 children: [
-      //                   /// BACK (small width)
-      //                   Expanded(
-      //                     flex: 1, // ✅ smaller
-      //                     child: SizedBox(
-      //                       height: 50.h,
-      //                       child: ElevatedButton(
-      //                         onPressed: () {
-      //                           Navigator.pop(context);
-      //                         },
-      //                         style: ElevatedButton.styleFrom(
-      //                           backgroundColor:
-      //                               Colors.transparent, // ❌ no fill
-      //                           foregroundColor: const Color(0xFFFF5722),
-      //                           elevation: 0,
-      //                           side: const BorderSide(
-      //                             color: Color(0xFFFF5722),
-      //                           ), // ✅ border
-      //                           shape: RoundedRectangleBorder(
-      //                             borderRadius: BorderRadius.circular(12.r),
-      //                           ),
-      //                         ),
-      //                         child: Text(
-      //                           'BACK',
-      //                           style: TextStyle(
-      //                             fontSize: 14.sp,
-      //                             fontWeight: FontWeight.bold,
-      //                           ),
-      //                         ),
-      //                       ),
-      //                     ),
-      //                   ),
-      //                   SizedBox(width: 12.w),
-      //                   /// SAVE & CONTINUE (bigger width)
-      //                   Expanded(
-      //                     flex: 2, // ✅ bigger
-      //                     child: SizedBox(
-      //                       height: 50.h,
-      //                       child: ElevatedButton(
-      //                         onPressed: () {
-      //                           if (!_formKey.currentState!.validate()) return;
-      //                           log("Submit");
-      //                         },
-      //                         style: ElevatedButton.styleFrom(
-      //                           backgroundColor: const Color(0xFFFF5722),
-      //                           foregroundColor: Colors.white,
-      //                           elevation: 2,
-      //                           shape: RoundedRectangleBorder(
-      //                             borderRadius: BorderRadius.circular(12.r),
-      //                           ),
-      //                         ),
-      //                         child: Text(
-      //                           'SAVE & CONTINUE',
-      //                           style: TextStyle(
-      //                             fontSize: 14.sp,
-      //                             fontWeight: FontWeight.bold,
-      //                           ),
-      //                         ),
-      //                       ),
-      //                     ),
-      //                   ),
-      //                 ],
-      //               ),
-      //             ],
-      //           ),
-      //         ),
-      //         const SizedBox(height: 24),
-      //         _buildSectionTitle("Photos & Media"),
-      //         const SizedBox(height: 12),
-      //         _buildCard(
-      //           child: Column(
-      //             children: [
-      //               ElevatedButton.icon(
-      //                 onPressed: pickImages,
-      //                 icon: const Icon(Icons.add_photo_alternate),
-      //                 label: const Text('Add Photos'),
-      //                 style: ElevatedButton.styleFrom(
-      //                   backgroundColor: const Color(0xFFFF5722),
-      //                   foregroundColor: Colors.white,
-      //                   minimumSize: const Size(double.infinity, 52),
-      //                   shape: RoundedRectangleBorder(
-      //                     borderRadius: BorderRadius.circular(12),
-      //                   ),
-      //                 ),
-      //               ),
-      //               const SizedBox(height: 16),
-      //               if (propertyImages.isEmpty)
-      //                 const Padding(
-      //                   padding: EdgeInsets.symmetric(vertical: 10),
-      //                   child: Text(
-      //                     'No photos selected',
-      //                     style: TextStyle(color: Colors.grey),
-      //                   ),
-      //                 )
-      //               else
-      //                 GridView.builder(
-      //                   shrinkWrap: true,
-      //                   physics: const NeverScrollableScrollPhysics(),
-      //                   gridDelegate:
-      //                       const SliverGridDelegateWithFixedCrossAxisCount(
-      //                         crossAxisCount: 3,
-      //                         crossAxisSpacing: 10,
-      //                         mainAxisSpacing: 10,
-      //                         childAspectRatio: 1,
-      //                       ),
-      //                   itemCount: propertyImages.length,
-      //                   itemBuilder: (_, i) {
-      //                     final img = propertyImages[i];
-      //                     return ClipRRect(
-      //                       borderRadius: BorderRadius.circular(12),
-      //                       child: Stack(
-      //                         fit: StackFit.expand,
-      //                         children: [
-      //                           img is File
-      //                               ? Image.file(img, fit: BoxFit.cover)
-      //                               : Image.network(img, fit: BoxFit.cover),
-      //                           Positioned(
-      //                             top: 6,
-      //                             right: 6,
-      //                             child: GestureDetector(
-      //                               onTap: () => removeImage(i),
-      //                               child: const CircleAvatar(
-      //                                 radius: 14,
-      //                                 backgroundColor: Colors.black54,
-      //                                 child: Icon(
-      //                                   Icons.close,
-      //                                   size: 16,
-      //                                   color: Colors.white,
-      //                                 ),
-      //                               ),
-      //                             ),
-      //                           ),
-      //                         ],
-      //                       ),
-      //                     );
-      //                   },
-      //                 ),
-      //             ],
-      //           ),
-      //         ),
-      //         const SizedBox(height: 24),
-      //         _buildSectionTitle("Deep Porperty Description"),
-      //         const SizedBox(height: 12),
-      //         _buildCard(
-      //           child: _buildTextField(
-      //             'Describe your property...',
-      //             _descriptionController,
-      //             maxLines: 5,
-      //             isRequired: false,
-      //           ),
-      //         ),
-      //         // const SizedBox(height: 24),
-      //         // _buildSectionTitle("Project Overview"),
-      //         // const SizedBox(height: 12),
-      //         // _buildCard(
-      //         //   child: Column(
-      //         //     crossAxisAlignment: CrossAxisAlignment.start,
-      //         //     children: [
-      //         //       _buildTextField(
-      //         //         'Project Area (Acre)',
-      //         //         _projectAreaController,
-      //         //         hint: 'e.g. 0.89 Acres',
-      //         //         type: TextInputType.number,
-      //         //         isRequired: true,
-      //         //       ),
-      //         //       const SizedBox(height: 12),
-      //         //       _buildTextField(
-      //         //         'Unit Sizes (sq.ft)',
-      //         //         _unitSizesController,
-      //         //         hint: 'e.g. 431 - 460',
-      //         //         type: TextInputType.number,
-      //         //         isRequired: true,
-      //         //       ),
-      //         //       const SizedBox(height: 12),
-      //         //       _buildTextField(
-      //         //         'Total Project Units',
-      //         //         _projectSizeController,
-      //         //         hint: '',
-      //         //         type: TextInputType.number,
-      //         //         isRequired: false,
-      //         //       ),
-      //         //       const SizedBox(height: 12),
-      //         //       _buildTextField(
-      //         //         'Launch Date',
-      //         //         _launchDateController,
-      //         //         hint: "Select launch date",
-      //         //         readOnly: true,
-      //         //         onTap: () => _selectDate(_launchDateController),
-      //         //         isRequired: true,
-      //         //       ),
-      //         //       const SizedBox(height: 12),
-      //         //       _buildTextField(
-      //         //         'Possession Start Date',
-      //         //         _possessionDateController,
-      //         //         hint: "Select possession date",
-      //         //         readOnly: true,
-      //         //         onTap: () => _selectDate(_possessionDateController),
-      //         //         isRequired: true,
-      //         //       ),
-      //         //     ],
-      //         //   ),
-      //         // ),
-      //         // const SizedBox(height: 24),
-      //         // _buildSectionTitle("Property Address"),
-      //         // const SizedBox(height: 12),
-      //         // _buildCard(
-      //         //   child: _buildTextField(
-      //         //     'Full Address',
-      //         //     _propertyAddressController,
-      //         //     maxLines: 3,
-      //         //     isRequired: true,
-      //         //   ),
-      //         // ),
-      //         const SizedBox(height: 40),
-      //         SafeArea(
-      //           top: false,
-      //           child: SizedBox(
-      //             width: double.infinity,
-      //             height: 56,
-      //             child: ElevatedButton(
-      //               onPressed: _isLoading ? null : _submitProperty,
-      //               style: ElevatedButton.styleFrom(
-      //                 backgroundColor: const Color(0xFFFF5722),
-      //                 foregroundColor: Colors.white,
-      //                 shape: RoundedRectangleBorder(
-      //                   borderRadius: BorderRadius.circular(30),
-      //                 ),
-      //                 elevation: 2,
-      //               ),
-      //               child: _isLoading
-      //                   ? const CircularProgressIndicator(color: Colors.white)
-      //                   : Text(
-      //                       isEditMode ? 'Update Property' : 'Submit Property',
-      //                       style: const TextStyle(
-      //                         fontSize: 18,
-      //                         fontWeight: FontWeight.bold,
-      //                       ),
-      //                     ),
-      //             ),
-      //           ),
-      //         ),
-      //         const SizedBox(height: 30),
-      //       ],
-      //     ),
-      //   ),
-      // ),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -1459,9 +614,9 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                           onPressed: _goToPreviousStep,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.transparent,
-                            foregroundColor: const Color(0xFFFF5722),
+                            foregroundColor: const Color(0xFF24ADD7),
                             elevation: 0,
-                            side: const BorderSide(color: Color(0xFFFF5722)),
+                            side: const BorderSide(color: Color(0xFF24ADD7)),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12.r),
                             ),
@@ -1487,9 +642,9 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _handleNextStep,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFFFF5722),
+                          backgroundColor: Color(0xFF24ADD7),
                           foregroundColor: Colors.white,
-                          disabledIconColor: Color(0xFFFF5722).withOpacity(0.5),
+                          disabledIconColor: Color(0xFF24ADD7).withOpacity(0.5),
                           elevation: 2,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12.r),
@@ -1539,7 +694,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Listing Purpose",
+                "Listing Purpose *",
                 style: TextStyle(
                   fontSize: 13.5.sp,
                   color: Colors.grey,
@@ -1579,7 +734,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(12.r),
                                     color: selectedType == 1
-                                        ? const Color(0xFFFF5722)
+                                        ? const Color(0xFF24ADD7)
                                         : Colors.transparent,
                                   ),
                                   child: Text(
@@ -1609,7 +764,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(12.r),
                                     color: selectedType == 2
-                                        ? const Color(0xFFFF5722)
+                                        ? const Color(0xFF24ADD7)
                                         : Colors.transparent,
                                   ),
                                   child: Text(
@@ -1672,7 +827,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Specific Property Type",
+                          "Specific Property Type *",
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1,
@@ -1760,12 +915,12 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                                   ),
                                   decoration: BoxDecoration(
                                     color: isSelected
-                                        ? const Color(0xffFF6A2A)
+                                        ? const Color(0xFF24ADD7)
                                         : const Color(0xFFF1F3F5),
                                     borderRadius: BorderRadius.circular(14.r),
                                     border: Border.all(
                                       color: isSelected
-                                          ? const Color(0xffFF6A2A)
+                                          ? const Color(0xFF24ADD7)
                                           : Colors.grey.shade300,
                                     ),
                                   ),
@@ -1802,6 +957,91 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                     );
                   },
                 ),
+              SizedBox(height: 12.h),
+              Text(
+                "Are You Broker",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1,
+                  fontSize: 14.sp,
+                ),
+              ),
+              SizedBox(height: 12.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          isBroker = true;
+                        });
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        decoration: BoxDecoration(
+                          color: isBroker == true
+                              ? const Color(0xFF24ADD7)
+                              : Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(14.r),
+                          border: Border.all(
+                            color: isBroker == true
+                                ? const Color(0xFF24ADD7)
+                                : Colors.grey.shade300,
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            "Yes",
+                            style: TextStyle(
+                              color: isBroker == true
+                                  ? Colors.white
+                                  : Colors.black,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(width: 10.w),
+
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          isBroker = false;
+                        });
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        decoration: BoxDecoration(
+                          color: isBroker == false
+                              ? const Color(0xFF24ADD7)
+                              : Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(14.r),
+                          border: Border.all(
+                            color: isBroker == false
+                                ? const Color(0xFF24ADD7)
+                                : Colors.grey.shade300,
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            "No",
+                            style: TextStyle(
+                              color: isBroker == false
+                                  ? Colors.white
+                                  : Colors.black,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         );
@@ -1813,11 +1053,120 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
             children: [
               _buildCityDropdown(cityAsync),
               const SizedBox(height: 12),
-              _buildDropdown(
-                'Locality / Area',
-                selectedLocality,
-                localityList,
-                (v) => setState(() => selectedLocality = v),
+              // _buildDropdown(
+              //   'Locality / Area',
+              //   selectedLocality,
+              //   localityList,
+              //   (v) => setState(() => selectedLocality = v),
+              // ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Locality / Area *',
+                    style: TextStyle(
+                      fontSize: 13.5.sp,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  SizedBox(height: 6.h),
+                  AbsorbPointer(
+                    absorbing: !isCitySelected,
+                    child: Opacity(
+                      opacity: isCitySelected ? 1 : 0.5,
+                      child: Autocomplete<String>(
+                        key: ValueKey(selectedCity),
+                        initialValue: TextEditingValue(
+                          text: selectedLocality ?? "",
+                        ),
+                        optionsBuilder: (TextEditingValue textEditingValue) {
+                          if (!isCitySelected) {
+                            return const Iterable<String>.empty();
+                          }
+                          if (textEditingValue.text.isEmpty) {
+                            return localityList;
+                          }
+                          return localityList.where((option) {
+                            return option.toLowerCase().contains(
+                              textEditingValue.text.toLowerCase(),
+                            );
+                          });
+                        },
+                        onSelected: (String selection) {
+                          setState(() {
+                            selectedLocality = selection;
+                          });
+                        },
+                        fieldViewBuilder:
+                            (context, controller, focusNode, onFieldSubmitted) {
+                              return TextFormField(
+                                controller: controller,
+                                focusNode: focusNode,
+                                autovalidateMode:
+                                    AutovalidateMode.onUserInteraction,
+                                decoration: InputDecoration(
+                                  hintText: isCitySelected
+                                      ? 'Select Locality / Area'
+                                      : 'Select City first',
+                                  hintStyle: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 14.sp,
+                                  ),
+                                  filled: true,
+                                  fillColor: const Color(0xFFF8F9FA),
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 14.w,
+                                    vertical: 14.h,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12.r),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12.r),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12.r),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFF24ADD7),
+                                      width: 1.8,
+                                    ),
+                                  ),
+                                  errorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12.r),
+                                    borderSide: BorderSide(color: Colors.red),
+                                  ),
+                                  focusedErrorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12.r),
+                                    borderSide: BorderSide(
+                                      color: Colors.red,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  errorStyle: TextStyle(
+                                    fontSize: 12.sp,
+                                    color: Colors.red,
+                                  ),
+                                ),
+                                validator: (value) {
+                                  if (!isCitySelected) return null;
+                                  if (value == null || value.isEmpty) {
+                                    return "Locality / Area is required";
+                                  }
+                                  return null;
+                                },
+                              );
+                            },
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
               _buildTextField(
@@ -1836,36 +1185,57 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildTextField(
-                'Price (₹)',
+                'Price (₹) *',
                 _priceController,
                 type: TextInputType.number,
                 isRequired: true,
               ),
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildTextField(
-                      'BHK',
-                      _bedroomsController,
-                      type: TextInputType.number,
-                      isRequired: true,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildTextField(
-                      'Bathrooms',
-                      _bathroomsController,
-                      type: TextInputType.number,
-                      isRequired: true,
-                    ),
-                  ),
+              _buildDropdown(
+                'BHK',
+                _selectedBhk,
+                [
+                  "1 BHK",
+                  "2 BHK",
+                  "3 BHK",
+                  "4 BHK",
+                  "5 BHK",
+                  "6 BHK",
+                  "7 BHK",
+                  "8+ BHK",
                 ],
+                (v) {
+                  setState(() {
+                    _selectedBhk = v;
+                    _bedroomsController.text = v ?? "";
+                  });
+                },
+                isRequired: true,
               ),
-              const SizedBox(height: 12),
+              // Row(
+              //   children: [
+              //     Expanded(
+              //       child: _buildTextField(
+              //         'BHK',
+              //         _bedroomsController,
+              //         type: TextInputType.number,
+              //         isRequired: true,
+              //       ),
+              //     ),
+              //     const SizedBox(width: 12),
+              //     Expanded(
+              //       child: _buildTextField(
+              //         'Bathrooms',
+              //         _bathroomsController,
+              //         type: TextInputType.number,
+              //         isRequired: true,
+              //       ),
+              //     ),
+              //   ],
+              // ),
+              SizedBox(height: 12.h),
               _buildTextField(
-                'Area (sq.ft)',
+                'Area (sq.ft) *',
                 _areaController,
                 type: TextInputType.number,
                 isRequired: true,
@@ -1875,9 +1245,58 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
         );
 
       case 3: // Amenities & Legal
-        return _buildCard(child: _buildMultiSelectAmenities());
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.only(left: 10.w, right: 10.w),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildDropdown(
+                      'Bathroom',
+                      _selectBathroom,
+                      [
+                        "1 Bathroom",
+                        "2 Bathroom",
+                        "3 Bathroom",
+                        "4 Bathroom",
+                        "5 Bathroom",
+                        "6+ Bathroom",
+                      ],
+                      (v) {
+                        setState(() {
+                          _selectBathroom = v;
+                          _bathroomsController.text = v ?? "";
+                        });
+                      },
+                      isRequired: false,
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: _buildDropdown(
+                      'Kitchen',
+                      _selectkitchen,
+                      ["1 Kitchen", "2 Kitchen", "3 Kitchen", "4+ Kitchen"],
+                      (v) {
+                        setState(() {
+                          _selectkitchen = v;
+                          _kitchenController.text = v ?? "";
+                        });
+                      },
+                      isRequired: false,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 10.h),
+            _buildCard(child: _buildMultiSelectAmenities()),
+          ],
+        );
 
-      case 4: // Around The Project
+      case 4:
         return _buildCard(
           child: Column(
             children: [
@@ -1936,7 +1355,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                 'RERA Number',
                 _reraController,
                 type: TextInputType.number,
-                isRequired: true,
+                isRequired: isBroker == true ? true : false,
               ),
               const SizedBox(height: 12),
               _buildDropdown(
@@ -1959,7 +1378,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                 icon: const Icon(Icons.add_photo_alternate),
                 label: const Text('Add Photos'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFF5722),
+                  backgroundColor: const Color(0xFF24ADD7),
                   foregroundColor: Colors.white,
                   minimumSize: const Size(double.infinity, 52),
                   shape: RoundedRectangleBorder(
@@ -2101,7 +1520,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          label + (isRequired ? " *" : ""),
+          label + (isRequired ? "" : ""),
           style: const TextStyle(
             fontSize: 13.5,
             color: Colors.grey,
@@ -2139,7 +1558,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(
-                color: Color(0xFFFF5722),
+                color: Color(0xFF24ADD7),
                 width: 1.8,
               ),
             ),
@@ -2236,7 +1655,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.r),
               borderSide: const BorderSide(
-                color: Color(0xFFFF5722),
+                color: Color(0xFF24ADD7),
                 width: 1.8,
               ),
             ),
@@ -2292,6 +1711,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
             setState(() {
               selectedCity = v;
               selectedLocality = null;
+              localityList = [];
               final selectedCityObj = cities.cast<dynamic>().firstWhere(
                 (c) =>
                     (c.cityName ?? "").toString().trim().toLowerCase() ==
@@ -2331,8 +1751,8 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
         return FilterChip(
           label: Text(amenity, style: const TextStyle(fontSize: 13)),
           selected: selected,
-          selectedColor: const Color(0xFFFF5722).withOpacity(0.15),
-          checkmarkColor: const Color(0xFFFF5722),
+          selectedColor: const Color(0xFF24ADD7).withOpacity(0.15),
+          checkmarkColor: const Color(0xFF24ADD7),
           backgroundColor: Colors.grey.shade100,
           onSelected: (sel) {
             setState(() {

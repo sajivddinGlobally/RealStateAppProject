@@ -36,7 +36,7 @@ class _SavedDetailsPageState extends State<SavedDetailsPage> {
     bool agreeToContact = false;
     bool interestedHomeLoan = false; // Ye optional rahega
     bool isLoading = false;
-    const primaryColor = Color(0xffFF6A2A);
+    const primaryColor = Color(0xFF24ADD7);
 
     showModalBottomSheet(
       context: context,
@@ -290,7 +290,7 @@ class _SavedDetailsPageState extends State<SavedDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xffFF6A2A);
+    const primaryColor = Color(0xFF24ADD7);
     final data = widget.savedData.propertyId;
 
     return Scaffold(

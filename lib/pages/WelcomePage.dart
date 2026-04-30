@@ -86,7 +86,7 @@ class _WelcomeNamePageState extends State<WelcomeNamePage> {
                         child: const Text(
                           "SKIP",
                           style: TextStyle(
-                            color: Color(0xffE86A34),
+                            color: Color(0xFF24ADD7),
                             fontWeight: FontWeight.w600,
                             fontSize: 14,
                           ),
@@ -206,7 +206,7 @@ class _WelcomeNamePageState extends State<WelcomeNamePage> {
                               height: 55,
                               width: double.infinity,
                               decoration: BoxDecoration(
-                                color: const Color(0xffE86A34),
+                                color: const Color(0xFF24ADD7),
                                 borderRadius: BorderRadius.circular(30),
                               ),
                               child: const Center(

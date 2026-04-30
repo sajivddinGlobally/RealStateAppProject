@@ -99,7 +99,7 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
   @override
   Widget build(BuildContext context) {
     List<Rating>? ratings;
-    const primaryColor = Color(0xFFFF5722);
+    const primaryColor = Color(0xFF24ADD7);
     final myRequestProvider = ref.watch(myRequestBookingServiceContorller);
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
@@ -181,7 +181,7 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
               return Center(child: Text("Error: $error"));
             },
             loading: () => const Center(
-              child: CircularProgressIndicator(color: Color(0xFFFF5722)),
+              child: CircularProgressIndicator(color: Color(0xFF24ADD7)),
             ),
           ),
         ),
@@ -931,6 +931,14 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
                     ),
                   ),
                   SizedBox(height: 12.h),
+                  Text(
+                    "Upload Problem Solve Photo",
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14.sp,
+                    ),
+                  ),
+                  SizedBox(height: 10.h),
                   Center(
                     child: Container(
                       width: double.infinity,
@@ -963,7 +971,9 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
                         ),
                         child: !showImage
                             ? InkWell(
-                                onTap: () => showImagePicker(),
+                                onTap: isAlreadyRated
+                                    ? null
+                                    : () => showImagePicker(),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [

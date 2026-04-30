@@ -117,7 +117,7 @@ class _LoanServiceDetailsPageState extends State<LoanServiceDetailsPage> {
             expandedHeight: 280.h,
             pinned: true,
             elevation: 0,
-            backgroundColor: Color(0xFFFF6725),
+            backgroundColor: Color(0xFF24ADD7),
             surfaceTintColor: Colors.white,
             forceElevated: true,
             leading: Container(
@@ -145,7 +145,7 @@ class _LoanServiceDetailsPageState extends State<LoanServiceDetailsPage> {
                         color: Colors.grey.shade200,
                         child: Center(
                           child: CircularProgressIndicator(
-                            color: Color(0xFFFF6725),
+                            color: Color(0xFF24ADD7),
                           ),
                         ),
                       );
@@ -172,7 +172,7 @@ class _LoanServiceDetailsPageState extends State<LoanServiceDetailsPage> {
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFFFF6725),
+                      color: Color(0xFF24ADD7),
                     ),
                   ),
 
@@ -188,7 +188,7 @@ class _LoanServiceDetailsPageState extends State<LoanServiceDetailsPage> {
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFFFF6725),
+                      color: Color(0xFF24ADD7),
                     ),
                   ),
                   SizedBox(height: 12.h),
@@ -210,7 +210,7 @@ class _LoanServiceDetailsPageState extends State<LoanServiceDetailsPage> {
                           vertical: 5.h,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.orange,
+                          color: Color(0xFF24ADD7),
                           borderRadius: BorderRadius.circular(20.r),
                         ),
                         child: Text(
@@ -295,7 +295,7 @@ class _LoanServiceDetailsPageState extends State<LoanServiceDetailsPage> {
                                 style: TextStyle(
                                   fontSize: 18.sp,
                                   fontWeight: FontWeight.w600,
-                                  color: Color(0xFFFF6725),
+                                  color: Color(0xFF24ADD7),
                                 ),
                               ),
                               SizedBox(height: 10.h),
@@ -452,7 +452,7 @@ class _LoanServiceDetailsPageState extends State<LoanServiceDetailsPage> {
                                 height: 44.h,
                                 child: ElevatedButton(
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.orange,
+                                    backgroundColor: Color(0xFF24ADD7),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(30.r),
                                     ),
@@ -569,7 +569,7 @@ class _LoanServiceDetailsPageState extends State<LoanServiceDetailsPage> {
                             Icon(
                               workSteps[index].icon,
                               size: 28.sp,
-                              color: Colors.orange,
+                              color: Color(0xFF24ADD7),
                             ),
                             SizedBox(height: 8.h),
                             Text(
@@ -653,7 +653,7 @@ class _LoanServiceDetailsPageState extends State<LoanServiceDetailsPage> {
                       height: 45.h,
                       width: 220.w,
                       decoration: BoxDecoration(
-                        color: Colors.orange,
+                        color: Color(0xFF24ADD7),
                         borderRadius: BorderRadius.circular(30.r),
                       ),
                       child: Center(
@@ -774,7 +774,7 @@ class _LoanServiceDetailsPageState extends State<LoanServiceDetailsPage> {
                           style: TextStyle(
                             fontSize: 19.sp,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFFFF6725),
+                            color: Color(0xFF24ADD7),
                           ),
                         ),
                         SizedBox(height: 10.h),
@@ -901,7 +901,7 @@ class _LoanServiceDetailsPageState extends State<LoanServiceDetailsPage> {
                           height: 44.h,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.orange,
+                              backgroundColor: Color(0xFF24ADD7),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(30.r),
                               ),
@@ -911,7 +911,10 @@ class _LoanServiceDetailsPageState extends State<LoanServiceDetailsPage> {
                             },
                             child: Text(
                               "Calculate Your EMI",
-                              style: TextStyle(fontSize: 14.sp),
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ),
@@ -1023,13 +1026,16 @@ class _LoanServiceDetailsPageState extends State<LoanServiceDetailsPage> {
                     height: 45.h,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange,
+                        backgroundColor: Color(0xFF24ADD7),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30.r),
                         ),
                       ),
                       onPressed: () {},
-                      child: Text("Check Bank Offers"),
+                      child: Text(
+                        "Check Bank Offers",
+                        style: TextStyle(color: Colors.white),
+                      ),
                     ),
                   ),
 
@@ -1092,7 +1098,7 @@ class _LoanServiceDetailsPageState extends State<LoanServiceDetailsPage> {
       padding: EdgeInsets.only(bottom: 6.h),
       child: Row(
         children: [
-          const Icon(Icons.check, color: Color(0xFFFF6725), size: 16),
+          const Icon(Icons.check, color: Color(0xFF24ADD7), size: 16),
           SizedBox(width: 6.w),
           Expanded(
             child: Text(text, style: TextStyle(fontSize: 13.sp)),

@@ -375,7 +375,30 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         /// LOGO
-                        Image.asset("assets/logo.png", width: 150),
+                        Container(
+                          height: 110,
+                          width: 140,
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.08),
+                                blurRadius: 12,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                            border: Border.all(color: Colors.grey.shade200),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(14),
+                            child: Image.asset(
+                              "assets/png/real_logo.png",
+                              fit: BoxFit.contain, // 👉 image stretch nahi hogi
+                            ),
+                          ),
+                        ),
 
                         const SizedBox(height: 20),
 
@@ -409,7 +432,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                           autoDisposeControllers: false,
                           keyboardType: TextInputType.number,
                           animationType: AnimationType.fade,
-                          cursorColor: const Color(0xffE86A34),
+                          cursorColor: const Color(0xFF24ADD7),
                           textStyle: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -422,8 +445,8 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                             activeFillColor: Colors.white,
                             inactiveFillColor: Colors.white,
                             selectedFillColor: Colors.white,
-                            activeColor: const Color(0xffE86A34),
-                            selectedColor: const Color(0xffE86A34),
+                            activeColor: const Color(0xFF24ADD7),
+                            selectedColor: const Color(0xFF24ADD7),
                             inactiveColor: Colors.grey.shade300,
                           ),
                           enableActiveFill: true,
@@ -441,7 +464,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                                 child: const Text(
                                   "Resend OTP",
                                   style: TextStyle(
-                                    color: Color(0xffE86A34),
+                                    color: Color(0xFF24ADD7),
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -449,7 +472,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                             : Text(
                                 "00:${_start.toString().padLeft(2, '0')}",
                                 style: const TextStyle(
-                                  color: Color(0xffE86A34),
+                                  color: Color(0xFF24ADD7),
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -465,7 +488,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                             decoration: BoxDecoration(
                               color: isVerify
                                   ? Colors.grey
-                                  : const Color(0xffE86A34),
+                                  : const Color(0xFF24ADD7),
                               borderRadius: BorderRadius.circular(30),
                             ),
                             child: const Center(
@@ -492,7 +515,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                               TextSpan(
                                 text: "Password",
                                 style: TextStyle(
-                                  color: Color(0xffE86A34),
+                                  color: Color(0xFF24ADD7),
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -511,7 +534,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                               TextSpan(
                                 text: "Get help",
                                 style: TextStyle(
-                                  color: Color(0xffE86A34),
+                                  color: Color(0xFF24ADD7),
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
