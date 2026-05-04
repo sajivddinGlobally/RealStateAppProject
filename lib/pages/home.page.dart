@@ -760,7 +760,6 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
                         autoPlayAnimationDuration: const Duration(
                           milliseconds: 800,
                         ),
-
                         onPageChanged: (index, reason) {
                           setState(() {
                             currentBannerIndex = index;
@@ -2335,7 +2334,8 @@ class PropertyCard extends StatelessWidget {
               children: [
                 // TITLE
                 Text(
-                  "${data.bedRoom} BHK ${data.propertyType}",
+                  // "${data.bedRoom} BHK ${data.propertyType}",
+                  "${data.bedRoom}  ${data.propertyType}",
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
@@ -2364,8 +2364,10 @@ class PropertyCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _spec(Icons.king_bed, "${data.bedRoom} Beds"),
-                    _spec(Icons.bathtub, "${data.bathrooms} Baths"),
+                    // _spec(Icons.king_bed, "${data.bedRoom} Beds"),
+                    _spec(Icons.king_bed, "${data.bedRoom} "),
+                    // _spec(Icons.bathtub, "${data.bathrooms} Baths"),
+                    _spec(Icons.bathtub, "${data.bathrooms} "),
                     _spec(Icons.square_foot, "${data.area} sqft"),
                     _spec(Icons.chair, data.furnishing ?? ''),
                   ],

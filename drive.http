@@ -1,9 +1,13 @@
-@token = Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTM4ZmY3MzRiMDc4OGQ5NTJjYmRkYjAiLCJlbWFpbCI6InNhaGlsam95YUBnbWFpbC5jb20iLCJpYXQiOjE3NjUzNDM5NDQsImV4cCI6MTc5Njg3OTk0NH0.TJLeynyh-xSNoiMFTEkdin5x4zEJw1yi05nvK318f-0
+@token = Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTVmNDYyYWJmYmMwYmViOWEyYWE2NzkiLCJlbWFpbCI6ImFzaWZAZ21haWwuY29tIiwiaWF0IjoxNzc3ODg1MTQ0LCJleHAiOjE4MDk0MjExNDR9.ooq5ZwRcSl98Y_3rwVTPkQ7D1qtYtcvf_PkLRiNRa7o
 @url = https://api.propertyleinnovation.com/api/v1
 //@url =  https://majesticlivingproperties.com/api/v1
 //@url =  https://api.propertyleinnovation.com/api/v1
 
 # 
+
+/user/BookingServices
+
+
 post {{url}}/user/userRegister
 Content-type: application/json
 

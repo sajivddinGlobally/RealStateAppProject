@@ -26,8 +26,10 @@ class CreatePropertyBodyModel {
   String? ded;
   String? brn;
   String? bathrooms;
+  String? kitchen;
   String? furnishing;
   String? description;
+  String? isBroker;
   AveneuOverView? aveneuOverView;
 
   String? propertyAddress;
@@ -50,11 +52,13 @@ class CreatePropertyBodyModel {
     this.ded,
     this.brn,
     this.bathrooms,
+    this.kitchen,
     this.furnishing,
     this.description,
     this.aveneuOverView,
     this.propertyAddress,
     this.uploadedPhotos,
+    this.isBroker,
   });
 
   factory CreatePropertyBodyModel.fromJson(Map<String, dynamic> json) =>
@@ -80,6 +84,7 @@ class CreatePropertyBodyModel {
         ded: json["ded"],
         brn: json["brn"],
         bathrooms: json["bathrooms"],
+        kitchen: json["kitchen"],
         furnishing: json["furnishing"],
         description: json["description"],
         aveneuOverView: json["aveneuOverView"] == null
@@ -89,6 +94,8 @@ class CreatePropertyBodyModel {
         uploadedPhotos: json["uploadedPhotos"] == null
             ? []
             : List<String>.from(json["uploadedPhotos"]!.map((x) => x)),
+
+        isBroker: json['isBroker '],
       );
 
   Map<String, dynamic> toJson() => {
@@ -111,6 +118,7 @@ class CreatePropertyBodyModel {
     "ded": ded,
     "brn": brn,
     "bathrooms": bathrooms,
+    "kitchen": kitchen,
     "furnishing": furnishing,
     "description": description,
     "aveneuOverView": aveneuOverView?.toJson(),
@@ -118,6 +126,7 @@ class CreatePropertyBodyModel {
     "uploadedPhotos": uploadedPhotos == null
         ? []
         : List<dynamic>.from(uploadedPhotos!.map((x) => x)),
+    "isBroker": isBroker,
   };
 }
 

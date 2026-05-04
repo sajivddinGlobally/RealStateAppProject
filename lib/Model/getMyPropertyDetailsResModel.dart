@@ -293,7 +293,9 @@ class Data {
     String? ded;
     String? brn;
     String? bathrooms;
+    String? kitchen;
     String? furnishing;
+    String? isBroker;
     String? description;
     List<AroundProject>? aroundProject;
     String? propertyAddress;
@@ -321,6 +323,8 @@ class Data {
         this.price,
         this.area,
         this.bedRoom,
+        this.kitchen,
+        this.isBroker,
         this.amenities,
         this.permitNo,
         this.rera,
@@ -356,6 +360,8 @@ class Data {
         price: json["price"],
         area: json["area"],
         bedRoom: json["bedRoom"],
+        kitchen: json["kitchen"],
+        isBroker: json["isBroker"],
         amenities: json["amenities"] == null ? [] : List<String>.from(json["amenities"]!.map((x) => x)),
         permitNo: json["permitNo"],
         rera: json["rera"],
@@ -391,6 +397,8 @@ class Data {
         "price": price,
         "area": area,
         "bedRoom": bedRoom,
+        "kitchen": kitchen,
+        "isBroker": isBroker,
         "amenities": amenities == null ? [] : List<dynamic>.from(amenities!.map((x) => x)),
         "permitNo": permitNo,
         "rera": rera,

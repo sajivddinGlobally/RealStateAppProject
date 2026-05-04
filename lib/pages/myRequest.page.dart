@@ -871,7 +871,7 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Rate Your Experience",
+                    isAlreadyRated ? "Your Review" : "Rate Your Experience",
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.bold,
                       fontSize: 14.sp,
@@ -932,7 +932,9 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
                   ),
                   SizedBox(height: 12.h),
                   Text(
-                    "Upload Problem Solve Photo",
+                    isAlreadyRated
+                        ? "Problem Solve Photo"
+                        : "Upload Problem Solve Photo",
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.bold,
                       fontSize: 14.sp,

@@ -128,6 +128,8 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
   final TextEditingController _propertyAddressController =
       TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController localityController = TextEditingController();
+  bool? isBroker;
 
   bool _isLoading = false;
   String? selectedLocality;
@@ -165,7 +167,10 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
       selectedFurnishing = _normalizeFurnishing(data.furnishing);
       _priceController.text = data.price ?? '';
       _bedroomsController.text = data.bedRoom ?? '';
+      _selectedBhk = data.bedRoom ?? "";
       _bathroomsController.text = data.bathrooms ?? '';
+      _selectBathroom = data.bathrooms ?? "";
+      _selectkitchen = data.kitchen ?? "";
       _areaController.text = data.area ?? '';
       _permitNoController.text = data.permitNo ?? '';
       _reraController.text = data.rera ?? '';
@@ -173,7 +178,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
       _brnController.text = data.brn ?? '';
       _propertyAddressController.text = data.propertyAddress ?? '';
       _descriptionController.text = data.description ?? '';
-
+      isBroker = (data.isBroker == "1" || data.isBroker == "yes");
       final overview = data.aveneuOverView;
       _projectAreaController.text = overview?.projectArea ?? '';
       _unitSizesController.text = overview?.size ?? '';
@@ -410,6 +415,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
         area: _areaController.text.trim(),
         bedRoom: _bedroomsController.text.trim(),
         bathrooms: _bathroomsController.text.trim(),
+        kitchen: _selectkitchen,
         furnishing: selectedFurnishing?.toLowerCase(),
         amenities: selectedAmenities,
         aroundProject: aroundProjects,
@@ -421,6 +427,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
         aveneuOverView: aveneu,
         propertyAddress: _propertyAddressController.text.trim(),
         uploadedPhotos: finalImageUrls,
+        isBroker: isBroker == true ? "yes" : "no",
       );
 
       dynamic response;
@@ -455,6 +462,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
             area: _areaController.text.trim(),
             bedRoom: _bedroomsController.text.trim(),
             bathrooms: _bathroomsController.text.trim(),
+            kitchen: _selectkitchen,
             furnishing: selectedFurnishing!.toLowerCase(),
             amenities: selectedAmenities,
             aroundProject: aroundProjects,
@@ -466,6 +474,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
             aveneuOverView: aveneu,
             propertyAddress: _propertyAddressController.text.trim(),
             uploadedPhotos: finalImageUrls,
+            isBroker: isBroker == true ? "yes" : "no",
           ),
         );
       } else {
@@ -557,9 +566,6 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
       });
     }
   }
-
-  final TextEditingController localityController = TextEditingController();
-  bool? isBroker;
 
   @override
   Widget build(BuildContext context) {
@@ -959,11 +965,11 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                 ),
               SizedBox(height: 12.h),
               Text(
-                "Are You Broker",
+                "Are You Broker?",
                 style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1,
+                  fontWeight: FontWeight.w400,
                   fontSize: 14.sp,
+                  color: Colors.black,
                 ),
               ),
               SizedBox(height: 12.h),
@@ -996,7 +1002,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                               color: isBroker == true
                                   ? Colors.white
                                   : Colors.black,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w400,
                             ),
                           ),
                         ),
@@ -1033,7 +1039,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                               color: isBroker == false
                                   ? Colors.white
                                   : Colors.black,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w400,
                             ),
                           ),
                         ),

@@ -31,6 +31,7 @@ class _HomeServiceDetailsPageState
   String? Id;
   static const primaryColor = Color(0xFF24ADD7);
   static const darkBlue = Color(0xff0E1A35);
+  List<bool> isAddedList = List.generate(2, (index) => false);
 
   File? selectedImage;
   final ImagePicker _picker = ImagePicker();
@@ -675,6 +676,28 @@ class _HomeServiceDetailsPageState
     );
   }
 
+  String timeAgo(int timestamp) {
+    final now = DateTime.now();
+    final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
+    final diff = now.difference(date);
+
+    if (diff.inSeconds < 60) {
+      return "Just now";
+    } else if (diff.inMinutes < 60) {
+      return "${diff.inMinutes} min ago";
+    } else if (diff.inHours < 24) {
+      return "${diff.inHours} hrs ago";
+    } else if (diff.inDays < 7) {
+      return "${diff.inDays} days ago";
+    } else if (diff.inDays < 30) {
+      return "${(diff.inDays / 7).floor()} weeks ago";
+    } else if (diff.inDays < 365) {
+      return "${(diff.inDays / 30).floor()} months ago";
+    } else {
+      return "${(diff.inDays / 365).floor()} years ago";
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final homeServiceDetislState = ref.watch(
@@ -682,6 +705,8 @@ class _HomeServiceDetailsPageState
     );
     return homeServiceDetislState.when(
       data: (data) {
+        final reviews = data.data?.reviewsList ?? [];
+
         return Scaffold(
           backgroundColor: Colors.white, // Pure white for a cleaner look
           bottomNavigationBar: _buildBottomAction(
@@ -775,7 +800,7 @@ class _HomeServiceDetailsPageState
                             ),
                             SizedBox(width: 4.w),
                             Text(
-                              "4.8",
+                              data.data!.averageRating.toString(),
                               style: GoogleFonts.inter(
                                 fontSize: 15.sp,
                                 fontWeight: FontWeight.bold,
@@ -783,7 +808,7 @@ class _HomeServiceDetailsPageState
                               ),
                             ),
                             Text(
-                              " (1,240 Reviews)",
+                              " (${data.data!.totalReviews ?? 0} Reviews)",
                               style: GoogleFonts.inter(
                                 fontSize: 13.sp,
                                 color: Colors.grey.shade500,
@@ -800,13 +825,54 @@ class _HomeServiceDetailsPageState
                           ],
                         ),
 
-                        SizedBox(height: 20.h),
+                        SizedBox(height: 10.h),
 
                         const Divider(height: 40, thickness: 1),
 
                         /// --- Price Section ---
-                        _buildPremiumPriceCard(data.data!.serviceFee ?? 0),
-                        SizedBox(height: 30.h),
+                        Container(
+                          padding: EdgeInsets.all(20.w),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [darkBlue, darkBlue.withOpacity(0.8)],
+                            ),
+                            borderRadius: BorderRadius.circular(20.r),
+                            boxShadow: [
+                              BoxShadow(
+                                color: darkBlue.withOpacity(0.2),
+                                blurRadius: 15,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Estimated Cost",
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 13.sp,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4.h),
+                                  Text(
+                                    "₹${data.data!.serviceFee ?? 0}",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 24.sp,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 10.h),
 
                         /// --- Service Features ---
                         _serviceDetailsSection(data.data?.name ?? ""),
@@ -815,8 +881,328 @@ class _HomeServiceDetailsPageState
 
                         /// --- Trust Section ---
                         _whyChooseUs(),
+                        SizedBox(height: 30.h),
+                        ListView.builder(
+                          padding: EdgeInsets.zero,
+                          itemCount: 2,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemBuilder: (context, index) {
+                            return Container(
+                              margin: EdgeInsets.only(bottom: 10.h),
+                              padding: EdgeInsets.all(10.h),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                border: Border.all(
+                                  color: Colors.grey.shade300,
+                                  width: 1,
+                                ),
+                                borderRadius: BorderRadius.circular(16.r),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment
+                                    .start, // Image aur Text ko top se align rakha hai
+                                children: [
+                                  /// 🔹 Service Image
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(10.r),
+                                    child: Image.network(
+                                      "https://media.istockphoto.com/id/1457385092/photo/an-asian-young-technician-service-man-wearing-blue-uniform-checking-cleaning-air-conditioner.jpg?s=612x612&w=0&k=20&c=Tqu5jMzD1TKFO1Fvow6d0JMDsEGU8T3kToP706bQFQI=",
+                                      height: 70.h,
+                                      width: 70.w,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                  SizedBox(width: 12.w),
 
-                        SizedBox(height: 100.h),
+                                  /// 🔹 Service Details (Text + Price & Button)
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          "AC Maintenance Service",
+                                          style: GoogleFonts.inter(
+                                            fontSize: 13.sp,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.black87,
+                                          ),
+                                        ),
+                                        SizedBox(height: 4.h),
+                                        Text(
+                                          "Deep cleaning of filters and cooling coils",
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: GoogleFonts.inter(
+                                            color: Colors.grey.shade600,
+                                            fontSize: 10.sp,
+                                            height: 1.2,
+                                          ),
+                                        ),
+                                        SizedBox(height: 8.h),
+
+                                        /// 🔹 Price and Button Row (Niche shift kiya taaki look better lage)
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              "₹599",
+                                              style: GoogleFonts.inter(
+                                                fontSize: 14.sp,
+                                                fontWeight: FontWeight.w700,
+                                                color: const Color(0xFF24ADD7),
+                                              ),
+                                            ),
+
+                                            /// 🔹 Updated Add/Remove Button
+                                            SizedBox(
+                                              height: 32
+                                                  .h, // Height thodi compact ki
+                                              child: ElevatedButton(
+                                                style: ElevatedButton.styleFrom(
+                                                  padding: EdgeInsets.symmetric(
+                                                    horizontal: 16.w,
+                                                  ),
+                                                  backgroundColor: Colors.white,
+                                                  elevation: 0,
+                                                  side: BorderSide(
+                                                    color: isAddedList[index]
+                                                        ? Colors.red
+                                                        : const Color(
+                                                            0xFF24ADD7,
+                                                          ),
+                                                    width: 1.5,
+                                                  ),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          10.r,
+                                                        ),
+                                                  ),
+                                                ),
+                                                onPressed: () {
+                                                  setState(() {
+                                                    isAddedList[index] =
+                                                        !isAddedList[index];
+                                                  });
+                                                },
+                                                child: Text(
+                                                  isAddedList[index]
+                                                      ? "Remove"
+                                                      : "Add",
+                                                  style: GoogleFonts.inter(
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 12.sp,
+                                                    color: isAddedList[index]
+                                                        ? Colors.red
+                                                        : const Color(
+                                                            0xFF24ADD7,
+                                                          ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                        SizedBox(height: 16.h),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Customer Reviews",
+                              style: GoogleFonts.inter(
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.bold,
+                                color: darkBlue,
+                              ),
+                            ),
+                            SizedBox(height: 10.h),
+                            reviews.isEmpty
+                                ? Container(
+                                    width: double.infinity,
+                                    padding: EdgeInsets.all(20.w),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade50,
+                                      borderRadius: BorderRadius.circular(16.r),
+                                      border: Border.all(
+                                        color: Colors.grey.shade200,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Icon(
+                                          Icons.rate_review_outlined,
+                                          size: 40.sp,
+                                          color: Colors.grey.shade400,
+                                        ),
+                                        SizedBox(height: 10.h),
+                                        Text(
+                                          "No Reviews Yet",
+                                          style: GoogleFonts.inter(
+                                            fontSize: 14.sp,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.grey.shade700,
+                                          ),
+                                        ),
+                                        SizedBox(height: 6.h),
+                                        Text(
+                                          "Be the first to share your experience!",
+                                          textAlign: TextAlign.center,
+                                          style: GoogleFonts.inter(
+                                            fontSize: 12.sp,
+                                            color: Colors.grey.shade500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : ListView.builder(
+                                    padding: EdgeInsets.zero,
+                                    itemCount: reviews.length,
+                                    shrinkWrap: true,
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    itemBuilder: (context, index) {
+                                      final review = reviews[index];
+                                      return Container(
+                                        margin: EdgeInsets.only(bottom: 14.h),
+                                        padding: EdgeInsets.all(14.w),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(
+                                            16.r,
+                                          ),
+                                          border: Border.all(
+                                            color: Colors.grey.shade200,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(
+                                                0.04,
+                                              ),
+                                              blurRadius: 6,
+                                              offset: const Offset(0, 3),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                CircleAvatar(
+                                                  radius: 20.r,
+                                                  backgroundImage: NetworkImage(
+                                                    review.user!.image ??
+                                                        "https://randomuser.me/api/portraits/men/32.jpg",
+                                                  ),
+                                                ),
+                                                SizedBox(width: 10.w),
+
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        review.user!.name ??
+                                                            "N/A",
+                                                        style:
+                                                            GoogleFonts.inter(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600,
+                                                              fontSize: 13.sp,
+                                                            ),
+                                                      ),
+                                                      SizedBox(height: 2.h),
+
+                                                      /// ⭐ Rating
+                                                      Row(
+                                                        children: List.generate(
+                                                          5,
+                                                          (starIndex) {
+                                                            final rating =
+                                                                review.rating ??
+                                                                0;
+
+                                                            return Icon(
+                                                              starIndex < rating
+                                                                  ? Icons.star
+                                                                  : Icons
+                                                                        .star_border,
+                                                              size: 16,
+                                                              color:
+                                                                  Colors.orange,
+                                                            );
+                                                          },
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+
+                                                Text(
+                                                  timeAgo(
+                                                    review.createdAt ?? 0,
+                                                  ),
+                                                  style: TextStyle(
+                                                    fontSize: 11.sp,
+                                                    color: Colors.grey,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+
+                                            SizedBox(height: 10.h),
+
+                                            /// ✍️ Review Text
+                                            Text(
+                                              // "Service was very fast and professional. Technician was polite and fixed the issue quickly.",
+                                              review.review ?? "No Review",
+                                              style: GoogleFonts.inter(
+                                                fontSize: 12.sp,
+                                                color: Colors.grey.shade700,
+                                                height: 1.4,
+                                              ),
+                                            ),
+
+                                            SizedBox(height: 10.h),
+
+                                            /// 📸 Review Image (Optional)
+                                            ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(10.r),
+                                              child: Image.network(
+                                                review.image ??
+                                                    "https://images.unsplash.com/photo-1581578731548-c64695cc6952",
+                                                height: 120.h,
+                                                width: double.infinity,
+                                                fit: BoxFit.cover,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -895,61 +1281,6 @@ class _HomeServiceDetailsPageState
             style: GoogleFonts.inter(
               fontSize: 13.sp,
               fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPremiumPriceCard(int amount) {
-    return Container(
-      padding: EdgeInsets.all(20.w),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [darkBlue, darkBlue.withOpacity(0.8)]),
-        borderRadius: BorderRadius.circular(20.r),
-        boxShadow: [
-          BoxShadow(
-            color: darkBlue.withOpacity(0.2),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Estimated Cost",
-                style: TextStyle(color: Colors.white70, fontSize: 13.sp),
-              ),
-              SizedBox(height: 4.h),
-              Text(
-                "₹${amount}",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24.sp,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-            decoration: BoxDecoration(
-              color: primaryColor,
-              borderRadius: BorderRadius.circular(10.r),
-            ),
-            child: const Text(
-              "SAVE 20%",
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
             ),
           ),
         ],

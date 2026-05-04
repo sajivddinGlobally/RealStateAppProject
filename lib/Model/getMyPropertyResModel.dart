@@ -72,11 +72,13 @@ class ListElement {
     String? ded;
     String? brn;
     String? bathrooms;
+    String? kitchen;
     String? furnishing;
     String? description;
     List<AroundProjectGet>? aroundProject;
     AveneuOverViewGet? aveneuOverView;
     String? propertyAddress;
+    String? isBroker;
     List<String>? uploadedPhotos;
     String? status;
     bool? verifyed;
@@ -101,6 +103,7 @@ class ListElement {
         this.price,
         this.area,
         this.bedRoom,
+        this.kitchen,
         this.amenities,
         this.permitNo,
         this.rera,
@@ -112,6 +115,7 @@ class ListElement {
         this.aroundProject,
         this.aveneuOverView,
         this.propertyAddress,
+        this.isBroker,
         this.uploadedPhotos,
         this.status,
         this.verifyed,
@@ -134,6 +138,7 @@ class ListElement {
         listingCategory: json["listingCategory"],
         localityArea: json["localityArea"],
         city: json["city"],
+        kitchen: json["kitchen"],
         price: json["price"],
         area: json["area"],
         bedRoom: json["bedRoom"],
@@ -161,6 +166,7 @@ class ListElement {
         updatedAt: json["updatedAt"],
         slug: json["slug"],
         v: json["__v"],
+        isBroker: json['isBroker']
     );
 
     Map<String, dynamic> toJson() => {
@@ -173,6 +179,7 @@ class ListElement {
         "price": price,
         "area": area,
         "bedRoom": bedRoom,
+        "kitchen": kitchen,
         "amenities": amenities == null ? [] : List<dynamic>.from(amenities!.map((x) => x)),
         "permitNo": permitNo,
         "rera": rera,
@@ -197,6 +204,7 @@ class ListElement {
         "updatedAt": updatedAt,
         "slug": slug,
         "__v": v,
+        "isBroker":isBroker
     };
 }
 
