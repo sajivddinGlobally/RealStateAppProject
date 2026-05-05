@@ -468,22 +468,23 @@ class _MyPropertyDetalsPageState extends ConsumerState<MyPropertyDetalsPage> {
               ),
 
               /// 🔥 DOT INDICATOR
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 10.h),
-                  child: Center(
-                    child: AnimatedSmoothIndicator(
-                      activeIndex: _currentIndex,
-                      count: photos.isEmpty ? 1 : photos.length,
-                      effect: ExpandingDotsEffect(
-                        activeDotColor: primary,
-                        dotHeight: 6,
-                        dotWidth: 6,
+              if (photos.length > 1)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 10.h),
+                    child: Center(
+                      child: AnimatedSmoothIndicator(
+                        activeIndex: _currentIndex,
+                        count: photos.isEmpty ? 1 : photos.length,
+                        effect: WormEffect(
+                          activeDotColor: primary,
+                          dotHeight: 6,
+                          dotWidth: 6,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
 
               /// 🔥 CONTENT
               SliverToBoxAdapter(
