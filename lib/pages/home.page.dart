@@ -499,7 +499,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
-                                      const SearchPropertyPage(),
+                                       SearchPropertyPage(),
                                 ),
                               );
                             },

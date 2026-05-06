@@ -884,10 +884,11 @@ class _HomeServiceDetailsPageState
                         SizedBox(height: 30.h),
                         ListView.builder(
                           padding: EdgeInsets.zero,
-                          itemCount: 2,
+                          itemCount: data.data?.pricingOptions?.length,
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           itemBuilder: (context, index) {
+                            final item = data.data!.pricingOptions![index];
                             return Container(
                               margin: EdgeInsets.only(bottom: 10.h),
                               padding: EdgeInsets.all(10.h),
@@ -907,10 +908,25 @@ class _HomeServiceDetailsPageState
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(10.r),
                                     child: Image.network(
-                                      "https://media.istockphoto.com/id/1457385092/photo/an-asian-young-technician-service-man-wearing-blue-uniform-checking-cleaning-air-conditioner.jpg?s=612x612&w=0&k=20&c=Tqu5jMzD1TKFO1Fvow6d0JMDsEGU8T3kToP706bQFQI=",
+                                      item.image ??
+                                          "https://media.istockphoto.com/id/1457385092/photo/an-asian-young-technician-service-man-wearing-blue-uniform-checking-cleaning-air-conditioner.jpg?s=612x612&w=0&k=20&c=Tqu5jMzD1TKFO1Fvow6d0JMDsEGU8T3kToP706bQFQI=",
                                       height: 70.h,
                                       width: 70.w,
                                       fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Container(
+                                          height: 70.h,
+                                          width: 70.w,
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey,
+                                          ),
+                                          child: Center(
+                                            child: Image.network(
+                                              "https://media.istockphoto.com/id/1457385092/photo/an-asian-young-technician-service-man-wearing-blue-uniform-checking-cleaning-air-conditioner.jpg?s=612x612&w=0&k=20&c=Tqu5jMzD1TKFO1Fvow6d0JMDsEGU8T3kToP706bQFQI=",
+                                            ),
+                                          ),
+                                        );
+                                      },
                                     ),
                                   ),
                                   SizedBox(width: 12.w),
@@ -923,7 +939,7 @@ class _HomeServiceDetailsPageState
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Text(
-                                          "AC Maintenance Service",
+                                          item.title ?? "",
                                           style: GoogleFonts.inter(
                                             fontSize: 13.sp,
                                             fontWeight: FontWeight.w600,
@@ -932,7 +948,7 @@ class _HomeServiceDetailsPageState
                                         ),
                                         SizedBox(height: 4.h),
                                         Text(
-                                          "Deep cleaning of filters and cooling coils",
+                                          item.description ?? "No Description",
                                           maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
                                           style: GoogleFonts.inter(
@@ -945,28 +961,29 @@ class _HomeServiceDetailsPageState
 
                                         /// 🔹 Price and Button Row (Niche shift kiya taaki look better lage)
                                         Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
                                           children: [
-                                            Text(
-                                              "₹599",
-                                              style: GoogleFonts.inter(
-                                                fontSize: 14.sp,
-                                                fontWeight: FontWeight.w700,
-                                                color: const Color(0xFF24ADD7),
+                                            Expanded(
+                                              child: Text(
+                                                "${item.price ?? ""}",
+                                                overflow: TextOverflow.ellipsis,
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 14.sp,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: const Color(
+                                                    0xFF24ADD7,
+                                                  ),
+                                                ),
                                               ),
                                             ),
 
-                                            /// 🔹 Updated Add/Remove Button
+                                            SizedBox(width: 10),
+
                                             SizedBox(
-                                              height: 32
-                                                  .h, // Height thodi compact ki
+                                              height: 32.h,
                                               child: ElevatedButton(
                                                 style: ElevatedButton.styleFrom(
                                                   padding: EdgeInsets.symmetric(
-                                                    horizontal: 16.w,
+                                                    horizontal: 12.w,
                                                   ),
                                                   backgroundColor: Colors.white,
                                                   elevation: 0,
@@ -1185,17 +1202,6 @@ class _HomeServiceDetailsPageState
                                             SizedBox(height: 10.h),
 
                                             /// 📸 Review Image (Optional)
-                                            ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(10.r),
-                                              child: Image.network(
-                                                review.image ??
-                                                    "https://images.unsplash.com/photo-1581578731548-c64695cc6952",
-                                                height: 120.h,
-                                                width: double.infinity,
-                                                fit: BoxFit.cover,
-                                              ),
-                                            ),
                                           ],
                                         ),
                                       );
