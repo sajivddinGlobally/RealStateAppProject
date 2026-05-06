@@ -31,7 +31,38 @@ class _HomeServiceDetailsPageState
   String? Id;
   static const primaryColor = Color(0xFF24ADD7);
   static const darkBlue = Color(0xff0E1A35);
-  List<bool> isAddedList = List.generate(2, (index) => false);
+  // List<bool> isAddedList = List.generate(2, (index) => false);
+  List<dynamic> cartItems = [];
+
+  void addToCart(dynamic item) {
+    final exists = cartItems.any((e) => e.id == item.id);
+
+    if (!exists) {
+      setState(() {
+        cartItems.add(item);
+      });
+    }
+  }
+
+  void removeFromCart(dynamic item) {
+    setState(() {
+      cartItems.removeWhere((e) => e.id == item.id);
+    });
+  }
+
+  bool isItemAdded(dynamic item) {
+    return cartItems.any((e) => e.id == item.id);
+  }
+
+  int get cartTotal {
+    int total = 0;
+
+    for (var item in cartItems) {
+      total += int.tryParse(item.price.toString()) ?? 0;
+    }
+
+    return total;
+  }
 
   File? selectedImage;
   final ImagePicker _picker = ImagePicker();
@@ -114,14 +145,15 @@ class _HomeServiceDetailsPageState
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withOpacity(0.5),
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
             return DraggableScrollableSheet(
               expand: false,
-              initialChildSize: 0.8,
+              initialChildSize: 0.7,
               minChildSize: 0.5,
-              maxChildSize: 0.95,
+              maxChildSize: 0.90,
               builder: (context, scrollController) {
                 return Container(
                   decoration: const BoxDecoration(
@@ -138,7 +170,7 @@ class _HomeServiceDetailsPageState
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            currentPage == 1
+                            currentPage > 0
                                 ? IconButton(
                                     onPressed: () {
                                       pageController.previousPage(
@@ -147,7 +179,7 @@ class _HomeServiceDetailsPageState
                                         ),
                                         curve: Curves.easeInOut,
                                       );
-                                      setState(() => currentPage = 0);
+                                      setState(() => currentPage--);
                                     },
                                     icon: const Icon(
                                       Icons.arrow_back_ios,
@@ -180,6 +212,252 @@ class _HomeServiceDetailsPageState
                           physics: const NeverScrollableScrollPhysics(),
                           children: [
                             /// ✅ STEP 1
+                            cartItems.isEmpty
+                                ? Container(
+                                    width: double.infinity,
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: 25.h,
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Icon(
+                                          Icons.shopping_cart_outlined,
+                                          size: 40.sp,
+                                          color: Colors.grey.shade400,
+                                        ),
+
+                                        SizedBox(height: 10.h),
+
+                                        Text(
+                                          "Your cart is empty",
+                                          style: TextStyle(
+                                            fontSize: 14.sp,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.grey.shade700,
+                                          ),
+                                        ),
+                                        SizedBox(height: 5.h),
+                                        Text(
+                                          "Add services to continue",
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 11.sp,
+                                            color: Colors.grey.shade500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : Container(
+                                    padding: EdgeInsets.all(20.w),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(24.r),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(.08),
+                                          blurRadius: 12.r,
+                                          spreadRadius: 1,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        /// Cart Title
+                                        Text(
+                                          "Cart",
+                                          style: TextStyle(
+                                            fontSize: 20.sp, // 26 -> 20
+                                            fontWeight: FontWeight.w700,
+                                            color: const Color(0xff1C2434),
+                                          ),
+                                        ),
+
+                                        SizedBox(height: 25.h),
+                                        Column(
+                                          children: cartItems.map((item) {
+                                            return Padding(
+                                              padding: EdgeInsets.only(
+                                                bottom: 8.h,
+                                              ),
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Expanded(
+                                                    child: Text(
+                                                      item.title ?? "",
+                                                      style: TextStyle(
+                                                        fontSize:
+                                                            14.sp, // 18 -> 14
+                                                        color: const Color(
+                                                          0xff5C6474,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    "₹${item.price}",
+                                                    style: TextStyle(
+                                                      fontSize:
+                                                          15.sp, // 18 -> 15
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                      color: const Color(
+                                                        0xff1C2434,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          }).toList(),
+                                        ),
+
+                                        const Divider(),
+
+                                        SizedBox(height: 10.h),
+
+                                        /// Items Total
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              "Items Total",
+                                              style: TextStyle(
+                                                fontSize: 14.sp, // 18 -> 14
+                                                color: const Color(0xff70798B),
+                                              ),
+                                            ),
+
+                                            Text(
+                                              "₹$cartTotal",
+                                              style: TextStyle(
+                                                fontSize: 14.sp, // 18 -> 14
+                                                fontWeight: FontWeight.w600,
+                                                color: const Color(0xff445063),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+
+                                        SizedBox(height: 14.h),
+
+                                        /// Service Charge
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              "Service Charge",
+                                              style: TextStyle(
+                                                fontSize: 14.sp, // 18 -> 14
+                                                color: const Color(0xff70798B),
+                                              ),
+                                            ),
+
+                                            Text(
+                                              "₹0",
+                                              style: TextStyle(
+                                                fontSize: 14.sp,
+                                                fontWeight: FontWeight.w600,
+                                                color: const Color(0xff11B8F4),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+
+                                        SizedBox(height: 15.h),
+
+                                        const Divider(),
+
+                                        SizedBox(height: 15.h),
+
+                                        /// Total
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              "Total",
+                                              style: TextStyle(
+                                                fontSize: 16.sp,
+                                                fontWeight: FontWeight.w700,
+                                                color: const Color(0xff1C2434),
+                                              ),
+                                            ),
+
+                                            Text(
+                                              "₹$cartTotal",
+                                              style: TextStyle(
+                                                fontSize: 20.sp, // 34 -> 24
+                                                fontWeight: FontWeight.bold,
+                                                color: const Color(0xff11B8F4),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+
+                                        SizedBox(height: 25.h),
+
+                                        /// Button
+                                        ElevatedButton(
+                                          onPressed: cartItems.isEmpty
+                                              ? null
+                                              : () {
+                                                  pageController.nextPage(
+                                                    duration: const Duration(
+                                                      milliseconds: 300,
+                                                    ),
+                                                    curve: Curves.easeIn,
+                                                  );
+                                                  setState(
+                                                    () => currentPage = 1,
+                                                  );
+                                                },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(
+                                              0xFF24ADD7,
+                                            ),
+                                            minimumSize: Size(
+                                              double.infinity,
+                                              55.h,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(15),
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Text(
+                                                "PROCEED NEXT",
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              SizedBox(width: 10),
+                                              Icon(
+                                                Icons.arrow_forward,
+                                                color: Colors.white,
+                                                size: 18,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                             SingleChildScrollView(
                               controller: scrollController,
                               padding: EdgeInsets.only(
@@ -227,13 +505,7 @@ class _HomeServiceDetailsPageState
                                         curve: Curves.easeIn,
                                       );
 
-                                      setState(() => currentPage = 1);
-
-                                      // Fluttertoast.showToast(
-                                      //   msg:
-                                      //       response.message ??
-                                      //       "Slot Available!",
-                                      // );
+                                      setState(() => currentPage = 2);
                                     } else {
                                       Fluttertoast.showToast(
                                         msg:
@@ -287,7 +559,8 @@ class _HomeServiceDetailsPageState
                                     message: issueController.text.trim(),
                                     problemImgae: uploadedImageUrl,
                                     serviceDate: selectedDate,
-                                    serviceFee: amount,
+                                    // serviceFee: amount,
+                                    serviceFee: cartTotal,
                                     serviceTimeSlot: selectedSlot,
                                     serviceType: id,
                                   );
@@ -367,6 +640,7 @@ class _HomeServiceDetailsPageState
               color: Color(0xFF24ADD7),
             ),
           ),
+
           SizedBox(height: 10.h),
           _sectionLabel("VISIT ADDRESS"),
           TextField(
@@ -706,7 +980,25 @@ class _HomeServiceDetailsPageState
     return homeServiceDetislState.when(
       data: (data) {
         final reviews = data.data?.reviewsList ?? [];
+        final totalReviews = reviews.length;
 
+        double averageRating = 0;
+
+        if (reviews.isNotEmpty) {
+          averageRating =
+              reviews.fold<double>(0, (sum, item) => sum + (item.rating ?? 0)) /
+              totalReviews;
+        }
+
+        Map<int, int> ratingCount = {5: 0, 4: 0, 3: 0, 2: 0, 1: 0};
+
+        for (var review in reviews) {
+          final rating = review.rating ?? 0;
+
+          if (ratingCount.containsKey(rating)) {
+            ratingCount[rating] = ratingCount[rating]! + 1;
+          }
+        }
         return Scaffold(
           backgroundColor: Colors.white, // Pure white for a cleaner look
           bottomNavigationBar: _buildBottomAction(
@@ -884,10 +1176,11 @@ class _HomeServiceDetailsPageState
                         SizedBox(height: 30.h),
                         ListView.builder(
                           padding: EdgeInsets.zero,
-                          itemCount: 2,
+                          itemCount: data.data?.pricingOptions?.length,
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           itemBuilder: (context, index) {
+                            final item = data.data!.pricingOptions![index];
                             return Container(
                               margin: EdgeInsets.only(bottom: 10.h),
                               padding: EdgeInsets.all(10.h),
@@ -900,22 +1193,43 @@ class _HomeServiceDetailsPageState
                                 borderRadius: BorderRadius.circular(16.r),
                               ),
                               child: Row(
-                                crossAxisAlignment: CrossAxisAlignment
-                                    .start, // Image aur Text ko top se align rakha hai
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  /// 🔹 Service Image
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(10.r),
                                     child: Image.network(
-                                      "https://media.istockphoto.com/id/1457385092/photo/an-asian-young-technician-service-man-wearing-blue-uniform-checking-cleaning-air-conditioner.jpg?s=612x612&w=0&k=20&c=Tqu5jMzD1TKFO1Fvow6d0JMDsEGU8T3kToP706bQFQI=",
+                                      item.image ??
+                                          "https://t4.ftcdn.net/jpg/07/91/22/59/360_F_791225927_caRPPH99D6D1iFonkCRmCGzkJPf36QDw.jpg",
                                       height: 70.h,
                                       width: 70.w,
                                       fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Container(
+                                          height: 70.h,
+                                          width: 70.w,
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey,
+                                            border: Border.all(
+                                              color: Colors.grey,
+                                              width: 1.w,
+                                            ),
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(
+                                              10.r,
+                                            ),
+                                            child: Image.network(
+                                              "https://t4.ftcdn.net/jpg/07/91/22/59/360_F_791225927_caRPPH99D6D1iFonkCRmCGzkJPf36QDw.jpg",
+                                              height: 70.h,
+                                              width: 70.w,
+                                              fit: BoxFit.cover,
+                                            ),
+                                          ),
+                                        );
+                                      },
                                     ),
                                   ),
                                   SizedBox(width: 12.w),
-
-                                  /// 🔹 Service Details (Text + Price & Button)
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment:
@@ -923,7 +1237,7 @@ class _HomeServiceDetailsPageState
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Text(
-                                          "AC Maintenance Service",
+                                          item.title ?? "",
                                           style: GoogleFonts.inter(
                                             fontSize: 13.sp,
                                             fontWeight: FontWeight.w600,
@@ -932,7 +1246,12 @@ class _HomeServiceDetailsPageState
                                         ),
                                         SizedBox(height: 4.h),
                                         Text(
-                                          "Deep cleaning of filters and cooling coils",
+                                          // item.description ?? "No Descriptin",
+                                          (item.description != null &&
+                                                  item.description!.isNotEmpty)
+                                              ? item.description!
+                                              : "No Description",
+
                                           maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
                                           style: GoogleFonts.inter(
@@ -942,36 +1261,33 @@ class _HomeServiceDetailsPageState
                                           ),
                                         ),
                                         SizedBox(height: 8.h),
-
-                                        /// 🔹 Price and Button Row (Niche shift kiya taaki look better lage)
                                         Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
                                           children: [
-                                            Text(
-                                              "₹599",
-                                              style: GoogleFonts.inter(
-                                                fontSize: 14.sp,
-                                                fontWeight: FontWeight.w700,
-                                                color: const Color(0xFF24ADD7),
+                                            Expanded(
+                                              child: Text(
+                                                "${item.price ?? ""}",
+                                                overflow: TextOverflow.ellipsis,
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 14.sp,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: const Color(
+                                                    0xFF24ADD7,
+                                                  ),
+                                                ),
                                               ),
                                             ),
-
-                                            /// 🔹 Updated Add/Remove Button
+                                            SizedBox(width: 10),
                                             SizedBox(
-                                              height: 32
-                                                  .h, // Height thodi compact ki
+                                              height: 32.h,
                                               child: ElevatedButton(
                                                 style: ElevatedButton.styleFrom(
                                                   padding: EdgeInsets.symmetric(
-                                                    horizontal: 16.w,
+                                                    horizontal: 12.w,
                                                   ),
                                                   backgroundColor: Colors.white,
                                                   elevation: 0,
                                                   side: BorderSide(
-                                                    color: isAddedList[index]
+                                                    color: isItemAdded(item)
                                                         ? Colors.red
                                                         : const Color(
                                                             0xFF24ADD7,
@@ -986,19 +1302,20 @@ class _HomeServiceDetailsPageState
                                                   ),
                                                 ),
                                                 onPressed: () {
-                                                  setState(() {
-                                                    isAddedList[index] =
-                                                        !isAddedList[index];
-                                                  });
+                                                  if (isItemAdded(item)) {
+                                                    removeFromCart(item);
+                                                  } else {
+                                                    addToCart(item);
+                                                  }
                                                 },
                                                 child: Text(
-                                                  isAddedList[index]
+                                                  isItemAdded(item)
                                                       ? "Remove"
                                                       : "Add",
                                                   style: GoogleFonts.inter(
                                                     fontWeight: FontWeight.w600,
                                                     fontSize: 12.sp,
-                                                    color: isAddedList[index]
+                                                    color: isItemAdded(item)
                                                         ? Colors.red
                                                         : const Color(
                                                             0xFF24ADD7,
@@ -1069,137 +1386,239 @@ class _HomeServiceDetailsPageState
                                       ],
                                     ),
                                   )
-                                : ListView.builder(
-                                    padding: EdgeInsets.zero,
-                                    itemCount: reviews.length,
-                                    shrinkWrap: true,
-                                    physics:
-                                        const NeverScrollableScrollPhysics(),
-                                    itemBuilder: (context, index) {
-                                      final review = reviews[index];
-                                      return Container(
-                                        margin: EdgeInsets.only(bottom: 14.h),
-                                        padding: EdgeInsets.all(14.w),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(
-                                            16.r,
-                                          ),
-                                          border: Border.all(
-                                            color: Colors.grey.shade200,
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black.withOpacity(
-                                                0.04,
-                                              ),
-                                              blurRadius: 6,
-                                              offset: const Offset(0, 3),
-                                            ),
-                                          ],
-                                        ),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
-                                              children: [
-                                                CircleAvatar(
-                                                  radius: 20.r,
-                                                  backgroundImage: NetworkImage(
-                                                    review.user!.image ??
-                                                        "https://randomuser.me/api/portraits/men/32.jpg",
-                                                  ),
+                                : Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          /// LEFT
+                                          Column(
+                                            children: [
+                                              Text(
+                                                averageRating.toStringAsFixed(
+                                                  1,
                                                 ),
-                                                SizedBox(width: 10.w),
-
-                                                Expanded(
-                                                  child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 35.sp,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: darkBlue,
+                                                ),
+                                              ),
+                                              Row(
+                                                children: List.generate(5, (
+                                                  index,
+                                                ) {
+                                                  return Icon(
+                                                    index <
+                                                            averageRating
+                                                                .round()
+                                                        ? Icons.star
+                                                        : Icons.star_border,
+                                                    size: 16.sp,
+                                                    color: Colors.amber,
+                                                  );
+                                                }),
+                                              ),
+                                              SizedBox(height: 4.h),
+                                              Text(
+                                                "$totalReviews reviews",
+                                                style: TextStyle(
+                                                  fontSize: 12.sp,
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          SizedBox(width: 15.w),
+                                          Expanded(
+                                            child: Column(
+                                              children: List.generate(5, (
+                                                index,
+                                              ) {
+                                                final star = 5 - index;
+                                                final count =
+                                                    ratingCount[star] ?? 0;
+                                                final progress =
+                                                    totalReviews == 0
+                                                    ? 0.0
+                                                    : count / totalReviews;
+                                                return Padding(
+                                                  padding: EdgeInsets.only(
+                                                    bottom: 8.h,
+                                                  ),
+                                                  child: Row(
                                                     children: [
                                                       Text(
-                                                        review.user!.name ??
-                                                            "N/A",
-                                                        style:
-                                                            GoogleFonts.inter(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w600,
-                                                              fontSize: 13.sp,
-                                                            ),
+                                                        "$star",
+                                                        style: TextStyle(
+                                                          fontSize: 12.sp,
+                                                        ),
                                                       ),
-                                                      SizedBox(height: 2.h),
-
-                                                      /// ⭐ Rating
-                                                      Row(
-                                                        children: List.generate(
-                                                          5,
-                                                          (starIndex) {
-                                                            final rating =
-                                                                review.rating ??
-                                                                0;
-
-                                                            return Icon(
-                                                              starIndex < rating
-                                                                  ? Icons.star
-                                                                  : Icons
-                                                                        .star_border,
-                                                              size: 16,
-                                                              color:
-                                                                  Colors.orange,
-                                                            );
-                                                          },
+                                                      SizedBox(width: 4.w),
+                                                      Icon(
+                                                        Icons.star,
+                                                        size: 12.sp,
+                                                        color: Colors.amber,
+                                                      ),
+                                                      SizedBox(width: 8.w),
+                                                      Expanded(
+                                                        child: LinearProgressIndicator(
+                                                          value: progress,
+                                                          minHeight: 6.h,
+                                                          backgroundColor:
+                                                              Colors
+                                                                  .grey
+                                                                  .shade200,
+                                                          valueColor:
+                                                              const AlwaysStoppedAnimation(
+                                                                Colors.amber,
+                                                              ),
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                20.r,
+                                                              ),
+                                                        ),
+                                                      ),
+                                                      SizedBox(width: 8.w),
+                                                      Text(
+                                                        "$count",
+                                                        style: TextStyle(
+                                                          fontSize: 12.sp,
                                                         ),
                                                       ),
                                                     ],
                                                   ),
-                                                ),
-
-                                                Text(
-                                                  timeAgo(
-                                                    review.createdAt ?? 0,
-                                                  ),
-                                                  style: TextStyle(
-                                                    fontSize: 11.sp,
-                                                    color: Colors.grey,
-                                                  ),
+                                                );
+                                              }),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      SizedBox(height: 10.h),
+                                      ListView.builder(
+                                        padding: EdgeInsets.zero,
+                                        itemCount: reviews.length,
+                                        shrinkWrap: true,
+                                        physics:
+                                            const NeverScrollableScrollPhysics(),
+                                        itemBuilder: (context, index) {
+                                          final review = reviews[index];
+                                          return Container(
+                                            margin: EdgeInsets.only(
+                                              bottom: 14.h,
+                                            ),
+                                            padding: EdgeInsets.all(14.w),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(16.r),
+                                              border: Border.all(
+                                                color: Colors.grey.shade200,
+                                              ),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black
+                                                      .withOpacity(0.04),
+                                                  blurRadius: 6,
+                                                  offset: const Offset(0, 3),
                                                 ),
                                               ],
                                             ),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    CircleAvatar(
+                                                      radius: 20.r,
+                                                      backgroundImage: NetworkImage(
+                                                        review.user!.image ??
+                                                            "https://randomuser.me/api/portraits/men/32.jpg",
+                                                      ),
+                                                    ),
+                                                    SizedBox(width: 10.w),
+                                                    Expanded(
+                                                      child: Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          Text(
+                                                            review.user!.name ??
+                                                                "N/A",
+                                                            style:
+                                                                GoogleFonts.inter(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600,
+                                                                  fontSize:
+                                                                      13.sp,
+                                                                ),
+                                                          ),
+                                                          SizedBox(height: 2.h),
 
-                                            SizedBox(height: 10.h),
+                                                          /// ⭐ Rating
+                                                          Row(
+                                                            children: List.generate(5, (
+                                                              starIndex,
+                                                            ) {
+                                                              final rating =
+                                                                  review
+                                                                      .rating ??
+                                                                  0;
 
-                                            /// ✍️ Review Text
-                                            Text(
-                                              // "Service was very fast and professional. Technician was polite and fixed the issue quickly.",
-                                              review.review ?? "No Review",
-                                              style: GoogleFonts.inter(
-                                                fontSize: 12.sp,
-                                                color: Colors.grey.shade700,
-                                                height: 1.4,
-                                              ),
+                                                              return Icon(
+                                                                starIndex <
+                                                                        rating
+                                                                    ? Icons.star
+                                                                    : Icons
+                                                                          .star_border,
+                                                                size: 16,
+                                                                color: Colors
+                                                                    .orange,
+                                                              );
+                                                            }),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+
+                                                    Text(
+                                                      timeAgo(
+                                                        review.createdAt ?? 0,
+                                                      ),
+                                                      style: TextStyle(
+                                                        fontSize: 11.sp,
+                                                        color: Colors.grey,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+
+                                                SizedBox(height: 10.h),
+
+                                                /// ✍️ Review Text
+                                                Text(
+                                                  // "Service was very fast and professional. Technician was polite and fixed the issue quickly.",
+                                                  review.review ?? "No Review",
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 12.sp,
+                                                    color: Colors.grey.shade700,
+                                                    height: 1.4,
+                                                  ),
+                                                ),
+
+                                                SizedBox(height: 10.h),
+                                              ],
                                             ),
-
-                                            SizedBox(height: 10.h),
-
-                                            /// 📸 Review Image (Optional)
-                                            ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(10.r),
-                                              child: Image.network(
-                                                review.image ??
-                                                    "https://images.unsplash.com/photo-1581578731548-c64695cc6952",
-                                                height: 120.h,
-                                                width: double.infinity,
-                                                fit: BoxFit.cover,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    },
+                                          );
+                                        },
+                                      ),
+                                    ],
                                   ),
                           ],
                         ),

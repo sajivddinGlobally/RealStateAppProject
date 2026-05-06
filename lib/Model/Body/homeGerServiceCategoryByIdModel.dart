@@ -40,13 +40,14 @@ class Data {
   String? image;
   bool? isDisable;
   bool? isDeleted;
+  List<Slot>? slots;
   int? date;
   int? month;
   int? year;
   int? createdAt;
   int? updatedAt;
   int? serviceFee;
-  List<Slot>? slots;
+  List<PricingOption>? pricingOptions;
   num? averageRating;
   int? totalReviews;
   List<ReviewsList>? reviewsList;
@@ -57,13 +58,14 @@ class Data {
     this.image,
     this.isDisable,
     this.isDeleted,
+    this.slots,
     this.date,
     this.month,
     this.year,
     this.createdAt,
     this.updatedAt,
     this.serviceFee,
-    this.slots,
+    this.pricingOptions,
     this.averageRating,
     this.totalReviews,
     this.reviewsList,
@@ -75,16 +77,21 @@ class Data {
     image: json["image"],
     isDisable: json["isDisable"],
     isDeleted: json["isDeleted"],
+    slots: json["slots"] == null
+        ? []
+        : List<Slot>.from(json["slots"]!.map((x) => Slot.fromJson(x))),
     date: json["date"],
     month: json["month"],
     year: json["year"],
     createdAt: json["createdAt"],
     updatedAt: json["updatedAt"],
-    serviceFee: json["serviceFee"],
-    slots: json["slots"] == null
+    serviceFee: json['serviceFee'],
+    pricingOptions: json["pricingOptions"] == null
         ? []
-        : List<Slot>.from(json["slots"]!.map((x) => Slot.fromJson(x))),
-    averageRating: (json["averageRating"] as num?)?.toDouble(),
+        : List<PricingOption>.from(
+            json["pricingOptions"]!.map((x) => PricingOption.fromJson(x)),
+          ),
+    averageRating: json["averageRating"],
     totalReviews: json["totalReviews"],
     reviewsList: json["reviewsList"] == null
         ? []
@@ -99,20 +106,55 @@ class Data {
     "image": image,
     "isDisable": isDisable,
     "isDeleted": isDeleted,
+    "slots": slots == null
+        ? []
+        : List<dynamic>.from(slots!.map((x) => x.toJson())),
     "date": date,
     "month": month,
     "year": year,
     "createdAt": createdAt,
     "updatedAt": updatedAt,
-    "serviceFee": serviceFee,
-    "slots": slots == null
+    "serviceFee":serviceFee,
+    "pricingOptions": pricingOptions == null
         ? []
-        : List<dynamic>.from(slots!.map((x) => x.toJson())),
+        : List<dynamic>.from(pricingOptions!.map((x) => x.toJson())),
     "averageRating": averageRating,
     "totalReviews": totalReviews,
     "reviewsList": reviewsList == null
         ? []
         : List<dynamic>.from(reviewsList!.map((x) => x.toJson())),
+  };
+}
+
+class PricingOption {
+  String? title;
+  int? price;
+  String? image;
+  String? description;
+  String? id;
+
+  PricingOption({
+    this.title,
+    this.price,
+    this.image,
+    this.description,
+    this.id,
+  });
+
+  factory PricingOption.fromJson(Map<String, dynamic> json) => PricingOption(
+    title: json["title"],
+    price: json["price"],
+    image: json["image"],
+    description: json["description"],
+    id: json["_id"],
+  );
+
+  Map<String, dynamic> toJson() => {
+    "title": title,
+    "price": price,
+    "image": image,
+    "description": description,
+    "_id": id,
   };
 }
 
@@ -172,6 +214,8 @@ class Slot {
     slotCount: json["slotCount"],
     id: json["_id"],
   );
+
+  String? get image => null;
 
   Map<String, dynamic> toJson() => {
     "timeSlot": timeSlot,

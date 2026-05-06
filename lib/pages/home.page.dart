@@ -498,8 +498,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) =>
-                                      const SearchPropertyPage(),
+                                  builder: (context) => SearchPropertyPage(),
                                 ),
                               );
                             },
@@ -3204,6 +3203,34 @@ class _HomeServiceState extends ConsumerState<HomeService> {
                         fontSize: 12.sp,
                         fontWeight: FontWeight.bold,
                       ),
+                    ),
+                    SizedBox(height: 4.h),
+
+                    // 🔹 Rating + Review Row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.star, color: Colors.orange, size: 14.sp),
+                        SizedBox(width: 2.w),
+
+                        Text(
+                          (item.averageRating ?? 0).toStringAsFixed(1),
+                          style: GoogleFonts.inter(
+                            fontSize: 10.sp,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+
+                        SizedBox(width: 4.w),
+
+                        Text(
+                          "(${item.totalReviews ?? 0} Review)",
+                          style: GoogleFonts.inter(
+                            fontSize: 10.sp,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 );
