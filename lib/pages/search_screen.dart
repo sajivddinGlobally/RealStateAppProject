@@ -207,7 +207,6 @@ class _SearchResultScreenState extends ConsumerState<SearchResultScreen> {
                                 //     PerticulerPropertyPage(
                                 //       data: PropertyDetailsModel.fromProperty(property),
                                 //     )
-
                                 // ));
                               },
                               child: Container(
@@ -375,7 +374,9 @@ class _SearchResultScreenState extends ConsumerState<SearchResultScreen> {
                                                 //   context,
                                                 //   MaterialPageRoute(
                                                 //     builder: (context) =>
-                                                //         PerticulerPropertyPage(data: property),
+                                                //         PerticulerPropertyPage(
+                                                //           data: property,
+                                                //         ),
                                                 //   ),
                                                 // );
                                               },
