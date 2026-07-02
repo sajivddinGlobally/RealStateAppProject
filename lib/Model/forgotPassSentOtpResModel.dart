@@ -38,16 +38,20 @@ class ForgotPassSentOtpResModel {
 
 class Data {
     String? token;
+    String? otp;
 
     Data({
         this.token,
+        this.otp,
     });
 
     factory Data.fromJson(Map<String, dynamic> json) => Data(
         token: json["token"],
+        otp: json["otp"],
     );
 
     Map<String, dynamic> toJson() => {
         "token": token,
+        "otp": otp,
     };
 }

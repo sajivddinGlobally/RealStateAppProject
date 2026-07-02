@@ -42,6 +42,48 @@ class _ForgotPasswordSentOtpPageState extends State<ForgotPasswordSentOtpPage> {
                 VerifyOrResectPasswordPage(token: res.data!.token.toString()),
           ),
         );
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   SnackBar(
+        //     backgroundColor: Colors.white,
+        //     shape: RoundedRectangleBorder(
+        //       borderRadius: BorderRadius.circular(20.r),
+        //     ),
+        //     behavior: SnackBarBehavior.floating,
+        //     margin: EdgeInsets.only(left: 20.w, right: 20.w, top: 20.h),
+
+        //     content: Text(
+        //       "OTP: ${res.data!.otp}",
+        //       style: TextStyle(color: Colors.black),
+        //     ),
+        //     duration: const Duration(seconds: 16),
+        //   ),
+        // );
+        ScaffoldMessenger.of(context).clearMaterialBanners();
+        ScaffoldMessenger.of(context).showMaterialBanner(
+          MaterialBanner(
+            backgroundColor: Colors.white,
+            content: Text(
+              "OTP: ${res.data!.otp}",
+              style: const TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
+                },
+                child: const Text("Close"),
+              ),
+            ],
+          ),
+        );
+        Future.delayed(const Duration(seconds: 12), () {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
+          }
+        });
       } else {
         Fluttertoast.showToast(msg: res.message ?? "");
       }

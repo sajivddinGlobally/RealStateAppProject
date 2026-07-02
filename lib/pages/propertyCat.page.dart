@@ -17,7 +17,7 @@ import '../Model/Body/PropertyListBodyModel.dart';
 import 'listingPage.dart';
 
 class PropertyPageCat extends ConsumerStatefulWidget {
-  final String property; // "HOUSE", "FLATS", "COMMERCIAL PROPERTIES" etc.
+  final String property;
 
   const PropertyPageCat({super.key, required this.property});
 
@@ -27,24 +27,19 @@ class PropertyPageCat extends ConsumerStatefulWidget {
 
 class _PropertyPageCatState extends ConsumerState<PropertyPageCat> {
   bool isBuy = true;
+  final TextEditingController searchController = TextEditingController();
 
+  String searchText = "";
   late final bodyProvider = PropertyListBodyModel(
     size: 50,
     pageNo: 1,
     sortBy: 'createdAt',
     sortOrder: 'desc',
-    // Optional: agar backend support kare toh direct filter bhej do
-    // property: widget.property.toLowerCase(),
-    // listingCategory: isBuy ? "buy" : "rent",
+
   );
 
   @override
   Widget build(BuildContext context) {
-    // Har baar tab change ya property change pe fresh call
-    // final currentBody = bodyProvider.copyWith(
-    //   // Agar backend filter support nahi karta toh yeh comment kar do
-    //   // listingCategory: isBuy ? "buy" : "rent",
-    // );
 
     final propertyAsync = ref.watch(getPropertyController(bodyProvider));
 
@@ -77,6 +72,43 @@ class _PropertyPageCatState extends ConsumerState<PropertyPageCat> {
       body: Column(
         children: [
           const SizedBox(height: 10),
+       
+
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: SizedBox(
+              height: 50.h,
+              child: TextField(
+                onChanged: (value) {
+                  setState(() {
+                            searchText = value.toLowerCase();
+                          });
+                },
+                style: TextStyle(fontSize: 15.sp),
+                decoration: InputDecoration(
+                  isDense: true,
+                  prefixIcon: Icon(
+                    Icons.search,
+                    size: 16.sp,
+                    color: Colors.grey,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16.r),
+                    borderSide: BorderSide(color: Colors.grey, width: 1.w),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16.r),
+                    borderSide: BorderSide(
+                      color: Color(0xFF24ADD7),
+                      width: 1.w,
+                    ),
+                  ),
+                  hintText: "Search...",
+                  hintStyle: TextStyle(fontSize: 14.sp, color: Colors.grey),
+                ),
+              ),
+            ),
+          ),
 
           Row(
             children: [
@@ -154,27 +186,44 @@ class _PropertyPageCatState extends ConsumerState<PropertyPageCat> {
                   return const Center(child: Text("No properties found"));
                 }
 
-                // // Final Filtering (Frontend pe guarantee ke liye)
-                // final filteredList = response.data!.list!.where((property) {
-                //   final matchesProperty =
-                //       property.property?.toUpperCase() ==
-                //       widget.property.toUpperCase();
-                //   final matchesCategory =
-                //       property.listingCategory?.toLowerCase() ==
-                //       (isBuy ? "sell" : "rent");
-                //   return matchesProperty && matchesCategory;
-                // }).toList();
 
                 final filteredList = response.data!.list!.where((property) {
                   final matchesProperty =
                       property.property?.toLowerCase() ==
-                      widget.property.toLowerCase();
+                          widget.property.toLowerCase();
 
                   final matchesCategory =
                       property.listingCategory?.toLowerCase() ==
-                      (isBuy ? "buy" : "rent");
+                          (isBuy ? "buy" : "rent");
 
-                  return matchesProperty && matchesCategory;
+                  final matchesSearch =
+                      searchText.isEmpty ||
+
+                          (property.city ?? "")
+                              .toLowerCase()
+                              .contains(searchText) ||
+
+                          (property.localityArea ?? "")
+                              .toLowerCase()
+                              .contains(searchText) ||
+
+                          (property.propertyType ?? "")
+                              .toLowerCase()
+                              .contains(searchText) ||
+
+                          (property.propertyAddress ?? "")
+                              .toLowerCase()
+                              .contains(searchText) ||
+
+                          (property.price ?? "")
+                              .contains(searchText) ||
+
+                          (property.bedRoom ?? "")
+                              .contains(searchText);
+
+                  return matchesProperty &&
+                      matchesCategory &&
+                      matchesSearch;
                 }).toList();
 
                 if (filteredList.isEmpty) {

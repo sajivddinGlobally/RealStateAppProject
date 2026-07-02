@@ -48,6 +48,11 @@ class _VerifyOrResectPasswordPageState
     if (confirmPasswordController.text.trim().isEmpty) {
       return;
     }
+
+    if (newPasswordController.text.trim() !=
+        confirmPasswordController.text.trim()) {
+      Fluttertoast.showToast(msg: "Password do not match");
+    }
     setState(() {
       isLoading = true;
     });
