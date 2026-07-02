@@ -1,0 +1,5238 @@
+import 'dart:developer';
+import 'package:carousel_slider/carousel_slider.dart';
+import 'package:dio/dio.dart';
+import 'package:dropdown_button2/dropdown_button2.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:marquee/marquee.dart';
+import 'package:realstate/Controller/contactUsController.dart';
+import 'package:realstate/Controller/getCityListController.dart';
+import 'package:realstate/Controller/getMyPropertyController.dart';
+import 'package:realstate/Controller/homeServiceCategoryController.dart';
+import 'package:realstate/Controller/likePropertyController.dart';
+import 'package:realstate/Controller/loanServiceController.dart';
+import 'package:realstate/Controller/notificationController.dart';
+import 'package:realstate/Controller/userProfileController.dart';
+import 'package:realstate/Model/commonLoanModel.dart';
+import 'package:realstate/Model/contactUsBodyModel.dart';
+import 'package:realstate/Model/getLikeProperyResModel.dart';
+import 'package:realstate/Model/getPropertyResponsemodel.dart';
+import 'package:realstate/Model/saveServiceBodyModel.dart';
+import 'package:realstate/core/network/api.state.dart';
+import 'package:realstate/core/utils/preety.dio.dart';
+import 'package:realstate/pages/MyPropertyRequest.dart';
+import 'package:realstate/pages/homeServiceDetails.page.dart';
+import 'package:realstate/pages/loanServiceDetails.page.dart';
+import 'package:realstate/pages/myLoanRequest.dart';
+import 'package:realstate/pages/myPropertyDetals.page.dart';
+import 'package:realstate/pages/myRequest.page.dart';
+import 'package:realstate/pages/notification.page.dart';
+import 'package:realstate/pages/perticulerProperty.page.dart';
+import 'package:realstate/pages/pricePlan.page.dart';
+import 'package:realstate/pages/propertyCat.page.dart';
+import 'package:realstate/pages/savedDetails.page.dart';
+import 'package:realstate/pages/search_screen.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../CityProvider.dart';
+import '../Model/commanLoanModel.dart';
+import '../Model/getMyPropertyResModel.dart';
+import 'SearchProperty.dart';
+import 'createPropertyPage.dart';
+import 'drawer.dart';
+
+class RealEstateHomePage extends ConsumerStatefulWidget {
+  const RealEstateHomePage({super.key});
+  @override
+  ConsumerState<RealEstateHomePage> createState() => _RealEstateHomePageState();
+}
+
+class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
+    with TickerProviderStateMixin, RouteAware {
+  late TabController _tabController;
+  int bottomIndex = 0;
+  int selectIndex = 0;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  String? selectedCity;
+  List<Property> properties = [];
+  String? _currentCity;
+  bool _isFetchingLocation = false;
+  @override
+  void initState() {
+    super.initState();
+    _addDummyProperties();
+    Future.microtask(() {
+      ref.read(userProfileController);
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadSavedCity();
+    });
+    _fetchAndSaveCurrentCity();
+    _tabController = TabController(length: 3, vsync: this);
+
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            setState(() {
+              selectIndex = _tabController.index;
+            });
+          }
+        });
+      }
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void dispose() {
+    // routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    _loadSavedCity(); // screen par wapas aate hi call hoga
+  }
+
+  Future<void> _loadSavedCity() async {
+    final saved = await ref.read(savedCityProvider.future);
+    if (saved != null && mounted) {
+      setState(() {
+        _currentCity = saved;
+      });
+      ref.read(currentCityProvider.notifier).state = saved;
+    }
+  }
+
+  Future<void> _fetchAndSaveCurrentCity() async {
+    if (_isFetchingLocation) return;
+    setState(() => _isFetchingLocation = true);
+
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Location services disabled")),
+          );
+        }
+        return;
+      }
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) return;
+      }
+      if (permission == LocationPermission.deniedForever) return;
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.medium,
+      );
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+      if (placemarks.isNotEmpty && mounted) {
+        String? city =
+            placemarks.first.locality ?? placemarks.first.subAdministrativeArea;
+        // if (city != null && city.isNotEmpty) {
+        //   setState(() {
+        //     _currentCity = city;
+        //     selectedCity = city; // ✅ yaha set kar diya
+        //   });
+        //   ref.read(currentCityProvider.notifier).state = city;
+        //   await saveCity(city);
+        //   Fluttertoast.showToast(
+        //     msg: "Location set to $city",
+        //     gravity: ToastGravity.BOTTOM,
+        //   );
+        // }
+        if (city != null && city.isNotEmpty) {
+          setState(() {
+            _currentCity = city;
+            // sirf first time set karo
+            selectedCity ??= city;
+          });
+          ref.read(currentCityProvider.notifier).state = city;
+          await saveCity(city);
+          Fluttertoast.showToast(
+            msg: "Location set to $city",
+            gravity: ToastGravity.BOTTOM,
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint("Location fetch error: $e");
+    } finally {
+      if (mounted) setState(() => _isFetchingLocation = false);
+    }
+  }
+
+  void _addDummyProperties() {
+    properties = [
+      Property(
+        propertyType: 'Apartment/Flat',
+        propertyCategory: 'Residential',
+        listingCategory: 'Sale',
+        city: 'Mumbai',
+        locality: 'Andheri West',
+        price: '2.5 Cr',
+        bedrooms: '3',
+        bathrooms: '3',
+        area: '1200',
+        furnishing: 'Semi-Furnished',
+        amenities: [
+          'Gymnasium',
+          'Swimming Pool',
+          'Lift',
+          'Security',
+          'Parking',
+        ],
+        aroundProject: [
+          {'place': 'Metro Station', 'details': '2 mins walk'},
+          {'place': 'School', 'details': 'International School - 1 km'},
+        ],
+        fullName: 'Rahul Sharma',
+        email: 'rahul@example.com',
+        phone: '+91 9171719060',
+        address: 'Palm Grove Apartments, Andheri West, Mumbai',
+        description: 'Luxurious 3 BHK with sea view...',
+      ),
+      Property(
+        propertyType: 'Independent House/Villa',
+        propertyCategory: 'Residential',
+        listingCategory: 'Rent/Lease',
+        city: 'Delhi',
+        locality: 'Greater Kailash',
+        price: '1.2 Lac/month',
+        bedrooms: '4',
+        bathrooms: '4',
+        area: '2500',
+        furnishing: 'Furnished',
+        amenities: ['Garden', 'Parking', 'Power Backup', 'Security'],
+        aroundProject: [
+          {'place': 'Market', 'details': 'GK Market - 500m'},
+          {'place': 'Hospital', 'details': 'Max Hospital - 3km'},
+        ],
+        fullName: 'Priya Singh',
+        email: 'priya@example.com',
+        phone: '+91 8765432109',
+        address: 'E-Block, Greater Kailash, New Delhi',
+        description: 'Beautiful independent villa with lawn...',
+      ),
+      Property(
+        propertyType: 'Shop/Showroom',
+        propertyCategory: 'Commercial',
+        listingCategory: 'Sale',
+        city: 'Bangalore',
+        locality: 'Koramangala',
+        price: '3.8 Cr',
+        bedrooms: '0',
+        bathrooms: '2',
+        area: '800',
+        furnishing: 'Unfurnished',
+        amenities: ['Parking', 'Lift', 'Security'],
+        aroundProject: [
+          {'place': 'Forum Mall', 'details': 'Walking distance'},
+        ],
+        fullName: 'Amit Patel',
+        email: 'amit@example.com',
+        phone: '+91 7654321098',
+        address: 'Main Road, Koramangala, Bangalore',
+        description: 'Prime location showroom...',
+      ),
+      Property(
+        propertyType: 'Plot/Land',
+        propertyCategory: 'Residential',
+        listingCategory: 'Sale',
+        city: 'Pune',
+        locality: 'Hinjewadi',
+        price: '85 Lac',
+        bedrooms: '0',
+        bathrooms: '0',
+        area: '2000',
+        furnishing: 'Unfurnished',
+        amenities: [],
+        aroundProject: [
+          {'place': 'IT Park', 'details': 'Phase 1 - 2km'},
+          {'place': 'School', 'details': 'Vibgyor - 1.5km'},
+        ],
+        fullName: 'Neha Gupta',
+        email: 'neha@example.com',
+        phone: '+91 6543210987',
+        address: 'Rajiv Gandhi Infotech Park, Hinjewadi, Pune',
+        description: 'Ready to construct residential plot...',
+      ),
+      Property(
+        propertyType: 'Office Space',
+        propertyCategory: 'Commercial',
+        listingCategory: 'Rent/Lease',
+        city: 'Gurgaon',
+        locality: 'Cyber City',
+        price: '2.5 Lac/month',
+        bedrooms: '0',
+        bathrooms: '4',
+        area: '3000',
+        furnishing: 'Furnished',
+        amenities: ['Lift', 'Parking', 'Power Backup', 'Security', 'Gymnasium'],
+        aroundProject: [
+          {'place': 'Metro', 'details': 'Cyber City Metro - 100m'},
+          {'place': 'Cafe', 'details': 'Starbucks - Ground floor'},
+        ],
+        fullName: 'Vikram Singh',
+        email: 'vikram@example.com',
+        phone: '+91 5432109876',
+        address: 'DLF Cyber Hub, Gurgaon',
+        description: 'Fully furnished premium office space...',
+      ),
+    ];
+  }
+
+  final emailController = TextEditingController();
+  final nameController = TextEditingController();
+  final phoneController = TextEditingController();
+  final subjectController = TextEditingController();
+  final messageController = TextEditingController();
+  final locationController = TextEditingController();
+  bool isLoading = false;
+  final _formKeyContactUs = GlobalKey<FormState>();
+  DateTime? lastPressedAt;
+  final List<String> bannerImages = [
+    "assets/home (3).png",
+    "assets/home (3).png",
+    "assets/home (3).png",
+  ];
+  int currentBannerIndex = 0;
+  final List<String> propertyImages = [
+    "assets/property1.jpg",
+    "assets/property2.jfif",
+    "assets/property3.jfif",
+  ];
+  final List<String> homeServiceImages = [
+    "assets/home1.webp",
+    "assets/home2.jfif",
+    "assets/home3.jfif",
+  ];
+  final List<String> loanImages = [
+    "assets/loan1.jpg",
+    "assets/loan2.jfif",
+    "assets/loan3.jpg",
+  ];
+  List<String> get currentImages {
+    if (selectIndex == 0) {
+      return propertyImages;
+    } else if (selectIndex == 1) {
+      return homeServiceImages;
+    } else {
+      return loanImages;
+    }
+  }
+
+  final TextEditingController _citySearchController = TextEditingController();
+
+  // @override
+  // void dispose() {
+  //   _tabController.dispose();
+  //   _citySearchController.dispose();
+  //   super.dispose();
+  // }
+  String searchListing = '';
+  @override
+  Widget build(BuildContext context) {
+    final city = ref.watch(currentCityProvider) ?? _currentCity;
+    final profileController = ref.watch(userProfileController);
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) async {
+        if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
+          Navigator.pop(context);
+          return;
+        }
+        if (bottomIndex != 0) {
+          setState(() {
+            bottomIndex = 0;
+          });
+          return;
+        }
+        final now = DateTime.now();
+        final backButtonHasNotBeenPressedRecently =
+            lastPressedAt == null ||
+            now.difference(lastPressedAt!) > const Duration(seconds: 2);
+
+        if (backButtonHasNotBeenPressedRecently) {
+          lastPressedAt = now;
+          Fluttertoast.showToast(
+            msg: "Press back again to exit",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            backgroundColor: Colors.black87,
+            textColor: Colors.white,
+          );
+          return;
+        }
+        SystemNavigator.pop();
+      },
+      child: Scaffold(
+        key: _scaffoldKey,
+        resizeToAvoidBottomInset: false,
+        drawer: AppDrawer(
+          onItemSelected: (index) {
+            setState(() {
+              bottomIndex = index;
+            });
+          },
+          profileController: profileController,
+        ),
+        backgroundColor: const Color(0xffF5F7FA),
+        body: <Widget>[
+          HomeScreen(city),
+          MyListingsScreen(),
+          CreatePropertyScreen(
+            fromBottomNav: true,
+            ListElement(),
+            onSuccess: () {
+              setState(() {
+                bottomIndex = 1;
+              });
+              ref.invalidate(getMyPropertyController);
+            },
+          ),
+          CallUsScreen(),
+          SavedScreen(),
+        ][bottomIndex],
+        floatingActionButton: SizedBox(
+          height: 46.h,
+          width: 46.w,
+          child: FloatingActionButton(
+            elevation: 6,
+            backgroundColor: const Color(0xFF24ADD7),
+            shape: const CircleBorder(),
+            onPressed: () {
+              if (selectIndex == 1) {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (_) => const VendorRegistrationBottomSheet(),
+                );
+              } else {
+                setState(() {
+                  bottomIndex = 2;
+                });
+              }
+            },
+            child: Icon(
+              // Icons.add,
+              selectIndex == 1 ? Icons.person_add : Icons.add,
+              size: 22.sp,
+              color: Colors.white,
+            ),
+          ),
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.12),
+                blurRadius: 10,
+                offset: const Offset(0, -3),
+              ),
+            ],
+          ),
+          child: BottomAppBar(
+            padding: EdgeInsets.zero,
+            color: Colors.white,
+            elevation: 8,
+            height: 70.h, // reduced from 90.h
+            shape: const CircularNotchedRectangle(),
+            notchMargin: 6.r,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 6.w),
+              child: Row(
+                children: [
+                  buildNavItem(Icons.home_outlined, 'Home', 0),
+                  buildNavItem(Icons.description_outlined, 'My Listings', 1),
+                  buildNavItem(
+                    Icons.description_outlined,
+                    //  'Add\nProperty',
+                    selectIndex == 1 ? 'Add\nVendor' : 'Add\nProperty',
+                    2,
+                  ),
+                  buildNavItem(Icons.call_outlined, 'Call us', 3),
+                  buildNavItem(Icons.bookmark_border, 'Saved', 4),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget buildNavItem(IconData icon, String label, int index) {
+    final isSelected = bottomIndex == index;
+    return Expanded(
+      child: InkWell(
+        onTap: () {
+          setState(() => bottomIndex = index);
+
+          /// Refresh controllers
+          if (index == 1) {
+            ref.invalidate(getMyPropertyController);
+          } else if (index == 3) {
+            ref.invalidate(likePropertyController);
+          }
+        },
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            /// Space for FAB
+            index == 2
+                ? SizedBox(height: 18.h)
+                : AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: EdgeInsets.all(5.r),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? const Color(0xFF24ADD7)
+                          : Colors.transparent,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      icon,
+                      size: 20.sp,
+                      color: isSelected
+                          ? Colors.white
+                          : const Color(0xFF838299),
+                    ),
+                  ),
+            SizedBox(height: 3.h),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 10.sp,
+                fontWeight: FontWeight.w400,
+                color: isSelected ? Colors.black : const Color(0xFF838299),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ==================== HOME SCREEN ====================
+  Widget HomeScreen(String? city) {
+    final cityListState = ref.watch(getCityController);
+    // return SafeArea(
+    //   top: false,
+    //   child: Builder(
+    //     builder: (BuildContext context) {
+    //       return SingleChildScrollView(
+    //         child: Column(
+    //           children: [
+    //             Container(
+    //               padding: EdgeInsets.only(
+    //                 left: 16.w,
+    //                 right: 16.w,
+    //                 top: 8.h,
+    //                 bottom: 8.h,
+    //               ),
+    //               color: const Color(0xFF24ADD7),
+    //               child: SafeArea(
+    //                 bottom: false,
+    //                 child: Row(
+    //                   children: [
+    //                     InkWell(
+    //                       onTap: () {
+    //                         Scaffold.of(context).openDrawer();
+    //                       },
+    //                       child: Icon(
+    //                         Icons.menu,
+    //                         color: Colors.white,
+    //                         size: 22.sp,
+    //                       ),
+    //                     ),
+    //                     SizedBox(width: 10.w),
+    //                     /// Search Box
+    //                     Expanded(
+    //                       child: TextField(
+    //                         onTap: () {
+    //                           Navigator.push(
+    //                             context,
+    //                             MaterialPageRoute(
+    //                               builder: (context) => SearchPropertyPage(),
+    //                             ),
+    //                           );
+    //                         },
+    //                         style: GoogleFonts.inter(color: Colors.white),
+    //                         cursorColor: Colors.white,
+    //                         readOnly: true,
+    //                         decoration: InputDecoration(
+    //                           filled: true,
+    //                           fillColor: Colors.white.withOpacity(0.25),
+    //                           enabledBorder: OutlineInputBorder(
+    //                             borderRadius: BorderRadius.circular(30.r),
+    //                             borderSide: BorderSide.none,
+    //                           ),
+    //                           focusedBorder: OutlineInputBorder(
+    //                             borderRadius: BorderRadius.circular(30.r),
+    //                             borderSide: BorderSide.none,
+    //                           ),
+    //                           isDense: true,
+    //                           contentPadding: EdgeInsets.symmetric(
+    //                             vertical: 8.h,
+    //                             horizontal: 10.w,
+    //                           ),
+    //                           prefixIcon: Icon(
+    //                             Icons.search,
+    //                             color: Colors.white,
+    //                             size: 18.sp,
+    //                           ),
+    //                           prefixIconConstraints: BoxConstraints(
+    //                             minHeight: 30.h,
+    //                             minWidth: 40.w,
+    //                           ),
+    //                           hintText: "Search",
+    //                           hintStyle: GoogleFonts.inter(
+    //                             color: Colors.white.withOpacity(0.85),
+    //                             fontSize: 13.sp,
+    //                           ),
+    //                         ),
+    //                       ),
+    //                     ),
+    //                     SizedBox(width: 10.w),
+    //                     const Icon(
+    //                       Icons.notifications_none,
+    //                       color: Colors.white,
+    //                     ),
+    //                     /// City Location
+    //                     SizedBox(width: 8.w),
+    //                     cityListState.when(
+    //                       data: (cityList) {
+    //                         // if (selectedCity == null &&
+    //                         //     cityList.data!.isNotEmpty) {
+    //                         //   selectedCity =
+    //                         //       city ?? cityList.data!.first.cityName;
+    //                         // }
+    //                         final cityNames = cityList.data!
+    //                             .map((e) => e.cityName.toString())
+    //                             .toSet()
+    //                             .toList();
+    //                         // First time initialize
+    //                         if (selectedCity == null) {
+    //                           if (_currentCity != null &&
+    //                               _currentCity!.isNotEmpty) {
+    //                             selectedCity = _currentCity;
+    //                           } else if (cityNames.isNotEmpty) {
+    //                             selectedCity = cityNames.first;
+    //                           }
+    //                         }
+    //                        return Container(
+    //                           padding: EdgeInsets.symmetric(
+    //                             horizontal: 8.w,
+    //                             vertical: 2.h,
+    //                           ),
+    //                           decoration: BoxDecoration(
+    //                             color: Colors.white,
+    //                             borderRadius: BorderRadius.circular(20.r),
+    //                           ),
+    //                           child: DropdownButtonHideUnderline(
+    //                             child: DropdownButton<String>(
+    //                               isDense: true,
+    //                               value: cityNames.contains(selectedCity)
+    //                                   ? selectedCity
+    //                                   : null,
+    //                               hint: Row(
+    //                                 mainAxisSize: MainAxisSize.min,
+    //                                 children: [
+    //                                   Icon(
+    //                                     Icons.location_on,
+    //                                     size: 14.sp,
+    //                                     color: const Color(0xFF24ADD7),
+    //                                   ),
+    //                                   SizedBox(width: 4.w),
+    //                                   Text(
+    //                                     _currentCity ?? "Select City",
+    //                                     style: TextStyle(
+    //                                       color: const Color(0xFF24ADD7),
+    //                                       fontSize: 13.sp,
+    //                                       fontWeight: FontWeight.w600,
+    //                                     ),
+    //                                   ),
+    //                                 ],
+    //                               ),
+    //                               icon: Icon(
+    //                                 Icons.keyboard_arrow_down,
+    //                                 color: const Color(0xFF24ADD7),
+    //                                 size: 18.sp,
+    //                               ),
+    //                               items: cityNames.map((cityName) {
+    //                                 return DropdownMenuItem<String>(
+    //                                   value: cityName,
+    //                                   child: Row(
+    //                                     children: [
+    //                                       Icon(
+    //                                         Icons.location_on,
+    //                                         size: 14.sp,
+    //                                         color: const Color(0xFF24ADD7),
+    //                                       ),
+    //                                       SizedBox(width: 4.w),
+    //                                       Text(cityName),
+    //                                     ],
+    //                                   ),
+    //                                 );
+    //                               }).toList(),
+    //                               onChanged: (String? newValue) async {
+    //                                 if (newValue == null) return;
+    //                                 setState(() {
+    //                                   selectedCity = newValue;
+    //                                   _currentCity = newValue;
+    //                                 });
+    //                                 ref
+    //                                         .read(currentCityProvider.notifier)
+    //                                         .state =
+    //                                     newValue;
+    //                                 await saveCity(newValue);
+    //                               },
+    //                             ),
+    //                           ),
+    //                         );
+    //                       },
+    //                       error: (error, stackTrace) {
+    //                         return Center(child: Text(error.toString()));
+    //                       },
+    //                       loading: () => Center(
+    //                         child: SizedBox(
+    //                           height: 20,
+    //                           width: 20,
+    //                           child: CircularProgressIndicator(
+    //                             color: Colors.white,
+    //                             strokeWidth: 1.5,
+    //                           ),
+    //                         ),
+    //                       ),
+    //                     ),
+    //                   ],
+    //                 ),
+    //               ),
+    //             ),
+    //             Stack(
+    //               children: [
+    //                 /// 🔥 IMAGE SLIDER
+    //                 CarouselSlider(
+    //                   options: CarouselOptions(
+    //                     height: 260.h,
+    //                     viewportFraction: 1,
+    //                     autoPlay: true,
+    //                     autoPlayInterval: const Duration(seconds: 3),
+    //                     autoPlayAnimationDuration: const Duration(
+    //                       milliseconds: 800,
+    //                     ),
+    //                     onPageChanged: (index, reason) {
+    //                       setState(() {
+    //                         currentBannerIndex = index;
+    //                       });
+    //                     },
+    //                   ),
+    //                   items: currentImages.map((image) {
+    //                     return Stack(
+    //                       children: [
+    //                         Image.asset(
+    //                           image,
+    //                           height: 260.h,
+    //                           width: double.infinity,
+    //                           fit: BoxFit.cover,
+    //                         ),
+    //                         /// Gradient
+    //                         Container(
+    //                           height: 260.h,
+    //                           decoration: BoxDecoration(
+    //                             gradient: LinearGradient(
+    //                               colors: [
+    //                                 Colors.black.withOpacity(0.6),
+    //                                 Colors.transparent,
+    //                               ],
+    //                               begin: Alignment.bottomCenter,
+    //                               end: Alignment.topCenter,
+    //                             ),
+    //                           ),
+    //                         ),
+    //                         /// TEXT CONTENT
+    //                         Positioned(
+    //                           left: 16.w,
+    //                           bottom: 30.h,
+    //                           right: 16.w,
+    //                           child: Column(
+    //                             crossAxisAlignment: CrossAxisAlignment.start,
+    //                             children: [
+    //                               Chip(
+    //                                 labelPadding: EdgeInsets.zero,
+    //                                 label: Text(
+    //                                   selectIndex == 0
+    //                                       ? "Top Property"
+    //                                       : selectIndex == 1
+    //                                       ? "Best Service"
+    //                                       : "Easy Loan",
+    //                                 ),
+    //                                 backgroundColor: Colors.white.withOpacity(
+    //                                   0.8,
+    //                                 ),
+    //                               ),
+    //                               SizedBox(height: 6.h),
+    //                               Text(
+    //                                 selectIndex == 0
+    //                                     ? "Find Your Dream Property"
+    //                                     : selectIndex == 1
+    //                                     ? "Best Home Services"
+    //                                     : "Get Instant Loan",
+    //                                 style: TextStyle(
+    //                                   color: Colors.white,
+    //                                   fontSize: 18.sp,
+    //                                   fontWeight: FontWeight.bold,
+    //                                 ),
+    //                               ),
+    //                               SizedBox(height: 4.h),
+    //                               Text(
+    //                                 selectIndex == 0
+    //                                     ? "Buy, Rent & Sell properties"
+    //                                     : selectIndex == 1
+    //                                     ? "Cleaning, Plumbing, Electrician & more"
+    //                                     : "Home, Personal & Business Loan Available",
+    //                                 style: TextStyle(
+    //                                   color: Colors.white70,
+    //                                   fontSize: 13.sp,
+    //                                 ),
+    //                               ),
+    //                             ],
+    //                           ),
+    //                         ),
+    //                       ],
+    //                     );
+    //                   }).toList(),
+    //                 ),
+    //                 /// 🔥 FIXED DOT INDICATOR (ALWAYS SAME POSITION)
+    //                 Positioned(
+    //                   bottom: 10.h,
+    //                   left: 0,
+    //                   right: 0,
+    //                   child: Row(
+    //                     mainAxisAlignment: MainAxisAlignment.center,
+    //                     children: List.generate(
+    //                       currentImages.length,
+    //                       (index) => AnimatedContainer(
+    //                         duration: const Duration(milliseconds: 300),
+    //                         margin: EdgeInsets.symmetric(horizontal: 4.w),
+    //                         width: currentBannerIndex == index ? 12.w : 8.w,
+    //                         height: currentBannerIndex == index ? 12.h : 8.h,
+    //                         decoration: BoxDecoration(
+    //                           color: currentBannerIndex == index
+    //                               ? const Color(0xFF24ADD7)
+    //                               : Colors.white,
+    //                           shape: BoxShape.circle,
+    //                         ),
+    //                       ),
+    //                     ),
+    //                   ),
+    //                 ),
+    //               ],
+    //             ),
+    //             // MARQUEE
+    //             Container(
+    //               width: double.infinity,
+    //               height: 40.h,
+    //               color: const Color(0xFF24ADD7),
+    //               child: Marquee(
+    //                 text:
+    //                     "CALL US TODAY AT +91-9171719060 FOR PROPERTY INQUERY",
+    //                 style: GoogleFonts.inter(
+    //                   fontSize: 12.sp,
+    //                   fontWeight: FontWeight.w400,
+    //                   color: Colors.white,
+    //                 ),
+    //                 scrollAxis: Axis.horizontal,
+    //                 velocity: 40,
+    //                 blankSpace: 50,
+    //                 startPadding: 10,
+    //               ),
+    //             ),
+    //             SizedBox(height: 15.h),
+    //             // TABS
+    //             SingleChildScrollView(
+    //               scrollDirection: Axis.horizontal,
+    //               padding: EdgeInsets.symmetric(horizontal: 16.w),
+    //               child: Row(
+    //                 children: [
+    //                   _tab("Buy & Rent Property", 0),
+    //                   _tab("Home Services", 1),
+    //                   _tab("Loan Service", 2),
+    //                 ],
+    //               ),
+    //             ),
+    //             SizedBox(height: 16.h),
+    //             // TAB CONTENT
+    //             if (selectIndex == 0)
+    //               Padding(
+    //                 padding: EdgeInsets.all(16.w),
+    //                 child: GridView.count(
+    //                   padding: EdgeInsets.zero,
+    //                   shrinkWrap: true,
+    //                   physics: const NeverScrollableScrollPhysics(),
+    //                   crossAxisCount: 3,
+    //                   crossAxisSpacing: 12,
+    //                   mainAxisSpacing: 12,
+    //                   children: [
+    //                     _gridItem("assets/png/home.png", "Buy House"),
+    //                     _gridItem("assets/png/apartment.png", "Rent Studio"),
+    //                     _gridItem("assets/png/buyFlat.png", "Buy Flats"),
+    //                     _gridItem("assets/png/buyPlot.png", "Buy Plots"),
+    //                     _gridItem("assets/png/commercial.png", "Commercial"),
+    //                     _gridItem("assets/png/buyHotel.png", "residential"),
+    //                     _gridItem("assets/png/rentCondos.png", "Rent Condos"),
+    //                     _gridItem("assets/png/buyDuplex.png", "Buy Duplex"),
+    //                     _gridItem("assets/png/rentHouse.png", "Rent House"),
+    //                   ],
+    //                 ),
+    //               )
+    //             else if (selectIndex == 1)
+    //               const HomeService()
+    //             else if (selectIndex == 2)
+    //               const LoanService(),
+    //             SizedBox(height: 80.h),
+    //           ],
+    //         ),
+    //       );
+    //     },
+    //   ),
+    // );
+
+    final notificationState = ref.watch(notificationController);
+    final unreadCount = notificationState.maybeWhen(
+      data: (data) =>
+          data.data?.where((item) => item.isRead == false).length ?? 0,
+      orElse: () => 0,
+    );
+    return NestedScrollView(
+      headerSliverBuilder: (context, _) => [
+        SliverToBoxAdapter(
+          child: Column(
+            children: [
+              Container(
+                padding: EdgeInsets.only(
+                  left: 16.w,
+                  right: 16.w,
+                  top: 8.h,
+                  bottom: 8.h,
+                ),
+                color: const Color(0xFF24ADD7),
+                child: SafeArea(
+                  bottom: false,
+                  child: Row(
+                    children: [
+                      InkWell(
+                        onTap: () {
+                          Scaffold.of(context).openDrawer();
+                        },
+                        child: Icon(
+                          Icons.menu,
+                          color: Colors.white,
+                          size: 22.sp,
+                        ),
+                      ),
+                      SizedBox(width: 10.w),
+
+                      Expanded(
+                        child: TextField(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    SearchResultScreen(selectedCity),
+                              ),
+                            );
+                          },
+                          style: GoogleFonts.inter(color: Colors.white),
+                          cursorColor: Colors.white,
+                          readOnly: true,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white.withOpacity(0.25),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(30.r),
+                              borderSide: BorderSide.none,
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(30.r),
+                              borderSide: BorderSide.none,
+                            ),
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(
+                              vertical: 8.h,
+                              horizontal: 10.w,
+                            ),
+                            prefixIcon: Icon(
+                              Icons.search,
+                              color: Colors.white,
+                              size: 18.sp,
+                            ),
+                            prefixIconConstraints: BoxConstraints(
+                              minHeight: 30.h,
+                              minWidth: 40.w,
+                            ),
+                            hintText: "Search",
+                            hintStyle: GoogleFonts.inter(
+                              color: Colors.white.withOpacity(0.85),
+                              fontSize: 13.sp,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 10.w),
+                      InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            CupertinoPageRoute(
+                              builder: (context) => NotificationPage(),
+                            ),
+                          ).then((value) {
+                            ref.invalidate(notificationController);
+                          });
+                        },
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Icon(Icons.notifications_none, color: Colors.white),
+                            if (unreadCount > 0)
+                              Positioned(
+                                right: 0,
+                                top: -2,
+                                child: Container(
+                                  padding: EdgeInsets.all(2),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.red,
+                                  ),
+                                  child: Text(
+                                    unreadCount > 99
+                                        ? "99+"
+                                        : unreadCount.toString(),
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 8.sp,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+
+                      // cityListState.when(
+                      //   data: (cityList) {
+                      //     // if (selectedCity == null &&
+                      //     //     cityList.data!.isNotEmpty) {
+                      //     //   selectedCity =
+                      //     //       city ?? cityList.data!.first.cityName;
+                      //     // }
+                      //     final cityNames = cityList.data!
+                      //         .map((e) => e.cityName.toString())
+                      //         .toSet()
+                      //         .toList();
+                      //     // First time initialize
+                      //     if (selectedCity == null) {
+                      //       if (_currentCity != null &&
+                      //           _currentCity!.isNotEmpty) {
+                      //         selectedCity = _currentCity;
+                      //       } else if (cityNames.isNotEmpty) {
+                      //         selectedCity = cityNames.first;
+                      //       }
+                      //     }
+                      //     return Container(
+                      //       padding: EdgeInsets.symmetric(
+                      //         horizontal: 8.w,
+                      //         vertical: 2.h,
+                      //       ),
+                      //       decoration: BoxDecoration(
+                      //         color: Colors.white,
+                      //         borderRadius: BorderRadius.circular(20.r),
+                      //       ),
+                      //       child: DropdownButtonHideUnderline(
+                      //         child: DropdownButton<String>(
+                      //           isDense: true,
+                      //           padding: EdgeInsets.zero,
+                      //           value: cityNames.contains(selectedCity)
+                      //               ? selectedCity
+                      //               : null,
+                      //           hint: Row(
+                      //             mainAxisSize: MainAxisSize.min,
+                      //             children: [
+                      //               Icon(
+                      //                 Icons.location_on,
+                      //                 size: 14.sp,
+                      //                 color: const Color(0xFF24ADD7),
+                      //               ),
+                      //               SizedBox(width: 4.w),
+                      //               Text(
+                      //                 _currentCity ?? "Select City",
+                      //                 style: TextStyle(
+                      //                   color: const Color(0xFF24ADD7),
+                      //                   fontSize: 13.sp,
+                      //                   fontWeight: FontWeight.w600,
+                      //                 ),
+                      //               ),
+                      //             ],
+                      //           ),
+                      //           icon: Icon(
+                      //             Icons.keyboard_arrow_down,
+                      //             color: const Color(0xFF24ADD7),
+                      //             size: 18.sp,
+                      //           ),
+                      //           items: cityNames.map((cityName) {
+                      //             return DropdownMenuItem<String>(
+                      //               value: cityName,
+                      //               child: Row(
+                      //                 children: [
+                      //                   Icon(
+                      //                     Icons.location_on,
+                      //                     size: 14.sp,
+                      //                     color: const Color(0xFF24ADD7),
+                      //                   ),
+                      //                   SizedBox(width: 4.w),
+                      //                   Text(cityName),
+                      //                 ],
+                      //               ),
+                      //             );
+                      //           }).toList(),
+                      //           onChanged: (String? newValue) async {
+                      //             if (newValue == null) return;
+                      //             setState(() {
+                      //               selectedCity = newValue;
+                      //               _currentCity = newValue;
+                      //             });
+                      //             ref.read(currentCityProvider.notifier).state =
+                      //                 newValue;
+                      //             await saveCity(newValue);
+                      //           },
+                      //         ),
+                      //       ),
+                      //     );
+                      //   },
+                      //   error: (error, stackTrace) {
+                      //     return Center(child: Text(error.toString()));
+                      //   },
+                      //   loading: () => Center(
+                      //     child: SizedBox(
+                      //       height: 20,
+                      //       width: 20,
+                      //       child: CircularProgressIndicator(
+                      //         color: Colors.white,
+                      //         strokeWidth: 1.5,
+                      //       ),
+                      //     ),
+                      //   ),
+                      // ),
+                      cityListState.when(
+                        data: (cityList) {
+                          final cityNames = cityList.data!
+                              .map((e) => e.cityName.toString())
+                              .toSet()
+                              .toList();
+
+                          // First time initialize
+                          if (selectedCity == null) {
+                            if (_currentCity != null &&
+                                _currentCity!.isNotEmpty) {
+                              selectedCity = _currentCity;
+                            } else if (cityNames.isNotEmpty) {
+                              selectedCity = cityNames.first;
+                            }
+                          }
+
+                          // ✅ FIX: Dropdown ko responsive parent size dene ke liye aur design matching ke liye Container lagaya hai
+                          return Container(
+                            height: 34.h,
+                            width: 120.w,
+                            padding: EdgeInsets.symmetric(horizontal: 6.w),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20.r),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton2<String>(
+                                isExpanded: true,
+                                isDense: true,
+
+                                value: cityNames.contains(selectedCity)
+                                    ? selectedCity
+                                    : null,
+                                hint: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.location_on,
+                                      size: 14.sp,
+                                      color: const Color(0xFF24ADD7),
+                                    ),
+                                    SizedBox(width: 4.w),
+                                    SizedBox(
+                                      // width: 100.w,
+                                      child: Text(
+                                        _currentCity ?? "Select",
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: const Color(0xFF24ADD7),
+                                          fontSize: 12.sp,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                iconStyleData: IconStyleData(
+                                  icon: Icon(
+                                    Icons.keyboard_arrow_down,
+                                    color: const Color(0xFF24ADD7),
+                                    size: 16.sp,
+                                  ),
+                                ),
+                                dropdownStyleData: DropdownStyleData(
+                                  maxHeight: 280.h,
+                                  width: 180.w,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(12.r),
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                items: cityNames.map((cityName) {
+                                  return DropdownMenuItem<String>(
+                                    value: cityName,
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.location_on,
+                                          size: 14.sp,
+                                          color: const Color(0xFF24ADD7),
+                                        ),
+                                        SizedBox(width: 6.w),
+                                        Expanded(
+                                          child: Text(
+                                            cityName,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(fontSize: 13.sp),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (String? newValue) async {
+                                  if (newValue == null) return;
+
+                                  setState(() {
+                                    selectedCity = newValue;
+                                    _currentCity = newValue;
+                                  });
+                                  ref.read(currentCityProvider.notifier).state =
+                                      newValue;
+                                  await saveCity(newValue);
+                                },
+                                dropdownSearchData: DropdownSearchData<String>(
+                                  searchController: _citySearchController,
+                                  searchInnerWidgetHeight: 45.h,
+                                  searchInnerWidget: Container(
+                                    height: 45.h,
+                                    padding: EdgeInsets.only(
+                                      top: 6.h,
+                                      bottom: 4.h,
+                                      left: 8.w,
+                                      right: 8.w,
+                                    ),
+                                    child: TextFormField(
+                                      controller: _citySearchController,
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        color: Colors.black,
+                                      ),
+                                      decoration: InputDecoration(
+                                        isDense: true,
+                                        contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 8.w,
+                                          vertical: 8.h,
+                                        ),
+                                        hintText: 'Search city...',
+                                        hintStyle: TextStyle(
+                                          fontSize: 11.sp,
+                                          color: Colors.grey,
+                                        ),
+                                        prefixIcon: Icon(
+                                          Icons.search,
+                                          size: 14.sp,
+                                          color: Colors.grey,
+                                        ),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            8.r,
+                                          ),
+                                          borderSide: BorderSide(
+                                            color: Colors.grey.shade300,
+                                          ),
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            8.r,
+                                          ),
+                                          borderSide: BorderSide(
+                                            color: Colors.grey.shade300,
+                                          ),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            8.r,
+                                          ),
+                                          borderSide: const BorderSide(
+                                            color: Color(0xFF24ADD7),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  searchMatchFn: (item, searchValue) {
+                                    return item.value
+                                        .toString()
+                                        .toLowerCase()
+                                        .contains(searchValue.toLowerCase());
+                                  },
+                                ),
+                                onMenuStateChange: (isOpen) {
+                                  if (!isOpen) {
+                                    _citySearchController.clear();
+                                  }
+                                },
+                              ),
+                            ),
+                          );
+                        },
+                        error: (error, stackTrace) {
+                          return Center(child: Text(error.toString()));
+                        },
+                        loading: () => Center(
+                          child: SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 1.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              Stack(
+                children: [
+                  /// 🔥 IMAGE SLIDER
+                  CarouselSlider(
+                    options: CarouselOptions(
+                      height: 260.h,
+                      viewportFraction: 1,
+                      autoPlay: true,
+                      autoPlayInterval: const Duration(seconds: 3),
+                      autoPlayAnimationDuration: const Duration(
+                        milliseconds: 800,
+                      ),
+                      onPageChanged: (index, reason) {
+                        setState(() {
+                          currentBannerIndex = index;
+                        });
+                      },
+                    ),
+                    items: currentImages.map((image) {
+                      return Stack(
+                        children: [
+                          Image.asset(
+                            image,
+                            height: 260.h,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
+
+                          /// Gradient
+                          Container(
+                            height: 260.h,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.black.withOpacity(0.6),
+                                  Colors.transparent,
+                                ],
+                                begin: Alignment.bottomCenter,
+                                end: Alignment.topCenter,
+                              ),
+                            ),
+                          ),
+
+                          /// TEXT CONTENT
+                          Positioned(
+                            left: 16.w,
+                            bottom: 30.h,
+                            right: 16.w,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Chip(
+                                  labelPadding: EdgeInsets.zero,
+                                  label: Text(
+                                    selectIndex == 0
+                                        ? "Top Property"
+                                        : selectIndex == 1
+                                        ? "Best Service"
+                                        : "Easy Loan",
+                                  ),
+                                  backgroundColor: Colors.white.withOpacity(
+                                    0.8,
+                                  ),
+                                ),
+
+                                SizedBox(height: 6.h),
+
+                                Text(
+                                  selectIndex == 0
+                                      ? "Find Your Dream Property"
+                                      : selectIndex == 1
+                                      ? "Best Home Services"
+                                      : "Get Instant Loan",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18.sp,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+
+                                SizedBox(height: 4.h),
+
+                                Text(
+                                  selectIndex == 0
+                                      ? "Buy, Rent & Sell properties"
+                                      : selectIndex == 1
+                                      ? "Cleaning, Plumbing, Electrician & more"
+                                      : "Home, Personal & Business Loan Available",
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 13.sp,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      );
+                    }).toList(),
+                  ),
+
+                  /// 🔥 FIXED DOT INDICATOR (ALWAYS SAME POSITION)
+                  Positioned(
+                    bottom: 10.h,
+                    left: 0,
+                    right: 0,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        currentImages.length,
+                        (index) => AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          margin: EdgeInsets.symmetric(horizontal: 4.w),
+                          width: currentBannerIndex == index ? 12.w : 8.w,
+                          height: currentBannerIndex == index ? 12.h : 8.h,
+                          decoration: BoxDecoration(
+                            color: currentBannerIndex == index
+                                ? const Color(0xFF24ADD7)
+                                : Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              // MARQUEE
+              Container(
+                width: double.infinity,
+                height: 40.h,
+                color: const Color(0xFF24ADD7),
+                child: Marquee(
+                  text: "CALL US TODAY AT +91-9171719060 FOR PROPERTY INQUERY",
+                  style: GoogleFonts.inter(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.white,
+                  ),
+                  scrollAxis: Axis.horizontal,
+                  velocity: 40,
+                  blankSpace: 50,
+                  startPadding: 10,
+                ),
+              ),
+              SizedBox(height: 15.h),
+            ],
+          ),
+        ),
+      ],
+      body: Column(
+        children: [
+          SizedBox(height: 10.h),
+          Padding(
+            padding: EdgeInsets.only(left: 0, right: 0),
+            child: TabBar(
+              labelPadding: EdgeInsets.zero,
+              indicatorPadding: EdgeInsets.zero,
+              splashBorderRadius: BorderRadius.circular(20.r),
+              controller: _tabController,
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              dividerColor: Colors.transparent,
+              padding: EdgeInsets.zero,
+              indicator: const BoxDecoration(),
+              tabs: [
+                _buildTab("Buy & Rent Property", 0),
+                _buildTab("Service Enquiry", 1),
+                _buildTab("Loan Enquiry", 2),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Container(
+              color: Colors.white,
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.all(16.w),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          // SizedBox(
+                          //   width: double.infinity,
+                          //   height: 45.h,
+                          //   child: ElevatedButton.icon(
+                          //     onPressed: () {
+                          //       Navigator.push(
+                          //         context,
+                          //         CupertinoPageRoute(
+                          //           builder: (context) =>
+                          //               const MyListedPropertiesScreen(),
+                          //         ),
+                          //       );
+                          //     },
+                          //     icon: Icon(
+                          //       Icons.home_work_outlined,
+                          //       size: 18.sp,
+                          //       color: Colors.white,
+                          //     ),
+                          //     label: Text(
+                          //       "My Property Requests",
+                          //       style: TextStyle(
+                          //         fontSize: 13.sp,
+                          //         fontWeight: FontWeight.w600,
+                          //         color: Colors.white,
+                          //       ),
+                          //     ),
+                          //     style: ElevatedButton.styleFrom(
+                          //       backgroundColor: const Color(0xFF24ADD7),
+                          //       shape: RoundedRectangleBorder(
+                          //         borderRadius: BorderRadius.circular(10.r),
+                          //       ),
+                          //     ),
+                          //   ),
+                          // ),
+                          SizedBox(height: 10.h),
+                          GridView.count(
+                            padding: EdgeInsets.zero,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            crossAxisCount: 3,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            children: [
+                              _gridItem("assets/png/home.png", "Buy House"),
+                              _gridItem(
+                                "assets/png/apartment.png",
+                                "Rent Studio",
+                              ),
+                              _gridItem("assets/png/buyFlat.png", "Buy Flats"),
+                              _gridItem("assets/png/buyPlot.png", "Buy Plots"),
+                              _gridItem(
+                                "assets/png/commercial.png",
+                                "Commercial",
+                              ),
+                              _gridItem(
+                                "assets/png/buyHotel.png",
+                                "residential",
+                              ),
+                              _gridItem(
+                                "assets/png/rentCondos.png",
+                                "Rent Condos",
+                              ),
+                              _gridItem(
+                                "assets/png/buyDuplex.png",
+                                "Buy Duplex",
+                              ),
+                              _gridItem(
+                                "assets/png/rentHouse.png",
+                                "Rent House",
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  HomeService(),
+                  LoanService(),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==================== MY LISTINGS SCREEN ====================
+  Widget MyListingsScreen() {
+    final getMyPropertyProvider = ref.watch(getMyPropertyController);
+    return SafeArea(
+      top: false,
+      child: Column(
+        children: [
+          Container(
+            height: 90.h,
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            color: const Color(0xFF24ADD7),
+            child: Padding(
+              padding: EdgeInsets.only(top: 25.h),
+              child: Row(
+                children: [
+                  Text(
+                    "My Property Manage",
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SizedBox(height: 20.h),
+          Padding(
+            padding: EdgeInsets.only(left: 16.w, right: 16.w),
+            child: TextField(
+              onChanged: (value) {
+                setState(() {
+                  searchListing = value.toLowerCase();
+                });
+              },
+              decoration: InputDecoration(
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(
+                  vertical: 8.h,
+                  horizontal: 12.w,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16.r),
+                  borderSide: BorderSide(color: Colors.grey, width: 1.w),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16.r),
+                  borderSide: BorderSide(color: Color(0xFF24ADD7), width: 1.w),
+                ),
+                prefixIcon: Icon(Icons.search, size: 18.sp, color: Colors.grey),
+                hint: Text(
+                  "Search...",
+                  style: TextStyle(fontSize: 13.sp, color: Colors.grey),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: 16.h),
+          Expanded(
+            child: RefreshIndicator(
+              backgroundColor: Color(0xFF24ADD7),
+              color: Colors.white,
+              onRefresh: () async {
+                // सबसे साफ तरीका
+                await ref.refresh(getMyPropertyController.future);
+              },
+              child: getMyPropertyProvider.when(
+                data: (snap) {
+                  final allProperties = snap.data?.list ?? [];
+
+                  final filteredProperties = allProperties.where((property) {
+                    final propertyType =
+                        property.propertyType?.toLowerCase() ?? '';
+
+                    final listingCategory =
+                        property.listingCategory?.toLowerCase() ?? '';
+
+                    final bedroom = property.bedRoom?.toLowerCase() ?? "";
+                    final localityArea =
+                        property.localityArea?.toLowerCase() ?? "";
+                    final city = property.city?.toLowerCase() ?? "";
+
+                    return propertyType.contains(searchListing) ||
+                        listingCategory.contains(searchListing) ||
+                        bedroom.contains(searchListing) ||
+                        localityArea.contains(searchListing) ||
+                        city.contains(searchListing);
+                  }).toList();
+
+                  if (snap.data!.list!.isEmpty) {
+                    return Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24.w),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.home_outlined,
+                              size: 80.sp,
+                              color: Colors.grey.shade400,
+                            ),
+                            SizedBox(height: 16.h),
+                            Text(
+                              "No properties listed yet",
+                              style: TextStyle(
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            SizedBox(height: 8.h),
+                            Text(
+                              "Start by adding your first property to manage listings easily.",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            SizedBox(height: 20.h),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                setState(() {
+                                  bottomIndex = 2;
+                                });
+                              },
+                              icon: const Icon(Icons.add, color: Colors.white),
+                              label: const Text(
+                                "Add Property",
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFFF5722),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 24.w,
+                                  vertical: 12.h,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12.r),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+                  if (filteredProperties.isEmpty) {
+                    return Center(
+                      child: Text(
+                        "No Property Found $searchListing",
+                        style: TextStyle(color: Colors.grey, fontSize: 15.sp),
+                      ),
+                    );
+                  }
+                  return ListView.builder(
+                    padding: EdgeInsets.only(
+                      left: 16.w,
+                      right: 16.w,
+                      bottom: 16.h,
+                    ),
+                    // itemCount: snap.data!.list!.length,
+                    itemCount: filteredProperties.length,
+                    itemBuilder: (context, index) {
+                      return PropertyCard(data: filteredProperties[index]);
+                    },
+                  );
+                },
+                error: (error, stackTrace) {
+                  log(stackTrace.toString());
+                  return Center(child: Text(error.toString()));
+                },
+                loading: () => Center(child: CircularProgressIndicator()),
+              ),
+            ),
+          ),
+          SizedBox(height: 16.h),
+        ],
+      ),
+    );
+  }
+
+  Widget CallUsScreen() {
+    return SafeArea(
+      top: false,
+      child: Column(
+        children: [
+          Container(
+            height: 90.h,
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            color: const Color(0xFF24ADD7),
+            child: Padding(
+              padding: EdgeInsets.only(top: 25.h),
+              child: Row(
+                children: [
+                  Text(
+                    "Call Us",
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    /// TITLE
+                    RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: "Send us a ",
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 22.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          TextSpan(
+                            text: "Message",
+                            style: TextStyle(
+                              color: Colors.orange,
+                              fontSize: 22.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    SizedBox(height: 6.h),
+
+                    /// SUBTITLE
+                    Text(
+                      "Find our contact info to reach out to us",
+                      style: TextStyle(color: Colors.black54, fontSize: 13.sp),
+                    ),
+
+                    SizedBox(height: 16.h),
+
+                    /// CARD
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(16.w),
+                      decoration: BoxDecoration(
+                        color: const Color(0xffE8D6CC),
+                        borderRadius: BorderRadius.circular(16.r),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          /// WHERE WE WORK
+                          Text(
+                            "WHERE WE WORK FROM",
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              letterSpacing: 1,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+
+                          SizedBox(height: 10.h),
+
+                          Text(
+                            "PropertyLe Innovation – One Call, One Click, Anytime.",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 13.sp,
+                            ),
+                          ),
+
+                          SizedBox(height: 8.h),
+
+                          /// ✅ FIXED ALIGNMENT
+                          Text(
+                            "B Raj Dhaakad: 66 Kailash Vihar City Centre",
+                            style: TextStyle(fontSize: 13.sp, height: 1.4),
+                          ),
+                          Text(
+                            "Gwalior, Madhya Pradesh",
+                            style: TextStyle(fontSize: 13.sp, height: 1.4),
+                          ),
+                          Text(
+                            "Pin 474012",
+                            style: TextStyle(fontSize: 13.sp, height: 1.4),
+                          ),
+
+                          SizedBox(height: 16.h),
+
+                          /// CALL + EMAIL
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              /// CALL
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () async {
+                                    final Uri url = Uri(
+                                      scheme: 'tel',
+                                      path: '9171719060',
+                                    );
+                                    await launchUrl(url);
+                                  },
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "CALL / TEXT",
+                                        style: TextStyle(
+                                          fontSize: 12.sp,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      SizedBox(height: 4.h),
+                                      Text(
+                                        "+91-9171719060",
+                                        style: TextStyle(fontSize: 13.sp),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+
+                              SizedBox(width: 20.w),
+
+                              /// EMAIL
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "EMAIL US",
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4.h),
+                                    Text(
+                                      "Info@property.com",
+                                      style: TextStyle(fontSize: 13.sp),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          SizedBox(height: 16.h),
+
+                          /// SOCIALS
+                          Text(
+                            "OUR SOCIALS",
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+
+                          SizedBox(height: 10.h),
+
+                          Row(
+                            children: [
+                              /// INSTAGRAM
+                              GestureDetector(
+                                onTap: () async {
+                                  final url =
+                                      "https://www.instagram.com/propertyleindia?igsh=MWJ4eG8yendnODg1Mw%3D%3D&utm_source=qr";
+                                  await launchUrl(
+                                    Uri.parse(url),
+                                    mode: LaunchMode.externalApplication,
+                                  );
+                                },
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: EdgeInsets.all(10.w),
+                                      decoration: const BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        gradient: LinearGradient(
+                                          colors: [Colors.pink, Colors.orange],
+                                        ),
+                                      ),
+                                      child: Image.asset(
+                                        "assets/insta.png",
+                                        height: 18.h,
+                                        width: 18.w,
+                                      ),
+                                    ),
+                                    SizedBox(width: 8.w),
+                                    Text(
+                                      "Instagram",
+                                      style: TextStyle(fontSize: 13.sp),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              SizedBox(width: 20.w),
+                              GestureDetector(
+                                onTap: () async {
+                                  final Uri url = Uri.parse(
+                                    "https://wa.me/9171719060",
+                                  );
+                                  await launchUrl(
+                                    url,
+                                    mode: LaunchMode.externalApplication,
+                                  );
+                                },
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: EdgeInsets.all(10.w),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.green,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Center(
+                                        child: SvgPicture.asset(
+                                          "assets/Svg/whatsapp.svg",
+                                          width: 20.w,
+                                          height: 20.h,
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(width: 8.w),
+                                    Text(
+                                      "WhatsApp",
+                                      style: TextStyle(fontSize: 13.sp),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 10.h),
+                          GestureDetector(
+                            onTap: () async {
+                              final Uri url = Uri(
+                                scheme: 'tel',
+                                path: '9171719060',
+                              );
+                              await launchUrl(url);
+                            },
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.all(10.w),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.green,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.call,
+                                    color: Colors.white,
+                                    size: 18.sp,
+                                  ),
+                                ),
+                                SizedBox(width: 8.w),
+                                Text("Call", style: TextStyle(fontSize: 13.sp)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 15.h),
+                    Form(
+                      key: _formKeyContactUs,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Send Enquiry",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xff0E1A35),
+                            ),
+                          ),
+                          SizedBox(height: 15.h),
+                          const Text(
+                            "Enter Your Email",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xff0E1A35),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          TextFormField(
+                            controller: emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            decoration: InputDecoration(
+                              prefixIcon: Icon(
+                                Icons.mail_outline,
+                                color: Colors.grey,
+                              ),
+                              hintStyle: TextStyle(fontSize: 14.sp),
+                              hintText: "Email",
+                              filled: true,
+                              fillColor: Colors.white,
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.red.shade300,
+                                ),
+                              ),
+                              focusedErrorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.red.shade300,
+                                ),
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return "Email is required";
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 15),
+                          const Text(
+                            "Enter Your Name",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xff0E1A35),
+                            ),
+                          ),
+
+                          const SizedBox(height: 10),
+
+                          TextFormField(
+                            controller: nameController,
+                            keyboardType: TextInputType.name,
+
+                            decoration: InputDecoration(
+                              prefixIcon: Icon(
+                                Icons.person,
+                                color: Colors.grey,
+                              ),
+                              hintStyle: TextStyle(fontSize: 14.sp),
+                              hintText: "Name",
+                              filled: true,
+                              fillColor: Colors.white,
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.red.shade300,
+                                ),
+                              ),
+                              focusedErrorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.red.shade300,
+                                ),
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return "Name is required";
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 15),
+                          const Text(
+                            "Mobile Number",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xff0E1A35),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          TextFormField(
+                            maxLength: 10,
+                            controller: phoneController,
+                            keyboardType: TextInputType.number,
+
+                            decoration: InputDecoration(
+                              prefixIcon: Icon(
+                                Icons.call_outlined,
+                                color: Colors.grey,
+                              ),
+                              counterText: "",
+                              hintStyle: TextStyle(fontSize: 14.sp),
+                              hintText: "Mobile Number",
+                              filled: true,
+                              fillColor: Colors.white,
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.red.shade300,
+                                ),
+                              ),
+                              focusedErrorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.red.shade300,
+                                ),
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return "Mobile Number is required";
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 15),
+                          const Text(
+                            "Subject",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xff0E1A35),
+                            ),
+                          ),
+
+                          const SizedBox(height: 10),
+
+                          TextFormField(
+                            controller: subjectController,
+                            keyboardType: TextInputType.text,
+
+                            decoration: InputDecoration(
+                              prefixIcon: Icon(
+                                Icons.subject_outlined,
+                                color: Colors.grey,
+                              ),
+                              hintStyle: TextStyle(fontSize: 14.sp),
+                              hintText: "Subject",
+                              filled: true,
+                              fillColor: Colors.white,
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.red.shade300,
+                                ),
+                              ),
+                              focusedErrorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.red.shade300,
+                                ),
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return "Subject is required";
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 15),
+                          const Text(
+                            "Message",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xff0E1A35),
+                            ),
+                          ),
+
+                          const SizedBox(height: 10),
+
+                          TextFormField(
+                            controller: messageController,
+                            keyboardType: TextInputType.text,
+
+                            decoration: InputDecoration(
+                              prefixIcon: Icon(
+                                Icons.messenger_outline,
+                                color: Colors.grey,
+                              ),
+                              filled: true,
+                              fillColor: Colors.white,
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.red.shade300,
+                                ),
+                              ),
+                              focusedErrorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.red.shade300,
+                                ),
+                              ),
+                              hintStyle: TextStyle(fontSize: 14.sp),
+                              hintText: "Message",
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return "Message is required";
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 15),
+                          const Text(
+                            "Location",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xff0E1A35),
+                            ),
+                          ),
+
+                          const SizedBox(height: 10),
+
+                          SizedBox(width: 10),
+                          TextFormField(
+                            controller: locationController,
+                            keyboardType: TextInputType.text,
+
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: Colors.white,
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.red.shade300,
+                                ),
+                              ),
+                              hintStyle: TextStyle(fontSize: 14.sp),
+                              hintText: "Location",
+                              prefixIcon: Icon(
+                                Icons.location_on_outlined,
+                                color: Colors.grey,
+                              ),
+                              focusedErrorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14.r),
+                                borderSide: BorderSide(
+                                  color: Colors.red.shade300,
+                                ),
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return "Location is required";
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 20),
+
+                          /// ==== SIGN IN BUTTON ====
+                          Center(
+                            child: GestureDetector(
+                              onTap: isLoading
+                                  ? null
+                                  : () async {
+                                      if (!_formKeyContactUs.currentState!
+                                          .validate()) {
+                                        return;
+                                      }
+                                      setState(() {
+                                        isLoading = true;
+                                      });
+                                      final body = ContactUsBodyModel(
+                                        email: emailController.text,
+                                        name: nameController.text,
+                                        phone: phoneController.text,
+                                        subject: subjectController.text,
+                                        message: messageController.text,
+                                        location: locationController.text,
+                                      );
+                                      try {
+                                        final response = await ref.read(
+                                          contactUsController(body).future,
+                                        );
+                                        if (response.code == 0 ||
+                                            response.error == false) {
+                                          Fluttertoast.showToast(
+                                            msg: response.message,
+                                          );
+
+                                          emailController.clear();
+                                          nameController.clear();
+                                          phoneController.clear();
+                                          subjectController.clear();
+                                          messageController.clear();
+                                          locationController.clear();
+                                        } else {
+                                          Fluttertoast.showToast(
+                                            msg: response.message,
+                                          );
+                                        }
+                                      } catch (e) {
+                                        log(e.toString());
+                                      } finally {
+                                        setState(() {
+                                          isLoading = false;
+                                        });
+                                      }
+                                    },
+                              child: Container(
+                                height: 50,
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: Color(0xFF24ADD7),
+                                  borderRadius: BorderRadius.circular(40),
+                                ),
+                                child: Center(
+                                  child: isLoading
+                                      ? Center(
+                                          child: SizedBox(
+                                            height: 20,
+                                            width: 20,
+                                            child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        )
+                                      : Text(
+                                          "Submit",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 17.sp,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 10.h),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // Column(
+          //   mainAxisAlignment: MainAxisAlignment.center,
+          //   children: [
+          //     /// Icon
+          //     Container(
+          //       width: 110.w,
+          //       height: 110.w,
+          //       decoration: BoxDecoration(
+          //         shape: BoxShape.circle,
+          //         color: Colors.orange.withOpacity(0.1),
+          //       ),
+          //       child: Icon(
+          //         Icons.support_agent,
+          //         color: const Color(0xFF24ADD7),
+          //         size: 55.sp,
+          //       ),
+          //     ),
+          //     SizedBox(height: 25.h),
+          //     /// Title
+          //     Text(
+          //       "Need Help?",
+          //       style: GoogleFonts.inter(
+          //         fontSize: 22.sp,
+          //         fontWeight: FontWeight.bold,
+          //       ),
+          //     ),
+          //     SizedBox(height: 8.h),
+          //     /// Subtitle
+          //     Text(
+          //       "Our support team is here to help you.\nContact us via Call or WhatsApp.",
+          //       textAlign: TextAlign.center,
+          //       style: GoogleFonts.inter(
+          //         fontSize: 14.sp,
+          //         color: Colors.grey.shade600,
+          //       ),
+          //     ),
+          //     SizedBox(height: 35.h),
+          //     /// Buttons Row
+          //     Padding(
+          //       padding: EdgeInsets.only(left: 20.w, right: 20.w),
+          //       child: Row(
+          //         children: [
+          //           /// Call Button
+          //           Expanded(
+          //             child: SizedBox(
+          //               height: 50.h,
+          //               child: ElevatedButton.icon(
+          //                 style: ElevatedButton.styleFrom(
+          //                   backgroundColor: const Color(
+          //                     0xFF24ADD7,
+          //                   ),
+          //                   shape: RoundedRectangleBorder(
+          //                     borderRadius: BorderRadius.circular(
+          //                       30.r,
+          //                     ),
+          //                   ),
+          //                 ),
+          //                 // onPressed: () async {
+          //                 //   String phone = "9171719060";
+          //                 //   final Uri url = Uri.parse("tel:$phone");
+          //                 //   if (await canLaunchUrl(url)) {
+          //                 //     await launchUrl(url);
+          //                 //   }
+          //                 // },
+          //                 onPressed: () async {
+          //                   final Uri url = Uri(
+          //                     scheme: 'tel',
+          //                     path: '9171719060',
+          //                   );
+          //                   await launchUrl(url);
+          //                 },
+          //                 icon: Icon(
+          //                   Icons.call,
+          //                   size: 20.sp,
+          //                   color: Colors.white,
+          //                 ),
+          //                 label: Text(
+          //                   "Call",
+          //                   style: GoogleFonts.inter(
+          //                     fontSize: 15.sp,
+          //                     fontWeight: FontWeight.w600,
+          //                     color: Colors.white,
+          //                   ),
+          //                 ),
+          //               ),
+          //             ),
+          //           ),
+          //           SizedBox(width: 12.w),
+          //           /// WhatsApp Button
+          //           Expanded(
+          //             child: SizedBox(
+          //               height: 50.h,
+          //               child: ElevatedButton.icon(
+          //                 style: ElevatedButton.styleFrom(
+          //                   backgroundColor: const Color(
+          //                     0xff25D366,
+          //                   ),
+          //                   shape: RoundedRectangleBorder(
+          //                     borderRadius: BorderRadius.circular(
+          //                       30.r,
+          //                     ),
+          //                   ),
+          //                 ),
+          //                 // onPressed: () async {
+          //                 //   String phone = "9171719060";
+          //                 //   final Uri url = Uri.parse("https://wa.me/$phone");
+          //                 //   if (await canLaunchUrl(url)) {
+          //                 //     await launchUrl(url);
+          //                 //   }
+          //                 // },
+          //                 onPressed: () async {
+          //                   final Uri url = Uri.parse(
+          //                     "https://wa.me/9171719060",
+          //                   );
+          //                   await launchUrl(
+          //                     url,
+          //                     mode:
+          //                         LaunchMode.externalApplication,
+          //                   );
+          //                 },
+          //                 icon: Icon(
+          //                   Icons.chat,
+          //                   size: 20.sp,
+          //                   color: Colors.white,
+          //                 ),
+          //                 label: Text(
+          //                   "WhatsApp",
+          //                   style: GoogleFonts.inter(
+          //                     fontSize: 15.sp,
+          //                     fontWeight: FontWeight.w600,
+          //                     color: Colors.white,
+          //                   ),
+          //                 ),
+          //               ),
+          //             ),
+          //           ),
+          //         ],
+          //       ),
+          //     ),
+          //     SizedBox(height: 25.h),
+          //     /// Phone Text
+          //     Text(
+          //       "Support: +91 9171719060",
+          //       style: GoogleFonts.inter(
+          //         fontSize: 14.sp,
+          //         fontWeight: FontWeight.w500,
+          //         color: Colors.grey.shade700,
+          //       ),
+          //     ),
+          //   ],
+          // ),
+        ],
+      ),
+    );
+  }
+
+  Widget SavedScreen() {
+    final likeProvider = ref.watch(likePropertyController);
+    return SafeArea(
+      top: false,
+      child: Column(
+        children: [
+          Container(
+            height: 90.h,
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            color: const Color(0xFF24ADD7),
+            child: Padding(
+              padding: EdgeInsets.only(top: 25.h),
+              child: Row(
+                children: [
+                  Text(
+                    "Saved Property",
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              backgroundColor: Color(0xFF24ADD7),
+              color: Colors.white,
+              onRefresh: () async {
+                // सबसे साफ तरीका
+                await ref.refresh(likePropertyController.future);
+                // या
+                // ref.invalidate(getMyPropertyController);
+              },
+              child: likeProvider.when(
+                data: (snap) {
+                  if (snap.data!.isEmpty) {
+                    return Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24.w),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.bookmark_border,
+                              size: 80.sp,
+                              color: Colors.grey.shade400,
+                            ),
+                            SizedBox(height: 16.h),
+
+                            Text(
+                              "No saved properties",
+                              style: TextStyle(
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+
+                            SizedBox(height: 8.h),
+
+                            Text(
+                              "You haven’t saved any properties yet.\nTap the bookmark icon to save your favorites.",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                color: Colors.grey,
+                              ),
+                            ),
+
+                            SizedBox(height: 20.h),
+
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                setState(() {
+                                  bottomIndex = 0;
+                                });
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        SearchResultScreen(selectedCity),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(
+                                Icons.search,
+                                color: Colors.white,
+                              ),
+                              label: const Text(
+                                "Explore Properties",
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF24ADD7),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 24.w,
+                                  vertical: 12.h,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12.r),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: snap.data!.length,
+                    itemBuilder: (context, index) {
+                      return PropertyCardSaved(data: snap.data![index]);
+                    },
+                  );
+                },
+                error: (error, stackTrace) {
+                  log(stackTrace.toString());
+                  log(error.toString());
+                  return Center(child: Text(error.toString()));
+                },
+                loading: () => Center(child: CircularProgressIndicator()),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTab(String title, int index) {
+    final isSelected = _tabController.index == index;
+    return Container(
+      margin: EdgeInsets.only(right: 0, left: 10.w),
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+      decoration: BoxDecoration(
+        color: isSelected ? Color(0xFF24ADD7) : Colors.white,
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(
+          color: isSelected
+              ? Colors.white.withOpacity(0.25)
+              : Color(0xFF24ADD7),
+          width: 0.95.w,
+        ),
+      ),
+      child: Text(
+        title,
+        style: GoogleFonts.inter(
+          color: isSelected ? Colors.white : const Color(0xFF24ADD7),
+          fontSize: 12.sp,
+        ),
+      ),
+    );
+  }
+
+  // GRID ITEM
+  Widget _gridItem(String icon, String title) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          CupertinoPageRoute(
+            builder: (context) => PropertyPageCat(property: title),
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(icon, height: 50.h),
+            SizedBox(height: 8.h),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 12),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ==================== PROPERTY MODEL ====================
+class Property {
+  final String propertyType;
+  final String propertyCategory;
+  final String listingCategory;
+  final String city;
+  final String locality;
+  final String price;
+  final String bedrooms;
+  final String bathrooms;
+  final String area;
+  final String furnishing;
+  final List<String> amenities;
+  final List<Map<String, String>> aroundProject;
+  final String fullName;
+  final String email;
+  final String phone;
+  final String address;
+  final String description;
+
+  Property({
+    required this.propertyType,
+    required this.propertyCategory,
+    required this.listingCategory,
+    required this.city,
+    required this.locality,
+    required this.price,
+    required this.bedrooms,
+    required this.bathrooms,
+    required this.area,
+    required this.furnishing,
+    required this.amenities,
+    required this.aroundProject,
+    required this.fullName,
+    required this.email,
+    required this.phone,
+    required this.address,
+    required this.description,
+  });
+}
+
+// ==================== PROPERTY CARD ====================
+class PropertyCard extends StatelessWidget {
+  final ListElement data;
+  const PropertyCard({super.key, required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = const Color(0xFF24ADD7);
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 16.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(.08),
+            blurRadius: 10,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ================= IMAGE =================
+          Stack(
+            children: [
+              InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    CupertinoPageRoute(
+                      builder: (context) =>
+                          MyPropertyDetalsPage(propetyId: data.slug ?? ""),
+                    ),
+                  );
+                },
+                child: ClipRRect(
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(16.r),
+                  ),
+                  child: Image.network(
+                    (data.uploadedPhotos != null &&
+                            data.uploadedPhotos!.isNotEmpty)
+                        ? data.uploadedPhotos!.first
+                        : '',
+                    height: 190.h,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        height: 190.h,
+                        width: double.infinity,
+                        child: Center(
+                          child: CircularProgressIndicator(strokeWidth: 1),
+                        ),
+                      );
+                    },
+                    errorBuilder: (_, __, ___) => Container(
+                      width: double.infinity,
+                      height: 190.h,
+                      color: Colors.grey.shade300,
+                      child: Center(child: const Icon(Icons.image, size: 40)),
+                    ),
+                  ),
+                ),
+              ),
+
+              // BUY / RENT CHIP
+              Positioned(
+                top: 12,
+                left: 12,
+                child: Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10.w,
+                        vertical: 5.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: primary,
+                        borderRadius: BorderRadius.circular(20.r),
+                      ),
+                      child: Text(
+                        (data.listingCategory ?? '').toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              Positioned(
+                top: 12,
+                right: 12,
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => CreatePropertyScreen(
+                              data,
+                              fromBottomNav: false,
+                            ),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 14.w,
+                          vertical: 5.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: primary,
+                          borderRadius: BorderRadius.circular(20.r),
+                        ),
+                        child: Icon(
+                          Icons.edit,
+                          color: Colors.white,
+                          size: 16.sp,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // PRICE
+              Positioned(
+                bottom: 12,
+                right: 12,
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 6.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20.r),
+                  ),
+                  child: Text(
+                    "₹ ${data.price}",
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.bold,
+                      color: primary,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          // ================= DETAILS =================
+          Padding(
+            padding: EdgeInsets.all(14.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // TITLE
+                Text(
+                  // "${data.bedRoom} BHK ${data.propertyType}",
+                  "${data.bedRoom}  ${data.propertyType}",
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+
+                SizedBox(height: 4.h),
+
+                // LOCATION
+                Row(
+                  children: [
+                    const Icon(Icons.location_on, size: 14, color: Colors.grey),
+                    SizedBox(width: 4.w),
+                    Expanded(
+                      child: Text(
+                        "${data.localityArea}, ${data.city}",
+                        style: TextStyle(fontSize: 13.sp, color: Colors.grey),
+                      ),
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: 10.h),
+
+                // SPECS
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // _spec(Icons.king_bed, "${data.bedRoom} Beds"),
+                    _spec(Icons.king_bed, "${data.bedRoom} "),
+                    // _spec(Icons.bathtub, "${data.bathrooms} Baths"),
+                    _spec(Icons.bathtub, "${data.bathrooms} "),
+                    _spec(Icons.square_foot, "${data.area} sqft"),
+                    _spec(Icons.chair, data.furnishing ?? ''),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 10.h),
+        ],
+      ),
+    );
+  }
+
+  // ================= HELPERS (SAME CLASS) =================
+  Widget _spec(IconData icon, String text) {
+    return Column(
+      children: [
+        Icon(icon, size: 18, color: Colors.grey),
+        SizedBox(height: 4.h),
+        Text(text, style: TextStyle(fontSize: 12.sp)),
+      ],
+    );
+  }
+}
+
+class PropertyCardSaved extends StatelessWidget {
+  final Datum data; // Aapka model class yaha aayega
+  const PropertyCardSaved({super.key, required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    const primaryColor = Color(0xFF24ADD7);
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 16.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 1. Image Section with Price Badge
+          Stack(
+            children: [
+              InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    CupertinoPageRoute(
+                      builder: (context) => SavedDetailsPage(savedData: data),
+                    ),
+                  );
+                },
+                child: ClipRRect(
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(16.r),
+                  ),
+                  child: Image.network(
+                    data.propertyId!.uploadedPhotos![0],
+                    // API se image
+                    height: 180.h,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return SizedBox(
+                        height: 180.h,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: primaryColor,
+                            strokeWidth: 1.w,
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stack) => Container(
+                      height: 180.h,
+                      width: double.infinity,
+                      color: Colors.grey[200],
+                      child: const Icon(Icons.image_not_supported),
+                    ),
+                  ),
+                ),
+              ),
+              // Price Badge
+              Positioned(
+                bottom: 12,
+                left: 12,
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 6.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: primaryColor,
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Text(
+                    "₹${data.propertyId!.price}",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16.sp,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          // 2. Details Section
+          Padding(
+            padding: EdgeInsets.all(12.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      //property.propertyType!.toUpperCase(),
+                      data.propertyId!.propertyType!.toUpperCase(),
+                      style: TextStyle(
+                        color: primaryColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12.sp,
+                      ),
+                    ),
+                    Text(
+                      "Status: ${data.propertyId!.status}",
+                      style: TextStyle(
+                        color: Colors.green,
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  //property.propertyAddress ?? "",
+                  data.propertyId!.propertyAddress ?? "",
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                Row(
+                  children: [
+                    Icon(Icons.location_on, size: 14.sp, color: Colors.grey),
+                    SizedBox(width: 4.w),
+                    Text(
+                      "${data.propertyId!.city}",
+                      style: TextStyle(color: Colors.grey, fontSize: 13.sp),
+                    ),
+                  ],
+                ),
+                Divider(height: 20.h),
+                // 3. Icons Row (Area, Bathrooms, Furnishing)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildIconDetail(
+                      Icons.square_foot,
+                      "${data.propertyId!.area} sqft",
+                    ),
+                    _buildIconDetail(
+                      Icons.bathtub_outlined,
+                      "${data.propertyId!.bathrooms} Bath",
+                    ),
+                    _buildIconDetail(Icons.chair_outlined, "Semi-Furnished"),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 10.h),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIconDetail(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, size: 16.sp, color: Colors.grey[600]),
+        SizedBox(width: 4.w),
+        Text(
+          text,
+          style: TextStyle(fontSize: 12.sp, color: Colors.grey[700]),
+        ),
+      ],
+    );
+  }
+}
+
+// ==================== MAIN STATE CLASS ====================
+class HomeService extends ConsumerStatefulWidget {
+  const HomeService({super.key});
+
+  @override
+  ConsumerState<HomeService> createState() => _HomeServiceState();
+}
+
+class _HomeServiceState extends ConsumerState<HomeService> {
+  final List<Map<String, String>> categories = const [
+    {
+      'label': 'ELECTRICIAN',
+      'url':
+          'https://media.istockphoto.com/id/1049775258/photo/smiling-handsome-electrician-repairing-electrical-box-with-pliers-in-corridor-and-looking-at.jpg?s=612x612&w=0&k=20&c=stdWozouV2XsrHk2xXD3C31nT90BG7ydZvcpAn1Fx7I=',
+    }, // Replace with actual
+    {
+      'label': 'CARPENTER',
+      'url':
+          'https://s3-media0.fl.yelpcdn.com/bphoto/y2N9GweV0RhaXx9dYbXHTA/l.jpg',
+    },
+    {
+      'label': 'PAINTER',
+      'url':
+          'https://www.shutterstock.com/image-vector/worker-repair-service-plumber-handyman-260nw-2234725577.jpg',
+    },
+    {
+      'label': 'PLUMBER',
+      'url':
+          'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/679085ac60c170e5ebba4b34_recBrwtY2JtNJji6k_image_1.webp',
+    },
+    {
+      'label': 'CLEANING',
+      'url':
+          'https://www.shutterstock.com/shutterstock/videos/3684051321/thumb/4.jpg?ip=x480',
+    },
+    {
+      'label': 'INTERIOR',
+      'url':
+          'https://s3-media0.fl.yelpcdn.com/bphoto/tuGs0mGEDRuE8omqeINuKQ/l.jpg',
+    },
+    {
+      'label': 'RENOVATION',
+      'url':
+          'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/677c007c62c5db1e8a3b1317_handyman-webflow-template.png',
+    },
+    {
+      'label': 'PEST CONTROL',
+      'url':
+          'https://img.freepik.com/free-photo/people-disinfecting-together-dangerous-area_23-2148848569.jpg?semt=ais_hybrid&w=740&q=80',
+    },
+  ];
+
+  final List<Map<String, String>> services = const [
+    {
+      'icon': 'Toilet Repair',
+      'title': 'Toilet Repair',
+      'desc':
+          'Fast, reliable toilet fixes that restore comfort and functionality.',
+    },
+    {
+      'icon': 'Faucet Installation',
+      'title': 'Faucet Installation',
+      'desc': 'Expert faucet installation and repair for every style.',
+    },
+    {
+      'icon': 'Sewer Inspection',
+      'title': 'Sewer Inspection',
+      'desc': 'Advanced camera inspections to prevent damage.',
+    },
+    {
+      'icon': 'Sewer Inspection',
+      'title': 'Sewer Inspection',
+      'desc': 'Advanced camera inspections to prevent damage.',
+    }, // Duplicate in screenshot, adjust if needed
+  ];
+
+  String searchQuery = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final homeServiceProvider = ref.watch(homeServiceCategoryController);
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          SizedBox(height: 15.h),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 22.w),
+            child: SizedBox(
+              height: 50.h,
+              child: TextField(
+                onChanged: (value) {
+                  setState(() {
+                    searchQuery = value.toLowerCase();
+                  });
+                },
+                style: TextStyle(fontSize: 15.sp),
+                decoration: InputDecoration(
+                  isDense: true,
+                  prefixIcon: Icon(
+                    Icons.search,
+                    size: 16.sp,
+                    color: Colors.grey,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16.r),
+                    borderSide: BorderSide(color: Colors.grey, width: 1.w),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16.r),
+                    borderSide: BorderSide(
+                      color: Color(0xFF24ADD7),
+                      width: 1.w,
+                    ),
+                  ),
+                  hintText: "Search...",
+                  hintStyle: TextStyle(fontSize: 14.sp, color: Colors.grey),
+                ),
+              ),
+            ),
+          ),
+          homeServiceProvider.when(
+            data: (service) {
+              final filteredServices = service.data!.list!.where((item) {
+                final name = (item.name ?? '').toLowerCase();
+
+                return name.contains(searchQuery);
+              }).toList();
+
+              if (filteredServices.isEmpty) {
+                return Column(
+                  children: [
+                    SizedBox(height: 20.h),
+                    Text(
+                      "No Service Found $searchQuery",
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                );
+              }
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 15.h),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 22.w),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                CupertinoPageRoute(
+                                  builder: (context) => PricePlanPage(),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              height: 40.h,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Color(0xFF24ADD7)),
+                                borderRadius: BorderRadius.circular(10.r),
+                              ),
+                              child: Text(
+                                'PRICING PLANS',
+                                textAlign: TextAlign.center,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.inter(
+                                  fontSize: 9.sp,
+                                  fontWeight: FontWeight.w400,
+                                  color: Color(0xFF24ADD7),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 8.w),
+                        Expanded(
+                          child: InkWell(
+                            onTap: () {
+                              // openBottomSheet(context);
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder: (_) =>
+                                    const VendorRegistrationBottomSheet(),
+                              );
+                            },
+                            child: Container(
+                              height: 40.h,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: Color(0xFF24ADD7),
+                                borderRadius: BorderRadius.circular(10.r),
+                              ),
+                              child: Text(
+                                'VENDOR REGISTRATION FORM',
+                                textAlign: TextAlign.center,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.inter(
+                                  fontSize: 9.sp,
+                                  fontWeight: FontWeight.w400,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 12.h),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 22.w),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 45.h,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            CupertinoPageRoute(
+                              builder: (context) => const MyrequestPage(),
+                            ),
+                          );
+                        },
+                        icon: Icon(
+                          Icons.assignment_outlined,
+                          size: 18.sp,
+                          color: Colors.white,
+                        ),
+                        label: Text(
+                          "MY Home Service Requests",
+                          style: GoogleFonts.inter(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF24ADD7),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.r),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 10.h),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(14),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          childAspectRatio: 0.75,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                        ),
+
+                    // itemCount: service.data!.list!.length,
+                    itemCount: filteredServices.length,
+                    itemBuilder: (context, index) {
+                      // final item = service.data!.list![index];
+                      final item = filteredServices[index];
+                      return Column(
+                        children: [
+                          InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                CupertinoPageRoute(
+                                  builder: (context) => HomeServiceDetailsPage(
+                                    // service: item,
+                                    id: item.id.toString(),
+                                  ),
+                                ),
+                              );
+                            },
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8.r),
+                              child: Image.network(
+                                // categories[index]['url']!,
+                                item.image ??
+                                    "https://s3-media0.fl.yelpcdn.com/bphoto/y2N9GweV0RhaXx9dYbXHTA/l.jpg",
+                                width: 80.w,
+                                height: 80.h,
+                                fit: BoxFit.cover,
+                                loadingBuilder:
+                                    (context, child, loadingProgress) {
+                                      if (loadingProgress == null) return child;
+                                      return Container(
+                                        width: 80.w,
+                                        height: 80.h,
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(
+                                            8.r,
+                                          ),
+                                          color: Colors.grey.shade300,
+                                        ),
+                                        child: Center(
+                                          child: SizedBox(
+                                            width: 20.w,
+                                            height: 20.h,
+                                            child: CircularProgressIndicator(
+                                              color: Colors.deepOrange,
+                                              strokeWidth: 1.w,
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 8.h),
+                          Text(
+                            //  categories[index]['label']!,
+                            item.name ?? "N/A",
+                            style: GoogleFonts.inter(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 4.h),
+
+                          // 🔹 Rating + Review Row
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.star,
+                                color: Colors.orange,
+                                size: 14.sp,
+                              ),
+                              SizedBox(width: 2.w),
+
+                              Text(
+                                (item.averageRating ?? 0).toStringAsFixed(1),
+                                style: GoogleFonts.inter(
+                                  fontSize: 10.sp,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+
+                              SizedBox(width: 4.w),
+
+                              Text(
+                                "(${item.totalReviews ?? 0} Review)",
+                                style: GoogleFonts.inter(
+                                  fontSize: 10.sp,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+
+                  // We Provide Quality Services
+                  Center(
+                    child: Text(
+                      'What We Offer',
+                      style: GoogleFonts.inter(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  Center(
+                    child: Text(
+                      'We Provide Quality Services',
+                      style: GoogleFonts.inter(
+                        fontSize: 20.sp,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+
+                  // Services Grid
+                  GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: MediaQuery.of(context).size.width > 600
+                        ? 3
+                        : 2,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                    childAspectRatio: 0.85,
+                    children: const [
+                      ServiceCard(
+                        title: 'Toilet Repair',
+                        desc:
+                            'Fast, reliable toilet fixes that restore proper function.',
+                        imageUrl:
+                            'https://media.gettyimages.com/id/2192255408/vector/plumbing-line-icon-set-group-of-object-pipe-bathtub-boiler-faucet-repair.jpg?s=612x612&w=gi&k=20&c=IgKlfAmPPCWSHJy7L_KlG4bjVyB_If33cqFTI8X51Ng=',
+                      ),
+                      ServiceCard(
+                        title: 'Faucet Installation',
+                        desc:
+                            'Expert faucet fitting that ensures smooth water flow.',
+                        imageUrl:
+                            'https://media.istockphoto.com/id/1140334314/vector/plumber-master-with-wrench-fixing-kitchen-faucet.jpg?s=612x612&w=0&k=20&c=5XTiydIT32QfXU-x8WVM6rSeWpy6TopGU66RNfPunw4=',
+                      ),
+                      ServiceCard(
+                        title: 'Sewer Inspection',
+                        desc: 'Advanced sewer checks to detect issues early.',
+                        imageUrl:
+                            'https://media.istockphoto.com/id/2194903933/vector/plumbers-and-plumbing-thin-line-icons-editable-stroke-icons-include-plumbing-pipes-leaky.jpg?s=612x612&w=0&k=20&c=V2EAWro2g_Xk72Bl9c0LJ78ylpTxzZaZcyct56nqwCc=',
+                      ),
+                      ServiceCard(
+                        title: 'Drain Cleaning',
+                        desc:
+                            'Prevent damage with professional drain cleaning.',
+                        imageUrl:
+                            'https://media.istockphoto.com/id/1363041172/vector/water-tank-pipe-pipeline-and-sewerage-cleaning-service-by-cleaner.jpg?s=612x612&w=0&k=20&c=OPh5837hpAV13c5fsr3daJrrzFK1E4HjSEhiDdgZwN0=',
+                      ),
+                    ],
+                  ),
+
+                  // Why We Are / Easy Solutions
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        Text(
+                          'Who We Are',
+                          style: GoogleFonts.inter(
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'Easy Solutions For Plumbing and Home Repair Needs',
+                          style: GoogleFonts.inter(fontSize: 16.sp),
+                        ),
+                        SizedBox(height: 10.h),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            Chip(
+                              padding: EdgeInsets.zero,
+                              label: Text(
+                                'Tech Expertise',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF000000),
+                                ),
+                              ),
+                            ),
+                            Chip(
+                              padding: EdgeInsets.zero,
+                              label: Text(
+                                'Advanced Tools',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF000000),
+                                ),
+                              ),
+                            ),
+                            Chip(
+                              padding: EdgeInsets.zero,
+                              label: Text(
+                                'Smart Solutions',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF000000),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            // openBottomSheet(context);
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (_) =>
+                                  const VendorRegistrationBottomSheet(),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0xFF24ADD7),
+                          ),
+                          child: const Text(
+                            'Hire Experts',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Plumber Image
+                  Image.network(
+                    'https://as1.ftcdn.net/jpg/05/94/89/64/1000_F_594896473_PmXb07nS8Odld7O3op4E5Vi2USzODYYc.jpg',
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                  ),
+
+                  // Affordable Pricing
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        pricingCard(),
+                        const SizedBox(height: 16),
+                        pricingCard(),
+                      ],
+                    ),
+                  ),
+
+                  // Featured Projects
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Featured Projects',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        // TextButton(
+                        //   onPressed: () {},
+                        //   child: const Text(
+                        //     'See Full Gallery >',
+                        //     style: TextStyle(color: Colors.orange),
+                        //   ),
+                        // ),
+                      ],
+                    ),
+                  ),
+
+                  Container(
+                    margin: EdgeInsets.only(top: 10.h),
+                    height: 200,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      children: [
+                        FeaturedProject(
+                          imageUrl:
+                              'https://images.finehomebuilding.com/app/uploads/2016/04/09114955/021181bs116-01_xlg.jpg',
+                          title: 'Drain Overhaul',
+                          subtitle: 'Complete drain system upgrade',
+                        ),
+                        FeaturedProject(
+                          imageUrl:
+                              'https://www.thespruce.com/thmb/e-MxaOBy4AKp4JW1XFZGbrkDaIw=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/how-to-install-a-sink-drain-2718789_hero_5078-64538f6f90d545c7af0728e4bf8f894e.jpg',
+                          title: 'Sink Installation',
+                          subtitle: 'New kitchen sink setup',
+                        ),
+                        FeaturedProject(
+                          imageUrl:
+                              'https://gharpedia.com/_next/image/?url=https%3A%2F%2Fcloudfrontgharpediabucket.gharpedia.com%2Fuploads%2F2021%2F12%2FBest-Way-to-Install-a-Bathroom-Sink-Drain-01-0504130013.jpg&w=3840&q=75',
+                          title: 'Drain Overhaul',
+                          subtitle: 'Complete drain system upgrade',
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Latest Insights
+                  const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Text(
+                      'Our Latest Insights',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        Image.network(
+                          'https://wg.scene7.com/is/image/wrenchgroup/insulate-pipes-info-ps22wi001wg?&wid=362',
+                          width: 100,
+                          height: 100,
+                          fit: BoxFit.cover,
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text(
+                                'How to Protect Your Pipes During Cold Weather',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                'Read More >',
+                                style: TextStyle(color: Colors.orange),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
+            error: (error, stackTrace) {
+              log(stackTrace.toString());
+              return Center(child: Text(error.toString()));
+            },
+            loading: () {
+              return SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: const EdgeInsets.all(16),
+                      itemCount: 6, // shimmer items
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            childAspectRatio: 0.80,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                          ),
+                      itemBuilder: (context, index) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            /// Image placeholder
+                            Shimmer.fromColors(
+                              baseColor: Colors.grey.shade300,
+                              highlightColor: Colors.grey.shade100,
+                              child: Container(
+                                width: 80.w,
+                                height: 80.h,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey,
+                                  borderRadius: BorderRadius.circular(8.r),
+                                ),
+                              ),
+                            ),
+
+                            SizedBox(height: 8.h),
+
+                            /// Text placeholder
+                            Shimmer.fromColors(
+                              baseColor: Colors.grey.shade300,
+                              highlightColor: Colors.grey.shade100,
+                              child: Container(
+                                width: 75.w,
+                                height: 12.h,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey,
+                                  borderRadius: BorderRadius.circular(6.r),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    SizedBox(height: 20.h),
+                    Center(
+                      child: Column(
+                        children: [
+                          Shimmer.fromColors(
+                            baseColor: Colors.grey.shade300,
+                            highlightColor: Colors.grey.shade100,
+                            child: Container(
+                              width: 100.w,
+                              height: 12.h,
+                              decoration: BoxDecoration(
+                                color: Colors.grey,
+                                borderRadius: BorderRadius.circular(6.r),
+                              ),
+                            ),
+                          ),
+
+                          SizedBox(height: 10.h),
+
+                          Shimmer.fromColors(
+                            baseColor: Colors.grey.shade300,
+                            highlightColor: Colors.grey.shade100,
+                            child: Container(
+                              width: 200.w,
+                              height: 12.h,
+                              decoration: BoxDecoration(
+                                color: Colors.grey,
+                                borderRadius: BorderRadius.circular(6.r),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 15.h),
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: const EdgeInsets.all(16),
+                      itemCount: 4, // shimmer items
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: 0.80,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                          ),
+                      itemBuilder: (context, index) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            /// Image placeholder
+                            Shimmer.fromColors(
+                              baseColor: Colors.grey.shade300,
+                              highlightColor: Colors.grey.shade100,
+                              child: Container(
+                                width: 200.w,
+                                height: 100.h,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey,
+                                  borderRadius: BorderRadius.circular(8.r),
+                                ),
+                              ),
+                            ),
+
+                            SizedBox(height: 8.h),
+
+                            /// Text placeholder
+                            Shimmer.fromColors(
+                              baseColor: Colors.grey.shade300,
+                              highlightColor: Colors.grey.shade100,
+                              child: Container(
+                                width: 75.w,
+                                height: 12.h,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey,
+                                  borderRadius: BorderRadius.circular(6.r),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+Widget pricingCard() {
+  return Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: const Color(0xff111111),
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white24),
+          ),
+          child: Text("\$", style: TextStyle(color: Colors.white)),
+        ),
+        SizedBox(height: 10),
+        Text(
+          'Affordable Pricing',
+          style: TextStyle(
+            color: Colors.orange,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        SizedBox(height: 6),
+        Text(
+          'Quality service doesn’t have to be costly; we offer transparent, fair pricing on every job.',
+          style: TextStyle(color: Colors.white70),
+        ),
+      ],
+    ),
+  );
+}
+
+class ServiceCard extends StatelessWidget {
+  final String title;
+  final String desc;
+  final String imageUrl;
+
+  const ServiceCard({
+    super.key,
+    required this.title,
+    required this.desc,
+    required this.imageUrl,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // ICON / IMAGE
+          SizedBox(
+            height: 60,
+            child: Image.network(imageUrl, fit: BoxFit.contain),
+          ),
+          const SizedBox(height: 14),
+
+          // TITLE
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              height: 1,
+            ),
+          ),
+
+          const SizedBox(height: 6),
+
+          // DESCRIPTION
+          Text(
+            desc,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class FeaturedProject extends StatelessWidget {
+  final String imageUrl;
+  final String title;
+  final String subtitle;
+
+  const FeaturedProject({
+    super.key,
+    required this.imageUrl,
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 200,
+      margin: const EdgeInsets.only(right: 16),
+      child: Stack(
+        children: [
+          Image.network(
+            imageUrl,
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+          ),
+          Container(color: Colors.black54),
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  subtitle,
+                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class LoanService extends ConsumerStatefulWidget {
+  const LoanService({super.key});
+
+  @override
+  ConsumerState<LoanService> createState() => _LoanServiceState();
+}
+
+class _LoanServiceState extends ConsumerState<LoanService> {
+  String searchLoan = '';
+  @override
+  Widget build(BuildContext context) {
+    final loanServiceProvider = ref.watch(loanServiceController);
+    return Padding(
+      padding: EdgeInsets.only(left: 20.w, right: 20.w, top: 20.h),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            /// 🔹 Title
+            Text(
+              "Top Loan Bank Partners",
+              style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 16.h),
+            TextField(
+              onChanged: (value) {
+                setState(() {
+                  searchLoan = value.toLowerCase();
+                });
+              },
+              style: TextStyle(fontSize: 15.sp),
+              decoration: InputDecoration(
+                isDense: true,
+                prefixIcon: Icon(Icons.search, size: 16.sp, color: Colors.grey),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16.r),
+                  borderSide: BorderSide(color: Colors.grey, width: 1.w),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16.r),
+                  borderSide: BorderSide(color: Color(0xFF24ADD7), width: 1.w),
+                ),
+                hintText: "Search...",
+                hintStyle: TextStyle(fontSize: 14.sp, color: Colors.grey),
+              ),
+            ),
+            SizedBox(height: 16.h),
+
+            // SizedBox(
+            //   width: double.infinity,
+            //   height: 45.h,
+            //   child: ElevatedButton.icon(
+            //     onPressed: () {
+            //       Navigator.push(
+            //         context,
+            //         CupertinoPageRoute(
+            //           builder: (context) => const MyLoanRequestsPage(),
+            //         ),
+            //       );
+            //     },
+            //     icon: Icon(
+            //       Icons.receipt_long,
+            //       size: 18.sp,
+            //       color: Colors.white,
+            //     ),
+            //     label: Text(
+            //       "MY Loan Requests",
+            //       style: TextStyle(
+            //         fontSize: 13.sp,
+            //         fontWeight: FontWeight.w600,
+            //         color: Colors.white,
+            //       ),
+            //     ),
+            //     style: ElevatedButton.styleFrom(
+            //       backgroundColor: const Color(0xFF24ADD7),
+            //       shape: RoundedRectangleBorder(
+            //         borderRadius: BorderRadius.circular(10.r),
+            //       ),
+            //     ),
+            //   ),
+            // ),
+            SizedBox(height: 16.h),
+            loanServiceProvider.when(
+              data: (loan) {
+                final list = loan.data?.list ?? [];
+
+                final filteredBankLoan = loan.data!.list!.where((item) {
+                  final name = (item.name ?? '').toLowerCase();
+
+                  return name.contains(searchLoan);
+                }).toList();
+
+                if (filteredBankLoan.isEmpty) {
+                  return Column(
+                    children: [
+                      SizedBox(height: 20.h),
+                      Text(
+                        "No Bank Found $searchLoan",
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  );
+                }
+
+                if (list.isEmpty) {
+                  return const Center(child: Text("No loan services found"));
+                }
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: EdgeInsets.zero,
+                  itemCount: filteredBankLoan.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 12.w,
+                    mainAxisSpacing: 12.h,
+                    childAspectRatio: 0.70,
+                  ),
+                  itemBuilder: (context, index) {
+                    final item = filteredBankLoan[index];
+                    return InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => LoanServiceDetailsPage(
+                              item: CommonLoanModel.fromLoanService(item),
+                            ),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: EdgeInsets.all(10.w),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12.r),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 6,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10.r),
+                              child: (item.bankLogo?.trim().isNotEmpty ?? false)
+                                  ? Image.network(
+                                      item.bankLogo!,
+                                      width: 100.w,
+                                      height: 55.h,
+                                      fit: BoxFit.contain,
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                            return Container(
+                                              width: 100.w,
+                                              height: 55.h,
+                                              alignment: Alignment.center,
+                                              child: Icon(
+                                                Icons.broken_image_outlined,
+                                                size: 40.sp,
+                                                color: Colors.grey,
+                                              ),
+                                            );
+                                          },
+                                    )
+                                  : Container(
+                                      width: 100.w,
+                                      height: 55.h,
+                                      alignment: Alignment.center,
+                                      child: Icon(
+                                        Icons.broken_image_outlined,
+                                        size: 40.sp,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                            ),
+                            SizedBox(height: 6.h),
+                            Text(
+                              // loanList[index].title,
+                              item.name ?? "N/A",
+                              maxLines: 2,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Spacer(),
+                            Container(
+                              height: 28.h,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: Color(0xFF24ADD7),
+                                borderRadius: BorderRadius.circular(6.r),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  // "Call Now",
+                                  "Contact Now",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11.sp,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+              error: (error, stackTrace) {
+                log(stackTrace.toString());
+                return Center(child: Text(error.toString()));
+              },
+              loading: () => GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                itemCount: 6, // shimmer items
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 12.w,
+                  mainAxisSpacing: 12.h,
+                  childAspectRatio: 0.70,
+                ),
+                itemBuilder: (context, index) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      /// Image placeholder
+                      Shimmer.fromColors(
+                        baseColor: Colors.grey.shade300,
+                        highlightColor: Colors.grey.shade100,
+                        child: Container(
+                          width: 200.w,
+                          height: 100.h,
+                          decoration: BoxDecoration(
+                            color: Colors.grey,
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(height: 8.h),
+
+                      /// Text placeholder
+                      Shimmer.fromColors(
+                        baseColor: Colors.grey.shade300,
+                        highlightColor: Colors.grey.shade100,
+                        child: Container(
+                          width: 75.w,
+                          height: 12.h,
+                          decoration: BoxDecoration(
+                            color: Colors.grey,
+                            borderRadius: BorderRadius.circular(6.r),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 🔹 Model
+class LoanModel {
+  final String title;
+  final IconData icon;
+
+  LoanModel({required this.title, required this.icon});
+}
+
+/// 🔹 Data
+final List<LoanModel> loanList = [
+  LoanModel(title: "Home Loan", icon: Icons.home),
+  LoanModel(title: "Car Loan", icon: Icons.directions_car),
+  LoanModel(title: "Two-Wheeler Loan", icon: Icons.motorcycle),
+  LoanModel(title: "Indian Bank", icon: Icons.account_balance),
+  LoanModel(title: "Education Loan", icon: Icons.school),
+  LoanModel(title: "Gold Loan", icon: Icons.currency_exchange),
+  LoanModel(title: "Property Loan", icon: Icons.apartment),
+  LoanModel(title: "Personal Loan", icon: Icons.person),
+];
+
+/// 🔹 Models
+class WorkModel {
+  final String title;
+  final String desc;
+  final IconData icon;
+
+  WorkModel({required this.title, required this.desc, required this.icon});
+}
+
+/// 🔹 Data
+final List<WorkModel> workSteps = [
+  WorkModel(
+    title: "Fill Online Form",
+    desc: "Fill an online form to view the best offers.",
+    icon: Icons.edit_document,
+  ),
+  WorkModel(
+    title: "Expert Assistance",
+    desc: "Our executive helps you choose best offer.",
+    icon: Icons.support_agent,
+  ),
+  WorkModel(
+    title: "Submit Documents",
+    desc: "Pick up documents at your doorstep.",
+    icon: Icons.file_copy,
+  ),
+  WorkModel(
+    title: "Bank Approval",
+    desc: "Bank reviews your application & confirms.",
+    icon: Icons.verified,
+  ),
+];
+
+/// 🔹 Models & Data
+class InfoModel {
+  final String title;
+  final String desc;
+  final String image;
+
+  InfoModel(this.title, this.desc, this.image);
+}
+
+final List<InfoModel> topCards = [
+  InfoModel(
+    "Personalized Deals",
+    "Discover home loan offers for your needs",
+    "assets/Rectangle 113 (1).png",
+  ),
+  InfoModel(
+    "Government Employees",
+    "Special schemes for government staff",
+    "assets/Rectangle 113 (2).png",
+  ),
+
+  InfoModel(
+    "Self Employed",
+    "Quick approval for self employed",
+    "assets/Rectangle 113.png",
+  ),
+
+  InfoModel(
+    "Cash Income",
+    "Low documentation for cash income",
+    "assets/Rectangle 113 (3).png",
+  ),
+];
+
+class VendorRegistrationBottomSheet extends ConsumerStatefulWidget {
+  const VendorRegistrationBottomSheet({super.key});
+
+  @override
+  ConsumerState<VendorRegistrationBottomSheet> createState() =>
+      _VendorRegistrationBottomSheetState();
+}
+
+class _VendorRegistrationBottomSheetState
+    extends ConsumerState<VendorRegistrationBottomSheet> {
+  final emailController = TextEditingController();
+  final phoneController = TextEditingController();
+  final nameController = TextEditingController();
+
+  final _formKeyVendor = GlobalKey<FormState>();
+
+  bool isLoading = false;
+
+  String? selectedExpertise;
+  String? selectedExpertiseId;
+  @override
+  Widget build(BuildContext context) {
+    final homeServiceProvider = ref.watch(homeServiceCategoryController);
+
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Container(
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Color(0xffF4F6F9),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+        ),
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKeyVendor,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Align(
+                  alignment: Alignment.topRight,
+                  child: IconButton(
+                    style: IconButton.styleFrom(
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                    icon: Icon(Icons.close),
+                  ),
+                ),
+
+                Text(
+                  "Registration",
+                  style: TextStyle(
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                SizedBox(height: 5.h),
+
+                Text(
+                  "Fill in your details below",
+                  style: TextStyle(color: Colors.grey),
+                ),
+
+                SizedBox(height: 20.h),
+
+                /// NAME
+                fieldTitle("Full Name"),
+                buildField(
+                  controller: nameController,
+                  hint: "Enter full name",
+                  keyboard: TextInputType.name,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "Name is required";
+                    }
+                    return null;
+                  },
+                ),
+
+                SizedBox(height: 15.h),
+
+                /// EMAIL
+                fieldTitle("EMAIL ADDRESS"),
+                buildField(
+                  controller: emailController,
+                  hint: "Enter email",
+                  keyboard: TextInputType.emailAddress,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "Email is required";
+                    }
+                    if (!RegExp(
+                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                    ).hasMatch(value)) {
+                      return "Enter valid email";
+                    }
+                    return null;
+                  },
+                ),
+
+                SizedBox(height: 15.h),
+
+                /// PHONE
+                fieldTitle("WHATSAPP / MOBILE"),
+                buildField(
+                  controller: phoneController,
+                  hint: "Enter phone number",
+                  keyboard: TextInputType.phone,
+                  counterText: "",
+                  maxLength: 10,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "Phone number required";
+                    }
+                    if (value.length < 10) {
+                      return "Enter valid number";
+                    }
+                    return null;
+                  },
+                ),
+
+                SizedBox(height: 15.h),
+
+                /// DROPDOWN
+                fieldTitle("YOUR EXPERTISE"),
+                // FormField(
+                //   validator: (value) {
+                //     if (selectedExpertise == null ||
+                //         selectedExpertise == "Select Your Expertise") {
+                //       return "Expertise is required";
+                //     }
+                //     return null;
+                //   },
+                //   builder: (FormFieldState<String> state) {
+                //     return Column(
+                //       crossAxisAlignment: CrossAxisAlignment.start,
+                //       children: [
+                //         GestureDetector(
+                //           onTap: () async {
+                //             showModalBottomSheet(
+                //               context: context,
+                //               builder: (context) {
+                //                 return homeServiceProvider.when(
+                //                   data: (data) {
+                //                     return ListView.builder(
+                //                       itemCount: data.data!.list!.length,
+                //                       itemBuilder: (context, index) {
+                //                         return ListTile(
+                //                           title: Text(
+                //                             data.data!.list![index].name ??
+                //                                 "N/A",
+                //                           ),
+                //                           onTap: () {
+                //                             setState(() {
+                //                               selectedExpertise =
+                //                                   data
+                //                                       .data!
+                //                                       .list![index]
+                //                                       .name ??
+                //                                   "N/A";
+                //                               selectedExpertiseId = data
+                //                                   .data!
+                //                                   .list![index]
+                //                                   .id
+                //                                   .toString();
+                //                             });
+                //                             Navigator.pop(context);
+                //                           },
+                //                         );
+                //                       },
+                //                     );
+                //                   },
+                //                   error: (error, stackTrace) {
+                //                     return Center(
+                //                       child: Text(error.toString()),
+                //                     );
+                //                   },
+                //                   loading: () => Center(
+                //                     child: CircularProgressIndicator(),
+                //                   ),
+                //                 );
+                //               },
+                //             );
+                //           },
+                //           child: Container(
+                //             padding: EdgeInsets.symmetric(
+                //               horizontal: 15,
+                //               vertical: 16,
+                //             ),
+                //             decoration: BoxDecoration(
+                //               color: Colors.white,
+                //               borderRadius: BorderRadius.circular(12),
+                //               border: Border.all(
+                //                 color: state.hasError
+                //                     ? Colors.red
+                //                     : Colors.transparent,
+                //               ),
+                //             ),
+                //             child: Row(
+                //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                //               children: [
+                //                 Text(
+                //                   selectedExpertise ?? "Select Your Expertise",
+                //                   style: TextStyle(
+                //                     color: selectedExpertise == null
+                //                         ? Colors.grey
+                //                         : Colors.black,
+                //                     fontSize: selectedExpertise == null
+                //                         ? 12.sp
+                //                         : 15.sp,
+                //                   ),
+                //                 ),
+                //                 Icon(Icons.keyboard_arrow_down),
+                //               ],
+                //             ),
+                //           ),
+                //         ),
+
+                //         /// ERROR TEXT
+                //         if (state.hasError)
+                //           Padding(
+                //             padding: const EdgeInsets.only(top: 5, left: 5),
+                //             child: Text(
+                //               state.errorText!,
+                //               style: TextStyle(color: Colors.red, fontSize: 12),
+                //             ),
+                //           ),
+                //       ],
+                //     );
+                //   },
+                // ),
+                FormField(
+                  validator: (value) {
+                    if (selectedExpertise == null ||
+                        selectedExpertise == "Select Your Expertise") {
+                      return "Expertise is required";
+                    }
+                    return null;
+                  },
+
+                  builder: (FormFieldState<String> state) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        homeServiceProvider.when(
+                          data: (data) {
+                            final expertiseList =
+                                data.data?.list
+                                    ?.map((e) => e.name ?? "")
+                                    .where((e) => e.isNotEmpty)
+                                    .toList() ??
+                                [];
+                            return RawAutocomplete<String>(
+                              initialValue: TextEditingValue(
+                                text: selectedExpertise ?? '',
+                              ),
+                              optionsBuilder:
+                                  (TextEditingValue textEditingValue) {
+                                    if (textEditingValue.text.isEmpty) {
+                                      return expertiseList;
+                                    }
+                                    return expertiseList.where(
+                                      (option) => option.toLowerCase().contains(
+                                        textEditingValue.text.toLowerCase(),
+                                      ),
+                                    );
+                                  },
+                              onSelected: (String selection) {
+                                final selectedItem = data.data!.list!
+                                    .firstWhere(
+                                      (item) => item.name == selection,
+                                    );
+
+                                setState(() {
+                                  selectedExpertise = selection;
+                                  selectedExpertiseId =
+                                      selectedItem.id?.toString() ?? "";
+                                });
+
+                                state.didChange(selection);
+                              },
+                              fieldViewBuilder:
+                                  (
+                                    context,
+                                    controller,
+                                    focusNode,
+                                    onFieldSubmitted,
+                                  ) {
+                                    controller.text = selectedExpertise ?? '';
+                                    return TextFormField(
+                                      controller: controller,
+                                      focusNode: focusNode,
+                                      decoration: InputDecoration(
+                                        hintText: "Select Your Expertise",
+                                        filled: true,
+                                        hintStyle: TextStyle(
+                                          color: Colors.grey.shade400,
+                                          fontSize: 12.sp,
+                                        ),
+                                        fillColor: Colors.white,
+                                        contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 15,
+                                          vertical: 16,
+                                        ),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          borderSide: BorderSide.none,
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          borderSide: BorderSide(
+                                            color: state.hasError
+                                                ? Colors.red
+                                                : Colors.transparent,
+                                          ),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          borderSide: BorderSide(
+                                            color: state.hasError
+                                                ? Colors.red
+                                                : Colors.blue,
+                                          ),
+                                        ),
+                                        suffixIcon: const Icon(
+                                          Icons.keyboard_arrow_down,
+                                        ),
+                                      ),
+                                      // onChanged: (value) {
+                                      //   setState(() {
+                                      //     selectedExpertise = value;
+                                      //   });
+                                      //   state.didChange(value);
+                                      // },
+                                      onChanged: (value) {
+                                        setState(() {
+                                          selectedExpertise = value;
+
+                                          final matchedItems = data.data?.list
+                                              ?.where(
+                                                (item) =>
+                                                    (item.name ?? "")
+                                                        .toLowerCase() ==
+                                                    value.toLowerCase(),
+                                              )
+                                              .toList();
+
+                                          if (matchedItems != null &&
+                                              matchedItems.isNotEmpty) {
+                                            selectedExpertiseId = matchedItems
+                                                .first
+                                                .id
+                                                ?.toString();
+                                          } else {
+                                            selectedExpertiseId = null;
+                                          }
+                                        });
+
+                                        state.didChange(value);
+                                      },
+                                    );
+                                  },
+                              optionsViewBuilder:
+                                  (context, onSelected, options) {
+                                    return Align(
+                                      alignment: Alignment.topLeft,
+                                      child: Material(
+                                        elevation: 4,
+                                        borderRadius: BorderRadius.circular(12),
+                                        color: Colors.white,
+                                        child: Container(
+                                          width:
+                                              MediaQuery.of(
+                                                context,
+                                              ).size.width -
+                                              40,
+                                          constraints: const BoxConstraints(
+                                            maxHeight: 250,
+                                          ),
+                                          child: ListView.builder(
+                                            padding: EdgeInsets.zero,
+                                            shrinkWrap: true,
+                                            itemCount: options.length,
+                                            itemBuilder: (context, index) {
+                                              final option = options.elementAt(
+                                                index,
+                                              );
+                                              return ListTile(
+                                                title: Text(option),
+                                                onTap: () => onSelected(option),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                            );
+                          },
+                          error: (error, stackTrace) => Text(error.toString()),
+                          loading: () =>
+                              const Center(child: CircularProgressIndicator()),
+                        ),
+
+                        /// ERROR TEXT (same as your code)
+                        if (state.hasError)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 5, left: 5),
+                            child: Text(
+                              state.errorText!,
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
+                SizedBox(height: 25.h),
+
+                /// BUTTON
+                SizedBox(
+                  width: double.infinity,
+                  height: 50.h,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 15.w,
+                        vertical: 14.h,
+                      ),
+                      backgroundColor: Color(0xFF24ADD7),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14.r),
+                      ),
+                    ),
+
+                    onPressed: isLoading
+                        ? null
+                        : () async {
+                            if (!_formKeyVendor.currentState!.validate())
+                              return;
+
+                            setState(() {
+                              isLoading = true;
+                            });
+                            final serviceTypeValue =
+                                (selectedExpertiseId != null &&
+                                    selectedExpertiseId!.isNotEmpty)
+                                ? selectedExpertiseId
+                                : selectedExpertise;
+
+                            final body = SaveServiceBodyModel(
+                              email: emailController.text.trim(),
+                              phone: phoneController.text.trim(),
+                              name: nameController.text.trim(),
+                              // serviceType: selectedExpertiseId,
+                              serviceType: serviceTypeValue,
+                            );
+                            try {
+                              final service = APIStateNetwork(createDio());
+                              final response = await service.saveService(body);
+
+                              if (response.code == 0 &&
+                                  response.error == false) {
+                                Navigator.of(context).pop();
+
+                                // ✅ fir toast dikhao (thoda delay safe hai)
+                                Future.delayed(Duration(milliseconds: 200), () {
+                                  Fluttertoast.showToast(
+                                    msg: response.message ?? "Register Success",
+                                  );
+                                });
+                              } else {
+                                Fluttertoast.showToast(
+                                  msg:
+                                      response.message ??
+                                      "Something went wrong",
+                                );
+                              }
+                            } catch (e, stackTrace) {
+                              print("Error: $e");
+                              print("StackTrace: $stackTrace");
+                              Fluttertoast.showToast(msg: e.toString());
+                            } finally {
+                              if (context.mounted) {
+                                setState(() {
+                                  isLoading = false;
+                                });
+                              }
+                            }
+                          },
+                    child: isLoading
+                        ? SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 1.5,
+                            ),
+                          )
+                        : Text(
+                            "SUBMIT REGISTRATION",
+                            style: GoogleFonts.inter(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                  ),
+                ),
+
+                SizedBox(height: 10),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget fieldTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 12.sp,
+          color: Colors.grey,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget buildField({
+    required TextEditingController controller,
+    required String hint,
+    TextInputType keyboard = TextInputType.text,
+    String? Function(String?)? validator,
+    int? maxLength,
+    String? counterText,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboard,
+      validator: validator,
+      maxLength: maxLength,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      style: TextStyle(fontSize: 15.sp, color: Colors.black),
+      decoration: InputDecoration(
+        errorStyle: TextStyle(color: Colors.red, fontSize: 12.sp),
+        counterText: counterText,
+        hintText: hint,
+        hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 12.sp),
+        filled: true,
+        fillColor: Colors.white,
+
+        contentPadding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 14.h),
+
+        // 👇 ADD THIS (important)
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Color(0xFF24ADD7), width: 1.5),
+        ),
+
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.red),
+        ),
+
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.red, width: 1.5),
+        ),
+      ),
+    );
+  }
+}
