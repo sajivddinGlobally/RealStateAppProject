@@ -38,26 +38,13 @@ class _ForgotPasswordSentOtpPageState extends State<ForgotPasswordSentOtpPage> {
         Navigator.push(
           context,
           CupertinoPageRoute(
-            builder: (context) =>
-                VerifyOrResectPasswordPage(token: res.data!.token.toString()),
+            builder: (context) => VerifyOrResectPasswordPage(
+              token: res.data!.token.toString(),
+              phone: phoneController.text.trim(),
+            ),
           ),
         );
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   SnackBar(
-        //     backgroundColor: Colors.white,
-        //     shape: RoundedRectangleBorder(
-        //       borderRadius: BorderRadius.circular(20.r),
-        //     ),
-        //     behavior: SnackBarBehavior.floating,
-        //     margin: EdgeInsets.only(left: 20.w, right: 20.w, top: 20.h),
 
-        //     content: Text(
-        //       "OTP: ${res.data!.otp}",
-        //       style: TextStyle(color: Colors.black),
-        //     ),
-        //     duration: const Duration(seconds: 16),
-        //   ),
-        // );
         ScaffoldMessenger.of(context).clearMaterialBanners();
         ScaffoldMessenger.of(context).showMaterialBanner(
           MaterialBanner(

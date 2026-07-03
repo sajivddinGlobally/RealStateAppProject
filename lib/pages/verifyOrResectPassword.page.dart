@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 
 import 'package:flutter/cupertino.dart';
@@ -5,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
+import 'package:realstate/Model/Body/forgotPassSentOtpBodyModel.dart';
 import 'package:realstate/Model/Body/resetPassBodyMOdel.dart';
 import 'package:realstate/core/network/api.state.dart';
 import 'package:realstate/core/utils/preety.dio.dart';
@@ -13,7 +15,12 @@ import 'package:realstate/pages/login.page.dart';
 
 class VerifyOrResectPasswordPage extends StatefulWidget {
   final String token;
-  const VerifyOrResectPasswordPage({super.key, required this.token});
+  final String phone;
+  const VerifyOrResectPasswordPage({
+    super.key,
+    required this.token,
+    required this.phone,
+  });
 
   @override
   State<VerifyOrResectPasswordPage> createState() =>
@@ -25,13 +32,46 @@ class _VerifyOrResectPasswordPageState
   bool isLoading = false;
   bool obscureNewPassword = true;
   bool obscureConfirmPassword = true;
+  late String currentToken;
 
   final otpController = TextEditingController();
   final newPasswordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
+  Timer? _timer;
+  int _start = 60;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    currentToken = widget.token;
+    startTimer();
+  }
+
+  void startTimer() {
+    _start = 60;
+
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
+      if (_start == 0) {
+        timer.cancel();
+      } else {
+        setState(() {
+          _start--;
+        });
+      }
+    });
+  }
+
   @override
   void dispose() {
+    _timer?.cancel();
     otpController.dispose();
     newPasswordController.dispose();
     confirmPasswordController.dispose();
@@ -60,7 +100,8 @@ class _VerifyOrResectPasswordPageState
       otp: otpController.text.trim(),
       newPassword: newPasswordController.text.trim(),
       confirmPassword: confirmPasswordController.text.trim(),
-      token: widget.token,
+      // token: widget.token,
+      token: currentToken,
     );
     try {
       final service = APIStateNetwork(createDio());
@@ -82,6 +123,57 @@ class _VerifyOrResectPasswordPageState
     } finally {
       setState(() {
         isLoading = false;
+      });
+    }
+  }
+
+  bool isResend = false;
+
+  Future<void> resendOTP() async {
+    final body = ForgotPassSentOtpBodyModel(phone: widget.phone);
+    setState(() {
+      isResend = true;
+    });
+    try {
+      final service = APIStateNetwork(createDio());
+      final res = await service.forgotPassSentOTP(body);
+      if (res.code == 0 && res.error == false) {
+        Fluttertoast.showToast(msg: res.message ?? "");
+        currentToken = res.data!.token.toString();
+        ScaffoldMessenger.of(context).clearMaterialBanners();
+        ScaffoldMessenger.of(context).showMaterialBanner(
+          MaterialBanner(
+            backgroundColor: Colors.white,
+            content: Text(
+              "OTP: ${res.data!.otp}",
+              style: const TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
+                },
+                child: const Text("Close"),
+              ),
+            ],
+          ),
+        );
+        Future.delayed(const Duration(seconds: 12), () {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
+          }
+        });
+      } else {
+        Fluttertoast.showToast(msg: res.message ?? "");
+      }
+    } catch (e, st) {
+      log(e.toString());
+    } finally {
+      setState(() {
+        isResend = false;
       });
     }
   }
@@ -191,20 +283,44 @@ class _VerifyOrResectPasswordPageState
                         enableActiveFill: true,
                         onChanged: (value) {},
                       ),
-                      Align(
-                        alignment: AlignmentGeometry.centerRight,
-                        child: GestureDetector(
-                          onTap: () {},
-                          child: Text(
-                            "Resend OTP",
-                            style: TextStyle(
-                              color: const Color(0xFF24ADD7),
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w600,
+                      _start == 0
+                          ? Align(
+                              alignment: AlignmentGeometry.centerRight,
+                              child: GestureDetector(
+                                onTap: () {
+                                  resendOTP();
+                                },
+                                child: isResend
+                                    ? SizedBox(
+                                        width: 20.w,
+                                        height: 20.h,
+                                        child: Center(
+                                          child: CircularProgressIndicator(
+                                            color: Colors.blue,
+                                            strokeWidth: 1.5,
+                                          ),
+                                        ),
+                                      )
+                                    : Text(
+                                        "Resend OTP",
+                                        style: TextStyle(
+                                          color: const Color(0xFF24ADD7),
+                                          fontSize: 14.sp,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                              ),
+                            )
+                          : Align(
+                              alignment: AlignmentGeometry.centerRight,
+                              child: Text(
+                                "${_start.toString().padLeft(2, '0')}",
+                                style: const TextStyle(
+                                  color: Color(0xFF24ADD7),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                      ),
                       Text(
                         "New Password",
                         style: TextStyle(
