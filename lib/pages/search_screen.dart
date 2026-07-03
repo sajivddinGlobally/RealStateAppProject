@@ -203,11 +203,18 @@ class _SearchResultScreenState extends ConsumerState<SearchResultScreen> {
                             final property = properties[index];
                             return GestureDetector(
                               onTap: () {
-                                // Navigator.push(context, MaterialPageRoute(builder: (context)=>
-                                //     PerticulerPropertyPage(
-                                //       data: PropertyDetailsModel.fromProperty(property),
-                                //     )
-                                // ));
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        PerticulerPropertyPage(
+                                          data:
+                                              PropertyDetailsModel.fromProperty(
+                                                property,
+                                              ),
+                                        ),
+                                  ),
+                                );
                               },
                               child: Container(
                                 margin: EdgeInsets.symmetric(vertical: 4.h),
@@ -668,7 +675,7 @@ class _SearchResultScreenState extends ConsumerState<SearchResultScreen> {
                                         ),
                                         child: Center(
                                           child: Text(
-                                            "Call Now",
+                                            "Contact Now",
                                             style: TextStyle(
                                               color: Colors.white,
                                               fontSize: 11.sp,

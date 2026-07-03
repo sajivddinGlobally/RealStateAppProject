@@ -1,5 +1,6 @@
 import 'package:realstate/Model/getPropertyResponsemodel.dart';
-import 'package:realstate/Model/searchPropertyListResponse.dart';
+import 'package:realstate/Model/searchPropertyListResponse.dart'
+    hide AveneuOverView, AroundProject;
 
 class PropertyDetailsModel {
   String? id;
@@ -7,6 +8,7 @@ class PropertyDetailsModel {
   String? propertyType;
   String? listingCategory;
   String? localityArea;
+  String? slug;
   String? city;
   String? price;
   String? area;
@@ -21,12 +23,15 @@ class PropertyDetailsModel {
   String? email;
   String? phone;
   bool? verifyed;
+  List<AroundProject>? aroundProject;
+  AveneuOverView? aveneuOverView;
 
   PropertyDetailsModel({
     this.id,
     this.property,
     this.propertyType,
     this.listingCategory,
+    this.slug,
     this.localityArea,
     this.city,
     this.price,
@@ -42,6 +47,8 @@ class PropertyDetailsModel {
     this.email,
     this.phone,
     this.verifyed,
+    this.aroundProject,
+    this.aveneuOverView,
   });
 
   factory PropertyDetailsModel.fromProperty(Property p) {
@@ -49,6 +56,7 @@ class PropertyDetailsModel {
       id: p.id,
       property: p.property,
       propertyType: p.propertyType,
+      slug: p.slug,
       listingCategory: p.listingCategory,
       localityArea: p.localityArea,
       city: p.city,
@@ -65,6 +73,21 @@ class PropertyDetailsModel {
       email: p.email,
       phone: p.phone,
       verifyed: p.verifyed,
+      aroundProject: p.aroundProject
+          ?.map(
+            (e) => AroundProject(name: e.name, details: e.details, id: e.id),
+          )
+          .toList(),
+
+      aveneuOverView: p.aveneuOverView == null
+          ? null
+          : AveneuOverView(
+              projectArea: p.aveneuOverView!.projectArea,
+              size: p.aveneuOverView!.size,
+              projectSize: p.aveneuOverView!.projectSize,
+              launchDate: p.aveneuOverView!.launchDate,
+              possessionStart: p.aveneuOverView!.possessionStart,
+            ),
     );
   }
 
@@ -72,6 +95,7 @@ class PropertyDetailsModel {
     return PropertyDetailsModel(
       id: p.id,
       property: p.property,
+      slug: p.slug,
       propertyType: p.propertyType,
       listingCategory: p.listingCategory,
       localityArea: p.localityArea,
@@ -89,6 +113,65 @@ class PropertyDetailsModel {
       email: p.email,
       phone: p.phone,
       verifyed: p.verifyed,
+      aroundProject: p.aroundProject,
+      aveneuOverView: p.aveneuOverView,
     );
   }
 }
+
+
+
+//
+// class AroundProject {
+//   String? name;
+//   String? details;
+//   String? id;
+//
+//   AroundProject({this.name, this.details, this.id});
+//
+//   factory AroundProject.fromJson(Map<String, dynamic> json) =>
+//       AroundProject(
+//         name: json["name"]?.toString(),
+//         details: json["details"]?.toString(),
+//         id: json["_id"]?.toString(),
+//       );
+//
+//   Map<String, dynamic> toJson() => {
+//     "name": name,
+//     "details": details,
+//     "_id": id,
+//   };
+// }
+//
+// class AveneuOverView {
+//   String? projectArea;
+//   String? size;
+//   String? projectSize;
+//   String? launchDate;
+//   String? possessionStart;
+//
+//   AveneuOverView({
+//     this.projectArea,
+//     this.size,
+//     this.projectSize,
+//     this.launchDate,
+//     this.possessionStart,
+//   });
+//
+//   factory AveneuOverView.fromJson(Map<String, dynamic> json) =>
+//       AveneuOverView(
+//         projectArea: json["projectArea"]?.toString(),
+//         size: json["size"]?.toString(),
+//         projectSize: json["projectSize"]?.toString(),
+//         launchDate: json["launchDate"]?.toString(),
+//         possessionStart: json["possessionStart"]?.toString(),
+//       );
+//
+//   Map<String, dynamic> toJson() => {
+//     "projectArea": projectArea,
+//     "size": size,
+//     "projectSize": projectSize,
+//     "launchDate": launchDate,
+//     "possessionStart": possessionStart,
+//   };
+// }

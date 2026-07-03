@@ -61,8 +61,8 @@ class _LoanServiceDetailsPageState extends State<LoanServiceDetailsPage> {
       selectTensure = tensureList.last;
     }
 
-    /// ✅ Loan Amount (API)
-    // loanAmountController.text = widget.item.loandAmount?.toString() ?? "";
+    //  ✅ Loan Amount (API)
+    loanAmountController.text = widget.item.loanAmount?.toString() ?? "";
 
     /// ✅ Interest Rate (API)
     interestRate = double.tryParse(widget.item.interest ?? "0") ?? 0.0;

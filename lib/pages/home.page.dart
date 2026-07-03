@@ -1755,7 +1755,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                                 style: TextStyle(color: Colors.white),
                               ),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFFF5722),
+                                backgroundColor: const Color(0xFF24ADD7),
                                 padding: EdgeInsets.symmetric(
                                   horizontal: 24.w,
                                   vertical: 12.h,
