@@ -138,6 +138,7 @@ class _VerifyOrResectPasswordPageState
       final service = APIStateNetwork(createDio());
       final res = await service.forgotPassSentOTP(body);
       if (res.code == 0 && res.error == false) {
+        startTimer();
         Fluttertoast.showToast(msg: res.message ?? "");
         currentToken = res.data!.token.toString();
         ScaffoldMessenger.of(context).clearMaterialBanners();
@@ -314,7 +315,7 @@ class _VerifyOrResectPasswordPageState
                           : Align(
                               alignment: AlignmentGeometry.centerRight,
                               child: Text(
-                                "${_start.toString().padLeft(2, '0')}",
+                                "Resend in ${_start.toString().padLeft(2, '0')} sec",
                                 style: const TextStyle(
                                   color: Color(0xFF24ADD7),
                                   fontWeight: FontWeight.bold,

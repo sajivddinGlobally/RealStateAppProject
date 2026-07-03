@@ -186,7 +186,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage> {
                       borderRadius: BorderRadius.circular(14),
                       child: Image.asset(
                         "assets/png/real_logo.png",
-                        fit: BoxFit.contain, // 👉 image stretch nahi hogi
+                        fit: BoxFit.contain,
                       ),
                     ),
                   ),
