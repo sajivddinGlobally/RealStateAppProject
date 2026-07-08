@@ -11,6 +11,8 @@ import 'package:intl/intl.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:realstate/Controller/myRequestBookingSerivceController.dart';
 import 'package:realstate/Model/Body/serviceRatingBodyModel.dart';
+import 'package:realstate/Model/cancelServiceBookingBodyModel.dart';
+import 'package:realstate/Model/reseduleServiceBookingBodyModel.dart';
 import 'package:realstate/Model/verfiyServiceAgenetBodyModel.dart';
 import 'package:realstate/core/network/api.state.dart';
 import 'package:realstate/core/utils/preety.dio.dart';
@@ -96,6 +98,308 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
     );
   }
 
+  DateTime? selectedDate;
+  String? selectedSlot;
+  bool isReschedule = false;
+
+  void showRescheduleDialog(
+    BuildContext context,
+    List<Slots> slots,
+    String bookingId,
+  ) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, dialogSetState) {
+            bool isButtonEnabled = selectedDate != null && selectedSlot != null;
+            return Dialog(
+              backgroundColor: Colors.white,
+              insetPadding: EdgeInsets.symmetric(
+                horizontal: 20.w,
+                vertical: 24.h,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20.r),
+              ),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 20.h,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      /// Header
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              "Reschedule Booking",
+                              style: TextStyle(
+                                fontSize: 22.sp,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              dialogSetState(() {
+                                selectedDate = null;
+                                selectedSlot = null;
+                              });
+                            },
+                            icon: Icon(Icons.close, size: 24.sp),
+                          ),
+                        ],
+                      ),
+
+                      Divider(thickness: 1.h),
+
+                      SizedBox(height: 15.h),
+
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          "SELECT NEW DATE",
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blueGrey,
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(height: 8.h),
+
+                      InkWell(
+                        onTap: () async {
+                          DateTime? picked = await showDatePicker(
+                            context: context,
+                            initialDate: selectedDate ?? DateTime.now(),
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime.now().add(
+                              const Duration(days: 30),
+                            ),
+                          );
+
+                          if (picked != null) {
+                            dialogSetState(() {
+                              selectedDate = picked;
+                            });
+                          }
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.all(15.w),
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: Colors.grey.shade400,
+                              width: 1.w,
+                            ),
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                selectedDate == null
+                                    ? "Select Date"
+                                    : DateFormat(
+                                        "dd/MM/yyyy",
+                                      ).format(selectedDate!),
+                                style: TextStyle(fontSize: 14.sp),
+                              ),
+                              Icon(
+                                Icons.calendar_month,
+                                color: Colors.black54,
+                                size: 22.sp,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(height: 20.h),
+
+                      Text(
+                        "SELECT TIME SLOT",
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blueGrey,
+                        ),
+                      ),
+
+                      SizedBox(height: 20.h),
+
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: slots.length,
+                        padding: EdgeInsets.zero,
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 3.5,
+                          crossAxisSpacing: 10.w,
+                          mainAxisSpacing: 10.h,
+                        ),
+                        itemBuilder: (context, index) {
+                          final slot = slots[index].timeSlot;
+                          bool isSelected = selectedSlot == slot;
+
+                          return InkWell(
+                            onTap: () {
+                              dialogSetState(() {
+                                selectedSlot = slot;
+                              });
+                            },
+                            borderRadius: BorderRadius.circular(10.r),
+                            child: Container(
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? const Color(0xFF24ADD7)
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(10.r),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? const Color(0xFF24ADD7)
+                                      : Colors.grey.shade400,
+                                  width: 1.w,
+                                ),
+                                boxShadow: isSelected
+                                    ? [
+                                        BoxShadow(
+                                          color: const Color(
+                                            0xFF24ADD7,
+                                          ).withOpacity(0.3),
+                                          blurRadius: 5.r,
+                                          offset: Offset(0, 3.h),
+                                        ),
+                                      ]
+                                    : [],
+                              ),
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 6.w),
+                                child: Text(
+                                  slot ?? "",
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 13.sp,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : Colors.blueGrey,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      SizedBox(height: 20.h),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50.h,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF24ADD7),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            disabledBackgroundColor: Colors.grey.shade400,
+                            disabledForegroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16.r),
+                            ),
+                          ),
+                          onPressed: isButtonEnabled
+                              ? () async {
+                                  dialogSetState(() {
+                                    isReschedule = true;
+                                  });
+                                  final body =
+                                      RescheduleServiceBookingBodyModel(
+                                        serviceDate: selectedDate,
+                                        serviceTimeSlot: selectedSlot,
+                                        bookingId: bookingId,
+                                      );
+
+                                  try {
+                                    final service = APIStateNetwork(
+                                      createDio(),
+                                    );
+                                    final res = await service
+                                        .rescheduleServiceBooking(body);
+                                    if (res.code == 0 && res.error == false) {
+                                      ref.invalidate(
+                                        myRequestBookingServiceContorller,
+                                      );
+                                      Navigator.pop(context);
+                                      Fluttertoast.showToast(
+                                        msg:
+                                            res.message ??
+                                            "Reschedule Sucessfull",
+                                      );
+                                      dialogSetState(() {
+                                        selectedDate = null;
+                                        selectedSlot = null;
+                                      });
+                                    } else {
+                                      Fluttertoast.showToast(
+                                        msg: res.message ?? "Reschedule Failed",
+                                      );
+                                      dialogSetState(() {
+                                        isReschedule = false;
+                                      });
+                                    }
+                                  } catch (e) {
+                                    log(e.toString());
+                                    dialogSetState(() {
+                                      isReschedule = false;
+                                    });
+                                  } finally {
+                                    dialogSetState(() {
+                                      isReschedule = false;
+                                    });
+                                  }
+                                }
+                              : null,
+                          child: isReschedule
+                              ? SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 1.5,
+                                    ),
+                                  ),
+                                )
+                              : Text(
+                                  "Confirm Reschedule",
+                                  style: TextStyle(
+                                    fontSize: 15.sp,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     List<Rating>? ratings;
@@ -151,12 +455,10 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
                       children: [
                         _buildCardHeader(item, status, primaryColor),
                         // 2. Status Stepper (new chain)
-                        _buildStatusStepper(status, primaryColor),
+                        if (status != "cancelled")
+                          _buildStatusStepper(status, primaryColor),
 
                         const Divider(height: 1),
-
-                        // 3. Details
-                        // _buildDetailsSection(item, status),
 
                         // 4. Verification & Technician Section
                         if (status != 'rejected')
@@ -167,7 +469,136 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
                             ref,
                             status,
                           ),
+                        if (status == "pending")
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 12.w),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: SizedBox(
+                                    height: 48.h,
+                                    child: OutlinedButton(
+                                      onPressed: () {
+                                        showRescheduleDialog(
+                                          context,
+                                          item.serviceType?.slots ?? [],
+                                          item.bookingId.toString(),
+                                        );
+                                      },
+                                      style: OutlinedButton.styleFrom(
+                                        side: const BorderSide(
+                                          color: Color(0xFF24ADD7),
+                                          width: 1.5,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16.r,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        "Reschedule",
+                                        style: TextStyle(
+                                          fontSize: 15.sp,
+                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFF24ADD7),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 16.w),
+                                Expanded(
+                                  child: SizedBox(
+                                    height: 48.h,
+                                    child: ElevatedButton(
+                                      onPressed: () async {
+                                        showGeneralDialog(
+                                          context: context,
+                                          barrierDismissible: false,
+                                          barrierLabel: "Loading",
+                                          barrierColor: Colors.black38,
+                                          transitionDuration: const Duration(
+                                            milliseconds: 200,
+                                          ),
+                                          pageBuilder: (_, __, ___) {
+                                            return const Center(
+                                              child: CircularProgressIndicator(
+                                                color: Color(0xFF24ADD7),
+                                              ),
+                                            );
+                                          },
+                                        );
 
+                                        try {
+                                          final body =
+                                              CancelServiceBookingBodyModel(
+                                                bookingId: item.bookingId,
+                                              );
+
+                                          final service = APIStateNetwork(
+                                            createDio(),
+                                          );
+                                          final res = await service
+                                              .cancelServiceBooking(body);
+
+                                          if (res.code == 0 ||
+                                              res.error == false) {
+                                            ref.invalidate(
+                                              myRequestBookingServiceContorller,
+                                            );
+                                            Fluttertoast.showToast(
+                                              msg:
+                                                  res.message ??
+                                                  "Booking cancelled successfully",
+                                            );
+                                          } else {
+                                            Fluttertoast.showToast(
+                                              msg:
+                                                  res.message ??
+                                                  "Something went wrong",
+                                            );
+                                          }
+                                        } catch (e) {
+                                          log(e.toString());
+
+                                          Fluttertoast.showToast(
+                                            msg: "Something went wrong",
+                                          );
+                                        } finally {
+                                          if (mounted) {
+                                            Navigator.of(
+                                              context,
+                                              rootNavigator: true,
+                                            ).pop();
+                                          }
+                                        }
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(
+                                          0xFF24ADD7,
+                                        ),
+                                        foregroundColor: Colors.white,
+                                        elevation: 0,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16.r,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        "Cancel",
+                                        style: TextStyle(
+                                          fontSize: 15.sp,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         // 5. Footer
                         _buildFooter(item, primaryColor),
                       ],
@@ -567,7 +998,7 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
 
     final bool isPending = lowerStatus == 'pending';
     final bool isAssigned = lowerStatus == 'in_progress';
-    // final bool isOnWay = lowerStatus == 'on_way';
+    final bool isCancelled = lowerStatus == 'cancelled';
     final bool isWorking = lowerStatus == 'working';
     final bool isCompleted = lowerStatus == 'complete';
 
@@ -601,503 +1032,561 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
     final rating = ref.watch(ratingProvider(item.id ?? ""));
     final reviewText = ref.watch(reviewTextProvider(item.id ?? ""));
 
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
-      padding: EdgeInsets.all(14.w),
-      decoration: BoxDecoration(
-        color: isCompleted
-            ? Colors.green.shade50
-            : isWorking
-            // ? Colors.indigo.shade50
-            // : isOnWay
-            ? Colors.blue.shade50
-            : isAssigned
-            ? Colors.blue.shade50
-            : Colors.orange.shade50,
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(
-          color: isCompleted
-              ? Colors.green.shade200
-              : isWorking
-              // ? Colors.indigo.shade200
-              // : isOnWay
-              ? Colors.blue.shade200
-              : isAssigned
-              ? Colors.blue.shade50
-              : Colors.orange.shade200,
-        ),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Stack(
-                children: [
-                  GestureDetector(
-                    onTap:
-                        technicianImage.isNotEmpty &&
-                            (isAssigned || isWorking || isCompleted)
-                        ? () {
-                            showDialog(
-                              context: context,
-                              barrierColor: Colors.black87,
-                              builder: (_) => Stack(
-                                children: [
-                                  Dialog(
-                                    backgroundColor: Colors.transparent,
-                                    insetPadding: EdgeInsets.zero,
-                                    child: Hero(
-                                      tag: technicianImage,
-                                      child: PhotoView(
-                                        imageProvider: NetworkImage(
-                                          technicianImage,
-                                        ),
-                                        backgroundDecoration:
-                                            const BoxDecoration(
-                                              color: Colors.black,
-                                            ),
-                                        minScale:
-                                            PhotoViewComputedScale.contained,
-                                        maxScale:
-                                            PhotoViewComputedScale.covered *
-                                            2.5,
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    top: 40.h,
-                                    left: 16.w,
-                                    child: IconButton(
-                                      icon: const Icon(
-                                        Icons.close,
-                                        color: Colors.white,
-                                        size: 32,
-                                      ),
-                                      onPressed: () => Navigator.pop(context),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }
-                        : null,
-                    child: CircleAvatar(
-                      radius: 26.r,
-                      backgroundColor: Colors.white,
-                      backgroundImage: technicianImage.isNotEmpty
-                          ? NetworkImage(technicianImage)
-                          : null,
-                      child: technicianImage.isEmpty
-                          ? Icon(
-                              Icons.person_search,
-                              color: Colors.orange,
-                              size: 28.sp,
-                            )
-                          : null,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        isCancelled
+            ? Container(
+                margin: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: null, // Disabled
+                  icon: const Icon(Icons.error),
+                  label: const Text("Service Cancelled"),
+                  style: ElevatedButton.styleFrom(
+                    disabledBackgroundColor: Colors.red.shade100,
+                    disabledForegroundColor: Colors.red.shade700,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
                     ),
                   ),
-                  if (!isPending)
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: InkWell(
-                        onTap:
-                            technicianImage.isNotEmpty &&
-                                (isAssigned || isWorking || isCompleted)
-                            ? () {
-                                showDialog(
-                                  context: context,
-                                  barrierColor: Colors.black87,
-                                  builder: (_) => Stack(
-                                    children: [
-                                      Dialog(
-                                        backgroundColor: Colors.transparent,
-                                        insetPadding: EdgeInsets.zero,
-                                        child: Hero(
-                                          tag: technicianImage,
-                                          child: PhotoView(
-                                            imageProvider: NetworkImage(
-                                              technicianImage,
-                                            ),
-                                            backgroundDecoration:
-                                                const BoxDecoration(
-                                                  color: Colors.black,
+                ),
+              )
+            : Container(
+                margin: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                padding: EdgeInsets.all(14.w),
+                decoration: BoxDecoration(
+                  color: isCompleted
+                      ? Colors.green.shade50
+                      : isWorking
+                      // ? Colors.indigo.shade50
+                      // : isOnWay
+                      ? Colors.blue.shade50
+                      : isAssigned
+                      ? Colors.blue.shade50
+                      : Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(16.r),
+                  border: Border.all(
+                    color: isCompleted
+                        ? Colors.green.shade200
+                        : isWorking
+                        // ? Colors.indigo.shade200
+                        // : isOnWay
+                        ? Colors.blue.shade200
+                        : isAssigned
+                        ? Colors.blue.shade50
+                        : Colors.orange.shade200,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Stack(
+                          children: [
+                            GestureDetector(
+                              onTap:
+                                  technicianImage.isNotEmpty &&
+                                      (isAssigned || isWorking || isCompleted)
+                                  ? () {
+                                      showDialog(
+                                        context: context,
+                                        barrierColor: Colors.black87,
+                                        builder: (_) => Stack(
+                                          children: [
+                                            Dialog(
+                                              backgroundColor:
+                                                  Colors.transparent,
+                                              insetPadding: EdgeInsets.zero,
+                                              child: Hero(
+                                                tag: technicianImage,
+                                                child: PhotoView(
+                                                  imageProvider: NetworkImage(
+                                                    technicianImage,
+                                                  ),
+                                                  backgroundDecoration:
+                                                      const BoxDecoration(
+                                                        color: Colors.black,
+                                                      ),
+                                                  minScale:
+                                                      PhotoViewComputedScale
+                                                          .contained,
+                                                  maxScale:
+                                                      PhotoViewComputedScale
+                                                          .covered *
+                                                      2.5,
                                                 ),
-                                            minScale: PhotoViewComputedScale
-                                                .contained,
-                                            maxScale:
-                                                PhotoViewComputedScale.covered *
-                                                2.5,
-                                          ),
+                                              ),
+                                            ),
+                                            Positioned(
+                                              top: 40.h,
+                                              left: 16.w,
+                                              child: IconButton(
+                                                icon: const Icon(
+                                                  Icons.close,
+                                                  color: Colors.white,
+                                                  size: 32,
+                                                ),
+                                                onPressed: () =>
+                                                    Navigator.pop(context),
+                                              ),
+                                            ),
+                                          ],
                                         ),
+                                      );
+                                    }
+                                  : null,
+                              child: CircleAvatar(
+                                radius: 26.r,
+                                backgroundColor: Colors.white,
+                                backgroundImage: technicianImage.isNotEmpty
+                                    ? NetworkImage(technicianImage)
+                                    : null,
+                                child: technicianImage.isEmpty
+                                    ? Icon(
+                                        Icons.person_search,
+                                        color: Colors.orange,
+                                        size: 28.sp,
+                                      )
+                                    : null,
+                              ),
+                            ),
+                            if (!isPending)
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: InkWell(
+                                  onTap:
+                                      technicianImage.isNotEmpty &&
+                                          (isAssigned ||
+                                              isWorking ||
+                                              isCompleted)
+                                      ? () {
+                                          showDialog(
+                                            context: context,
+                                            barrierColor: Colors.black87,
+                                            builder: (_) => Stack(
+                                              children: [
+                                                Dialog(
+                                                  backgroundColor:
+                                                      Colors.transparent,
+                                                  insetPadding: EdgeInsets.zero,
+                                                  child: Hero(
+                                                    tag: technicianImage,
+                                                    child: PhotoView(
+                                                      imageProvider:
+                                                          NetworkImage(
+                                                            technicianImage,
+                                                          ),
+                                                      backgroundDecoration:
+                                                          const BoxDecoration(
+                                                            color: Colors.black,
+                                                          ),
+                                                      minScale:
+                                                          PhotoViewComputedScale
+                                                              .contained,
+                                                      maxScale:
+                                                          PhotoViewComputedScale
+                                                              .covered *
+                                                          2.5,
+                                                    ),
+                                                  ),
+                                                ),
+                                                Positioned(
+                                                  top: 40.h,
+                                                  left: 16.w,
+                                                  child: IconButton(
+                                                    icon: const Icon(
+                                                      Icons.close,
+                                                      color: Colors.white,
+                                                      size: 32,
+                                                    ),
+                                                    onPressed: () =>
+                                                        Navigator.pop(context),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        }
+                                      : null,
+                                  child: Container(
+                                    padding: EdgeInsets.all(3),
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.green,
+                                    ),
+                                    child: Center(
+                                      child: Icon(
+                                        Icons.zoom_in_rounded,
+                                        color: Colors.white,
+                                        size: 12.sp,
                                       ),
-                                      Positioned(
-                                        top: 40.h,
-                                        left: 16.w,
-                                        child: IconButton(
-                                          icon: const Icon(
-                                            Icons.close,
-                                            color: Colors.white,
-                                            size: 32,
-                                          ),
-                                          onPressed: () =>
-                                              Navigator.pop(context),
-                                        ),
-                                      ),
-                                    ],
+                                    ),
                                   ),
-                                );
-                              }
-                            : null,
-                        child: Container(
-                          padding: EdgeInsets.all(3),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.green,
+                                ),
+                              ),
+                          ],
+                        ),
+                        SizedBox(width: 14.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (!isPending)
+                                Text(
+                                  "Service Partner",
+                                  style: GoogleFonts.inter(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12.sp,
+                                  ),
+                                ),
+                              Text(
+                                technicianName,
+                                style: GoogleFonts.inter(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15.sp,
+                                ),
+                              ),
+                              SizedBox(height: 4.h),
+                              Text(
+                                isPending
+                                    ? "Finding technician..."
+                                    : isAssigned
+                                    ? "Technician is on the way"
+                                    // : isOnWay
+                                    // ? "Technician is on the way"
+                                    : isWorking
+                                    ? "Service in progress"
+                                    : isCompleted
+                                    ? "Service completed"
+                                    : "Status updating...",
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  color: Colors.grey.shade700,
+                                ),
+                              ),
+                            ],
                           ),
-                          child: Center(
-                            child: Icon(
-                              Icons.zoom_in_rounded,
-                              color: Colors.white,
-                              size: 12.sp,
+                        ),
+                        if (isAssigned || isWorking)
+                          IconButton(
+                            onPressed: () async {
+                              final phone = item.serviceBoy?.phone ?? "";
+                              if (phone.isEmpty) return;
+                              final uri = Uri.parse('tel:$phone');
+                              if (await canLaunchUrl(uri)) {
+                                await launchUrl(uri);
+                              } else {
+                                log("Cannot call: $uri");
+                              }
+                            },
+                            icon: const Icon(Icons.call, color: Colors.green),
+                            style: IconButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              padding: EdgeInsets.all(10.w),
+                            ),
+                          ),
+                      ],
+                    ),
+                    SizedBox(height: 16.h),
+                    // Action / Status indicator
+                    if (isAssigned)
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () => _showVerifyDialog(
+                            context,
+                            technicianName,
+                            item.id,
+                            ref,
+                          ),
+                          icon: const Icon(Icons.verified_user, size: 18),
+                          label: Text("VERIFY TECHNICIAN ARRIVAL"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue.shade100,
+                            foregroundColor: Colors.blue.shade800,
+                            padding: EdgeInsets.symmetric(vertical: 12.h),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.r),
                             ),
                           ),
                         ),
+                      )
+                    else if (isCompleted) ...[
+                      _statusIndicator(
+                        Icons.check_circle,
+                        "SERVICE COMPLETED SUCCESSFULLY",
+                        Colors.green.shade800,
+                        Colors.green.shade100,
                       ),
-                    ),
-                ],
-              ),
-              SizedBox(width: 14.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (!isPending)
-                      Text(
-                        "Service Partner",
-                        style: GoogleFonts.inter(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12.sp,
+                      SizedBox(height: 12.h),
+
+                      // ⭐ REVIEW CARD
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(14.w),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14.r),
+                          border: Border.all(color: Colors.green.shade200),
                         ),
-                      ),
-                    Text(
-                      technicianName,
-                      style: GoogleFonts.inter(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15.sp,
-                      ),
-                    ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      isPending
-                          ? "Finding technician..."
-                          : isAssigned
-                          ? "Technician is on the way"
-                          // : isOnWay
-                          // ? "Technician is on the way"
-                          : isWorking
-                          ? "Service in progress"
-                          : isCompleted
-                          ? "Service completed"
-                          : "Status updating...",
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: Colors.grey.shade700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (isAssigned || isWorking)
-                IconButton(
-                  onPressed: () async {
-                    final phone = item.serviceBoy?.phone ?? "";
-                    if (phone.isEmpty) return;
-                    final uri = Uri.parse('tel:$phone');
-                    if (await canLaunchUrl(uri)) {
-                      await launchUrl(uri);
-                    } else {
-                      log("Cannot call: $uri");
-                    }
-                  },
-                  icon: const Icon(Icons.call, color: Colors.green),
-                  style: IconButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    padding: EdgeInsets.all(10.w),
-                  ),
-                ),
-            ],
-          ),
-          SizedBox(height: 16.h),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              isAlreadyRated
+                                  ? "Your Review"
+                                  : "Rate Your Experience",
+                              style: GoogleFonts.inter(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14.sp,
+                              ),
+                            ),
 
-          // Action / Status indicator
-          if (isAssigned)
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () =>
-                    _showVerifyDialog(context, technicianName, item.id, ref),
-                icon: const Icon(Icons.verified_user, size: 18),
-                label: Text("VERIFY TECHNICIAN ARRIVAL"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue.shade100,
-                  foregroundColor: Colors.blue.shade800,
-                  padding: EdgeInsets.symmetric(vertical: 12.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                ),
-              ),
-            )
-          else if (isCompleted) ...[
-            _statusIndicator(
-              Icons.check_circle,
-              "SERVICE COMPLETED SUCCESSFULLY",
-              Colors.green.shade800,
-              Colors.green.shade100,
-            ),
-            SizedBox(height: 12.h),
+                            SizedBox(height: 10.h),
 
-            // ⭐ REVIEW CARD
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(14.w),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14.r),
-                border: Border.all(color: Colors.green.shade200),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    isAlreadyRated ? "Your Review" : "Rate Your Experience",
-                    style: GoogleFonts.inter(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14.sp,
-                    ),
-                  ),
-
-                  SizedBox(height: 10.h),
-
-                  Row(
-                    children: List.generate(5, (index) {
-                      return IconButton(
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        icon: Icon(
-                          index < rating ? Icons.star : Icons.star_border,
-                          color: Colors.orange,
-                          size: 26.sp,
-                        ),
-                        onPressed: isAlreadyRated
-                            ? null
-                            : () {
+                            Row(
+                              children: List.generate(5, (index) {
+                                return IconButton(
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  icon: Icon(
+                                    index < rating
+                                        ? Icons.star
+                                        : Icons.star_border,
+                                    color: Colors.orange,
+                                    size: 26.sp,
+                                  ),
+                                  onPressed: isAlreadyRated
+                                      ? null
+                                      : () {
+                                          ref
+                                                  .read(
+                                                    ratingProvider(
+                                                      item.id ?? "",
+                                                    ).notifier,
+                                                  )
+                                                  .state =
+                                              index + 1;
+                                        },
+                                );
+                              }),
+                            ),
+                            SizedBox(height: 10.h),
+                            TextField(
+                              controller:
+                                  TextEditingController(text: reviewText)
+                                    ..selection = TextSelection.collapsed(
+                                      offset: reviewText.length,
+                                    ),
+                              enabled: !isAlreadyRated,
+                              maxLines: 3,
+                              onChanged: (val) {
                                 ref
                                         .read(
-                                          ratingProvider(
+                                          reviewTextProvider(
                                             item.id ?? "",
                                           ).notifier,
                                         )
                                         .state =
-                                    index + 1;
+                                    val;
                               },
-                      );
-                    }),
-                  ),
-                  SizedBox(height: 10.h),
-                  TextField(
-                    controller: TextEditingController(text: reviewText)
-                      ..selection = TextSelection.collapsed(
-                        offset: reviewText.length,
-                      ),
-                    enabled: !isAlreadyRated,
-                    maxLines: 3,
-                    onChanged: (val) {
-                      ref
-                              .read(reviewTextProvider(item.id ?? "").notifier)
-                              .state =
-                          val;
-                    },
-                    decoration: InputDecoration(
-                      hintText: "Write your review...",
-                      filled: true,
-                      fillColor: Colors.grey.shade100,
-                      contentPadding: EdgeInsets.all(10.w),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10.r),
-                        borderSide: BorderSide(),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 12.h),
-                  Text(
-                    isAlreadyRated
-                        ? "Problem Solve Photo"
-                        : "Upload Problem Solve Photo",
-                    style: GoogleFonts.inter(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14.sp,
-                    ),
-                  ),
-                  SizedBox(height: 10.h),
-                  Center(
-                    child: Container(
-                      width: double.infinity,
-                      height: 180.h,
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20.r),
-                        gradient: LinearGradient(
-                          colors: [
-                            const Color(0xffE86A34).withOpacity(0.5),
-                            Colors.transparent,
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                      ),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(18.r),
-                          image: showImage
-                              ? DecorationImage(
-                                  fit: BoxFit.cover,
-                                  image: problemSolvePhtot != null
-                                      ? FileImage(problemSolvePhtot!)
-                                      : NetworkImage(apiImage!)
-                                            as ImageProvider,
-                                )
-                              : null,
-                        ),
-                        child: !showImage
-                            ? InkWell(
-                                onTap: isAlreadyRated
-                                    ? null
-                                    : () => showImagePicker(),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.cloud_upload_outlined,
-                                      size: 40.sp,
-                                      color: Colors.grey.shade400,
+                              decoration: InputDecoration(
+                                hintText: "Write your review...",
+                                filled: true,
+                                fillColor: Colors.grey.shade100,
+                                contentPadding: EdgeInsets.all(10.w),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  borderSide: BorderSide(),
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 12.h),
+                            Text(
+                              isAlreadyRated
+                                  ? "Problem Solve Photo"
+                                  : "Upload Problem Solve Photo",
+                              style: GoogleFonts.inter(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14.sp,
+                              ),
+                            ),
+                            SizedBox(height: 10.h),
+                            Center(
+                              child: Container(
+                                width: double.infinity,
+                                height: 180.h,
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20.r),
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      const Color(0xffE86A34).withOpacity(0.5),
+                                      Colors.transparent,
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                ),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade100,
+                                    borderRadius: BorderRadius.circular(18.r),
+                                    image: showImage
+                                        ? DecorationImage(
+                                            fit: BoxFit.cover,
+                                            image: problemSolvePhtot != null
+                                                ? FileImage(problemSolvePhtot!)
+                                                : NetworkImage(apiImage!)
+                                                      as ImageProvider,
+                                          )
+                                        : null,
+                                  ),
+                                  child: !showImage
+                                      ? InkWell(
+                                          onTap: isAlreadyRated
+                                              ? null
+                                              : () => showImagePicker(),
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons.cloud_upload_outlined,
+                                                size: 40.sp,
+                                                color: Colors.grey.shade400,
+                                              ),
+                                              SizedBox(height: 8.h),
+                                              Text(
+                                                "Upload Solve Photo",
+                                                style: TextStyle(
+                                                  color: Colors.grey.shade500,
+                                                  fontSize: 14.sp,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        )
+                                      : null,
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 12.h),
+                            if (!isAlreadyRated)
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  onPressed: () async {
+                                    if (rating == 0) {
+                                      Fluttertoast.showToast(
+                                        msg: "Please give rating",
+                                      );
+                                      return;
+                                    }
+                                    final serivce = APIStateNetwork(
+                                      createDio(),
+                                    );
+                                    if (problemSolvePhtot != null) {
+                                      final imgResponse = await serivce
+                                          .uploadImage(problemSolvePhtot!);
+                                      if (imgResponse.code == 0 &&
+                                          imgResponse.error == false) {
+                                        existingImage = imgResponse
+                                            .data!
+                                            .imageUrl
+                                            .toString();
+                                      } else {
+                                        Fluttertoast.showToast(
+                                          msg:
+                                              "Image upload failed, trying again.",
+                                        );
+                                      }
+                                    }
+                                    final body = ServiceRatingBodyModel(
+                                      serviceBooking: item.id,
+                                      rating: rating,
+                                      review: reviewText,
+                                      image: existingImage,
+                                    );
+
+                                    try {
+                                      final resposne = await serivce
+                                          .createServiceRating(body);
+                                      if (resposne.code == 0 &&
+                                          resposne.error == false) {
+                                        Fluttertoast.showToast(
+                                          msg: resposne.message ?? "Sucess",
+                                        );
+                                        ref.invalidate(
+                                          myRequestBookingServiceContorller,
+                                        );
+                                      } else {
+                                        Fluttertoast.showToast(
+                                          msg: resposne.message ?? "Error",
+                                        );
+                                      }
+                                    } catch (e, st) {
+                                      log(st.toString());
+                                      log(e.toString());
+                                      Fluttertoast.showToast(
+                                        msg: "Rating failed $e",
+                                      );
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green,
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: 12.h,
                                     ),
-                                    SizedBox(height: 8.h),
-                                    Text(
-                                      "Upload Solve Photo",
-                                      style: TextStyle(
-                                        color: Colors.grey.shade500,
-                                        fontSize: 14.sp,
-                                        fontWeight: FontWeight.w500,
-                                      ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10.r),
                                     ),
-                                  ],
+                                  ),
+                                  child: Text("Submit Review"),
                                 ),
                               )
-                            : null,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 12.h),
-                  if (!isAlreadyRated)
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          if (rating == 0) {
-                            Fluttertoast.showToast(msg: "Please give rating");
-                            return;
-                          }
-                          final serivce = APIStateNetwork(createDio());
-                          if (problemSolvePhtot != null) {
-                            final imgResponse = await serivce.uploadImage(
-                              problemSolvePhtot!,
-                            );
-                            if (imgResponse.code == 0 &&
-                                imgResponse.error == false) {
-                              existingImage = imgResponse.data!.imageUrl
-                                  .toString();
-                            } else {
-                              Fluttertoast.showToast(
-                                msg: "Image upload failed, trying again.",
-                              );
-                            }
-                          }
-                          final body = ServiceRatingBodyModel(
-                            serviceBooking: item.id,
-                            rating: rating,
-                            review: reviewText,
-                            image: existingImage,
-                          );
-
-                          try {
-                            final resposne = await serivce.createServiceRating(
-                              body,
-                            );
-                            if (resposne.code == 0 && resposne.error == false) {
-                              Fluttertoast.showToast(
-                                msg: resposne.message ?? "Sucess",
-                              );
-                              ref.invalidate(myRequestBookingServiceContorller);
-                            } else {
-                              Fluttertoast.showToast(
-                                msg: resposne.message ?? "Error",
-                              );
-                            }
-                          } catch (e, st) {
-                            log(st.toString());
-                            log(e.toString());
-                            Fluttertoast.showToast(msg: "Rating failed $e");
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          padding: EdgeInsets.symmetric(vertical: 12.h),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.r),
-                          ),
-                        ),
-                        child: Text("Submit Review"),
-                      ),
-                    )
-                  else
-                    Center(
-                      child: Text(
-                        "✅ Review Submitted",
-                        style: TextStyle(
-                          color: Colors.green,
-                          fontWeight: FontWeight.bold,
+                            else
+                              Center(
+                                child: Text(
+                                  "✅ Review Submitted",
+                                  style: TextStyle(
+                                    color: Colors.green,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
-                    ),
-                ],
+                    ] else if (isWorking)
+                      _statusIndicator(
+                        Icons.engineering,
+                        "TECHNICIAN WORKING ON SITE",
+                        Colors.indigo.shade800,
+                        Colors.indigo.shade50,
+                      )
+                    else if (isAssigned)
+                      _statusIndicator(
+                        Icons.directions_car,
+                        "TECHNICIAN IS ON THE WAY",
+                        Colors.blue.shade800,
+                        Colors.blue.shade50,
+                      )
+                    else if (isPending)
+                      _statusIndicator(
+                        Icons.sync,
+                        "SEARCHING FOR TECHNICIAN...",
+                        Colors.orange.shade800,
+                        Colors.orange.shade100,
+                      ),
+                  ],
+                ),
               ),
-            ),
-          ] else if (isWorking)
-            _statusIndicator(
-              Icons.engineering,
-              "TECHNICIAN WORKING ON SITE",
-              Colors.indigo.shade800,
-              Colors.indigo.shade50,
-            )
-          else if (isAssigned)
-            _statusIndicator(
-              Icons.directions_car,
-              "TECHNICIAN IS ON THE WAY",
-              Colors.blue.shade800,
-              Colors.blue.shade50,
-            )
-          else if (isPending)
-            _statusIndicator(
-              Icons.sync,
-              "SEARCHING FOR TECHNICIAN...",
-              Colors.orange.shade800,
-              Colors.orange.shade100,
-            ),
-        ],
-      ),
+      ],
     );
   }
 

@@ -356,3 +356,23 @@ Content-type: application/json
   "newPassword":"654355",
   "confirmPassword":"654355"
 }
+
+# rescheduleServiceBooking
+POST {{url}}/user/rescheduleServiceBooking
+Content-type: application/json
+Authorization: {{token}}
+
+{
+    "serviceDate": "2026-03-20T00:00:00.000Z",
+    "serviceTimeSlot": "11:00 AM - 01:00 PM",
+    "bookingId": "SRV-20260708-0004"
+}
+
+# cancel-service-booking
+POST {{url}}/user/cancel-service-booking
+Content-type: application/json
+Authorization: {{token}}
+
+{
+    "bookingId": "SRV-20260708-0003"
+}

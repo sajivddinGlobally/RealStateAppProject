@@ -25,6 +25,7 @@ import 'package:realstate/Model/commonLoanModel.dart';
 import 'package:realstate/Model/contactUsBodyModel.dart';
 import 'package:realstate/Model/getLikeProperyResModel.dart';
 import 'package:realstate/Model/getPropertyResponsemodel.dart';
+import 'package:realstate/Model/myListingPropertyDeleteBodyModel.dart';
 import 'package:realstate/Model/saveServiceBodyModel.dart';
 import 'package:realstate/core/network/api.state.dart';
 import 'package:realstate/core/utils/preety.dio.dart';
@@ -1025,7 +1026,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                                 right: 0,
                                 top: -2,
                                 child: Container(
-                                  padding: EdgeInsets.all(2),
+                                  padding: EdgeInsets.all(3),
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                     color: Colors.red,
@@ -1047,111 +1048,6 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                         ),
                       ),
                       SizedBox(width: 8.w),
-
-                      // cityListState.when(
-                      //   data: (cityList) {
-                      //     // if (selectedCity == null &&
-                      //     //     cityList.data!.isNotEmpty) {
-                      //     //   selectedCity =
-                      //     //       city ?? cityList.data!.first.cityName;
-                      //     // }
-                      //     final cityNames = cityList.data!
-                      //         .map((e) => e.cityName.toString())
-                      //         .toSet()
-                      //         .toList();
-                      //     // First time initialize
-                      //     if (selectedCity == null) {
-                      //       if (_currentCity != null &&
-                      //           _currentCity!.isNotEmpty) {
-                      //         selectedCity = _currentCity;
-                      //       } else if (cityNames.isNotEmpty) {
-                      //         selectedCity = cityNames.first;
-                      //       }
-                      //     }
-                      //     return Container(
-                      //       padding: EdgeInsets.symmetric(
-                      //         horizontal: 8.w,
-                      //         vertical: 2.h,
-                      //       ),
-                      //       decoration: BoxDecoration(
-                      //         color: Colors.white,
-                      //         borderRadius: BorderRadius.circular(20.r),
-                      //       ),
-                      //       child: DropdownButtonHideUnderline(
-                      //         child: DropdownButton<String>(
-                      //           isDense: true,
-                      //           padding: EdgeInsets.zero,
-                      //           value: cityNames.contains(selectedCity)
-                      //               ? selectedCity
-                      //               : null,
-                      //           hint: Row(
-                      //             mainAxisSize: MainAxisSize.min,
-                      //             children: [
-                      //               Icon(
-                      //                 Icons.location_on,
-                      //                 size: 14.sp,
-                      //                 color: const Color(0xFF24ADD7),
-                      //               ),
-                      //               SizedBox(width: 4.w),
-                      //               Text(
-                      //                 _currentCity ?? "Select City",
-                      //                 style: TextStyle(
-                      //                   color: const Color(0xFF24ADD7),
-                      //                   fontSize: 13.sp,
-                      //                   fontWeight: FontWeight.w600,
-                      //                 ),
-                      //               ),
-                      //             ],
-                      //           ),
-                      //           icon: Icon(
-                      //             Icons.keyboard_arrow_down,
-                      //             color: const Color(0xFF24ADD7),
-                      //             size: 18.sp,
-                      //           ),
-                      //           items: cityNames.map((cityName) {
-                      //             return DropdownMenuItem<String>(
-                      //               value: cityName,
-                      //               child: Row(
-                      //                 children: [
-                      //                   Icon(
-                      //                     Icons.location_on,
-                      //                     size: 14.sp,
-                      //                     color: const Color(0xFF24ADD7),
-                      //                   ),
-                      //                   SizedBox(width: 4.w),
-                      //                   Text(cityName),
-                      //                 ],
-                      //               ),
-                      //             );
-                      //           }).toList(),
-                      //           onChanged: (String? newValue) async {
-                      //             if (newValue == null) return;
-                      //             setState(() {
-                      //               selectedCity = newValue;
-                      //               _currentCity = newValue;
-                      //             });
-                      //             ref.read(currentCityProvider.notifier).state =
-                      //                 newValue;
-                      //             await saveCity(newValue);
-                      //           },
-                      //         ),
-                      //       ),
-                      //     );
-                      //   },
-                      //   error: (error, stackTrace) {
-                      //     return Center(child: Text(error.toString()));
-                      //   },
-                      //   loading: () => Center(
-                      //     child: SizedBox(
-                      //       height: 20,
-                      //       width: 20,
-                      //       child: CircularProgressIndicator(
-                      //         color: Colors.white,
-                      //         strokeWidth: 1.5,
-                      //       ),
-                      //     ),
-                      //   ),
-                      // ),
                       cityListState.when(
                         data: (cityList) {
                           final cityNames = cityList.data!
@@ -2935,13 +2831,50 @@ class Property {
 }
 
 // ==================== PROPERTY CARD ====================
-class PropertyCard extends StatelessWidget {
+class PropertyCard extends StatefulWidget {
   final ListElement data;
   const PropertyCard({super.key, required this.data});
 
   @override
+  State<PropertyCard> createState() => _PropertyCardState();
+}
+
+class _PropertyCardState extends State<PropertyCard> {
+  bool isDelete = false;
+  @override
   Widget build(BuildContext context) {
     final primary = const Color(0xFF24ADD7);
+
+    final String status = (widget.data.status ?? "").toLowerCase();
+
+    String statusText;
+    Color statusBgColor;
+    Color statusTextColor;
+
+    switch (status) {
+      case "pending":
+        statusText = "UNDER REVIEW";
+        statusBgColor = const Color(0xFFFFF8E1); // Light Yellow
+        statusTextColor = const Color(0xFFE6A700); // Dark Yellow
+        break;
+
+      case "approved":
+        statusText = "ACTIVE";
+        statusBgColor = const Color(0xFFE9FFF3); // Light Green
+        statusTextColor = const Color(0xFF16A34A); // Green
+        break;
+
+      case "rejected":
+        statusText = "REJECTED";
+        statusBgColor = const Color(0xFFFFF1F2); // Light Red
+        statusTextColor = const Color(0xFFEF4444); // Red
+        break;
+
+      default:
+        statusText = (widget.data.status ?? "").toUpperCase();
+        statusBgColor = Colors.grey.shade200;
+        statusTextColor = Colors.grey.shade700;
+    }
 
     return Container(
       margin: EdgeInsets.only(bottom: 16.h),
@@ -2967,8 +2900,9 @@ class PropertyCard extends StatelessWidget {
                   Navigator.push(
                     context,
                     CupertinoPageRoute(
-                      builder: (context) =>
-                          MyPropertyDetalsPage(propetyId: data.slug ?? ""),
+                      builder: (context) => MyPropertyDetalsPage(
+                        propetyId: widget.data.slug ?? "",
+                      ),
                     ),
                   );
                 },
@@ -2977,9 +2911,9 @@ class PropertyCard extends StatelessWidget {
                     top: Radius.circular(16.r),
                   ),
                   child: Image.network(
-                    (data.uploadedPhotos != null &&
-                            data.uploadedPhotos!.isNotEmpty)
-                        ? data.uploadedPhotos!.first
+                    (widget.data.uploadedPhotos != null &&
+                            widget.data.uploadedPhotos!.isNotEmpty)
+                        ? widget.data.uploadedPhotos!.first
                         : '',
                     height: 190.h,
                     width: double.infinity,
@@ -3006,8 +2940,34 @@ class PropertyCard extends StatelessWidget {
 
               // BUY / RENT CHIP
               Positioned(
+                top: 12.h,
+                left: 12.w,
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 5.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: statusBgColor,
+                    border: Border.all(
+                      color: statusTextColor.withOpacity(0.35),
+                      width: 1,
+                    ),
+                    borderRadius: BorderRadius.circular(20.r),
+                  ),
+                  child: Text(
+                    statusText,
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      color: statusTextColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
                 top: 12,
-                left: 12,
+                right: 12,
                 child: Row(
                   children: [
                     Container(
@@ -3020,7 +2980,7 @@ class PropertyCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20.r),
                       ),
                       child: Text(
-                        (data.listingCategory ?? '').toUpperCase(),
+                        (widget.data.listingCategory ?? '').toUpperCase(),
                         style: TextStyle(
                           fontSize: 11.sp,
                           color: Colors.white,
@@ -3032,47 +2992,10 @@ class PropertyCard extends StatelessWidget {
                 ),
               ),
 
-              Positioned(
-                top: 12,
-                right: 12,
-                child: Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => CreatePropertyScreen(
-                              data,
-                              fromBottomNav: false,
-                            ),
-                          ),
-                        );
-                      },
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 14.w,
-                          vertical: 5.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: primary,
-                          borderRadius: BorderRadius.circular(20.r),
-                        ),
-                        child: Icon(
-                          Icons.edit,
-                          color: Colors.white,
-                          size: 16.sp,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
               // PRICE
               Positioned(
                 bottom: 12,
-                right: 12,
+                left: 12,
                 child: Container(
                   padding: EdgeInsets.symmetric(
                     horizontal: 12.w,
@@ -3083,7 +3006,7 @@ class PropertyCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20.r),
                   ),
                   child: Text(
-                    "₹ ${data.price}",
+                    "₹ ${widget.data.price}",
                     style: TextStyle(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.bold,
@@ -3104,7 +3027,7 @@ class PropertyCard extends StatelessWidget {
                 // TITLE
                 Text(
                   // "${data.bedRoom} BHK ${data.propertyType}",
-                  "${data.bedRoom}  ${data.propertyType}",
+                  "${widget.data.bedRoom}  ${widget.data.propertyType}",
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
@@ -3120,7 +3043,7 @@ class PropertyCard extends StatelessWidget {
                     SizedBox(width: 4.w),
                     Expanded(
                       child: Text(
-                        "${data.localityArea}, ${data.city}",
+                        "${widget.data.localityArea}, ${widget.data.city}",
                         style: TextStyle(fontSize: 13.sp, color: Colors.grey),
                       ),
                     ),
@@ -3134,12 +3057,125 @@ class PropertyCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     // _spec(Icons.king_bed, "${data.bedRoom} Beds"),
-                    _spec(Icons.king_bed, "${data.bedRoom} "),
+                    _spec(Icons.king_bed, "${widget.data.bedRoom} "),
                     // _spec(Icons.bathtub, "${data.bathrooms} Baths"),
-                    _spec(Icons.bathtub, "${data.bathrooms} "),
-                    _spec(Icons.square_foot, "${data.area} sqft"),
-                    _spec(Icons.chair, data.furnishing ?? ''),
+                    _spec(Icons.bathtub, "${widget.data.bathrooms} "),
+                    _spec(Icons.square_foot, "${widget.data.area} sqft"),
+                    _spec(Icons.chair, widget.data.furnishing ?? ''),
                   ],
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 10.h),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 12.w),
+            child: Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 42.h,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => CreatePropertyScreen(
+                              widget.data,
+                              fromBottomNav: false,
+                            ),
+                          ),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 8.h),
+                        side: BorderSide(
+                          color: const Color(0xFF24ADD7),
+                          width: 1.2.w,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                      ),
+                      child: Text(
+                        "Edit",
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF24ADD7),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                SizedBox(width: 12.w),
+                Consumer(
+                  builder: (context, ref, child) {
+                    return Expanded(
+                      child: SizedBox(
+                        height: 42.h,
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            setState(() {
+                              isDelete = true;
+                            });
+                            final body = MyListingProperyDeleteBodyModel(
+                              id: widget.data.id.toString(),
+                            );
+                            try {
+                              final service = APIStateNetwork(createDio());
+                              final res = await service.myListingPropertyDelete(
+                                body,
+                              );
+                              if (res.code == 0 && res.error == false) {
+                                Fluttertoast.showToast(msg: res.message ?? "");
+                                ref.invalidate(getMyPropertyController);
+                              } else {
+                                Fluttertoast.showToast(msg: res.message ?? "");
+                                setState(() {
+                                  isDelete = false;
+                                });
+                              }
+                            } catch (e) {
+                              log(e.toString());
+                            } finally {
+                              setState(() {
+                                isDelete = false;
+                              });
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: EdgeInsets.symmetric(vertical: 8.h),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                          ),
+                          child: isDelete
+                              ? SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 1.5,
+                                    ),
+                                  ),
+                                )
+                              : Text(
+                                  "Delete",
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
@@ -3665,6 +3701,23 @@ class _HomeServiceState extends ConsumerState<HomeService> {
                                         ),
                                       );
                                     },
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    width: 80.w,
+                                    height: 80.h,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8.r),
+                                      color: Colors.grey.shade300,
+                                    ),
+                                    child: Center(
+                                      child: Icon(
+                                        Icons.image_not_supported_outlined,
+                                        size: 30.sp,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
                             ),
                           ),

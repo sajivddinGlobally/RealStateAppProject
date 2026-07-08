@@ -39,7 +39,7 @@ Dio createDio() {
             (route) => false,
           );
           final box = Hive.box("userdata");
-          await box.clear(); 
+          await box.clear();
           Fluttertoast.showToast(
             msg: response.data['message'],
             gravity: ToastGravity.BOTTOM,

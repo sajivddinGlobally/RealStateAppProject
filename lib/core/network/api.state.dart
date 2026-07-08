@@ -9,6 +9,8 @@ import 'package:realstate/Model/Body/resetPassBodyMOdel.dart';
 import 'package:realstate/Model/Body/saveAddCustomAreaBodyModel.dart';
 import 'package:realstate/Model/Body/serviceRatingBodyModel.dart';
 import 'package:realstate/Model/Body/userResister.dart';
+import 'package:realstate/Model/cancelServiceBookingBodyModel.dart';
+import 'package:realstate/Model/cancelServiceBookingResModel.dart';
 import 'package:realstate/Model/checkSlotResModel.dart';
 import 'package:realstate/Model/contactUsBodyModel.dart';
 import 'package:realstate/Model/contactUsResModel.dart';
@@ -30,9 +32,12 @@ import 'package:realstate/Model/loanQueryResModel.dart';
 import 'package:realstate/Model/loanServiceResModel.dart';
 import 'package:realstate/Model/loginWithPhoneBodyModel.dart';
 import 'package:realstate/Model/myBookingServiceRequestResModel.dart';
+import 'package:realstate/Model/myListingPropertyDeleteResModel.dart';
 import 'package:realstate/Model/planResModel.dart';
 import 'package:realstate/Model/readNotificationResModel.dart';
 import 'package:realstate/Model/registerResModel.dart';
+import 'package:realstate/Model/reseduleServiceBookingBodyModel.dart';
+import 'package:realstate/Model/reseduleServiceBookingResModel.dart';
 import 'package:realstate/Model/resetPassResModel.dart';
 import 'package:realstate/Model/saveAddCustomAreaResModel.dart';
 import 'package:realstate/Model/saveContactInPropertyBodyModel.dart';
@@ -209,4 +214,19 @@ abstract class APIStateNetwork {
 
   @POST("/user/resetPassword")
   Future<ResetPassResModel> resetPassword(@Body() ResetPassBodyModel body);
+
+  @POST("/user/cancel-service-booking")
+  Future<CancelServiceBookingResModel> cancelServiceBooking(
+    @Body() CancelServiceBookingBodyModel body,
+  );
+
+  @POST("/user/rescheduleServiceBooking")
+  Future<RescheduleServiceBookingResModel> rescheduleServiceBooking(
+    @Body() RescheduleServiceBookingBodyModel body,
+  );
+
+  @POST("/user/deleteProperty")
+  Future<MyListingProperyDeleteResModel> myListingPropertyDelete(
+    @Body() MyListingProperyDeleteBodyModel,
+  );
 }

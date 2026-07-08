@@ -180,7 +180,7 @@ class Rating {
   int? rating;
   dynamic review;
   String? image;
-  Rating({this.id, this.userId, this.rating, this.review,this.image});
+  Rating({this.id, this.userId, this.rating, this.review, this.image});
 
   factory Rating.fromJson(Map<String, dynamic> json) => Rating(
     id: json["_id"],
@@ -216,11 +216,46 @@ class ServiceType {
   String? id;
   String? name;
   String? image;
+  List<Slots>? slots;
 
-  ServiceType({this.id, this.name, this.image});
+  ServiceType({this.id, this.name, this.image, this.slots});
 
-  factory ServiceType.fromJson(Map<String, dynamic> json) =>
-      ServiceType(id: json["_id"], name: json["name"], image: json["image"]);
+  factory ServiceType.fromJson(Map<String, dynamic> json) => ServiceType(
+    id: json["_id"],
+    name: json["name"],
+    image: json["image"],
 
-  Map<String, dynamic> toJson() => {"_id": id, "name": name, "image": image};
+    slots: json["slots"] == null
+        ? []
+        : List<Slots>.from(json["slots"].map((x) => Slots.fromJson(x))),
+  );
+
+  Map<String, dynamic> toJson() => {
+    "_id": id,
+    "name": name,
+    "image": image,
+    "slots": slots == null
+        ? []
+        : List<dynamic>.from(slots!.map((x) => x.toJson())),
+  };
+}
+
+class Slots {
+  String? id;
+  String? timeSlot;
+  int? slotCount;
+
+  Slots({this.id, this.timeSlot, this.slotCount});
+
+  factory Slots.fromJson(Map<String, dynamic> json) {
+    return Slots(
+      id: json["_id"],
+      timeSlot: json["timeSlot"],
+      slotCount: json["slotCount"],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {"_id": id, "timeSlot": timeSlot, "slotCount": slotCount};
+  }
 }

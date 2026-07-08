@@ -1241,49 +1241,30 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                 type: TextInputType.number,
                 isRequired: true,
               ),
-              const SizedBox(height: 12),
-              _buildDropdown(
-                'BHK',
-                _selectedBhk,
-                [
-                  "1 BHK",
-                  "2 BHK",
-                  "3 BHK",
-                  "4 BHK",
-                  "5 BHK",
-                  "6 BHK",
-                  "7 BHK",
-                  "8+ BHK",
-                ],
-                (v) {
-                  setState(() {
-                    _selectedBhk = v;
-                    _bedroomsController.text = v ?? "";
-                  });
-                },
-                isRequired: true,
-              ),
-              // Row(
-              //   children: [
-              //     Expanded(
-              //       child: _buildTextField(
-              //         'BHK',
-              //         _bedroomsController,
-              //         type: TextInputType.number,
-              //         isRequired: true,
-              //       ),
-              //     ),
-              //     const SizedBox(width: 12),
-              //     Expanded(
-              //       child: _buildTextField(
-              //         'Bathrooms',
-              //         _bathroomsController,
-              //         type: TextInputType.number,
-              //         isRequired: true,
-              //       ),
-              //     ),
-              //   ],
-              // ),
+              if (selectedPropertySubType != "land") ...[
+                const SizedBox(height: 12),
+                _buildDropdown(
+                  'BHK',
+                  _selectedBhk,
+                  [
+                    "1 BHK",
+                    "2 BHK",
+                    "3 BHK",
+                    "4 BHK",
+                    "5 BHK",
+                    "6 BHK",
+                    "7 BHK",
+                    "8+ BHK",
+                  ],
+                  (v) {
+                    setState(() {
+                      _selectedBhk = v;
+                      _bedroomsController.text = v ?? "";
+                    });
+                  },
+                  isRequired: true,
+                ),
+              ],
               SizedBox(height: 12.h),
               _buildTextField(
                 'Area (sq.ft) *',
@@ -1299,87 +1280,89 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: EdgeInsets.only(left: 10.w, right: 10.w),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildDropdown(
-                      'Bathroom',
-                      _selectBathroom,
-                      [
-                        "1 Bathroom",
-                        "2 Bathroom",
-                        "3 Bathroom",
-                        "4 Bathroom",
-                        "5 Bathroom",
-                        "6+ Bathroom",
-                      ],
-                      (v) {
-                        setState(() {
-                          _selectBathroom = v;
-                          _bathroomsController.text = v ?? "";
-                        });
-                      },
-                      isRequired: false,
+            if (selectedPropertySubType != "land") ...[
+              Padding(
+                padding: EdgeInsets.only(left: 10.w, right: 10.w),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _buildDropdown(
+                        'Bathroom',
+                        _selectBathroom,
+                        [
+                          "1 Bathroom",
+                          "2 Bathroom",
+                          "3 Bathroom",
+                          "4 Bathroom",
+                          "5 Bathroom",
+                          "6+ Bathroom",
+                        ],
+                        (v) {
+                          setState(() {
+                            _selectBathroom = v;
+                            _bathroomsController.text = v ?? "";
+                          });
+                        },
+                        isRequired: false,
+                      ),
                     ),
-                  ),
-                  SizedBox(width: 10.w),
-                  Expanded(
-                    child: _buildDropdown(
-                      'Kitchen',
-                      _selectkitchen,
-                      ["1 Kitchen", "2 Kitchen", "3 Kitchen", "4+ Kitchen"],
-                      (v) {
-                        setState(() {
-                          _selectkitchen = v;
-                          _kitchenController.text = v ?? "";
-                        });
-                      },
-                      isRequired: false,
+                    SizedBox(width: 10.w),
+                    Expanded(
+                      child: _buildDropdown(
+                        'Kitchen',
+                        _selectkitchen,
+                        ["1 Kitchen", "2 Kitchen", "3 Kitchen", "4+ Kitchen"],
+                        (v) {
+                          setState(() {
+                            _selectkitchen = v;
+                            _kitchenController.text = v ?? "";
+                          });
+                        },
+                        isRequired: false,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            SizedBox(height: 20.h),
-            Padding(
-              padding: EdgeInsets.only(left: 10.w, right: 10.w),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildDropdown(
-                      'Balcony',
-                      _selectBalcony,
-                      ["1", "2", "3", "4+"],
-                      (v) {
-                        setState(() {
-                          _selectBalcony = v;
-                          _balconyController.text = v ?? "";
-                        });
-                      },
-                      isRequired: false,
+              SizedBox(height: 20.h),
+              Padding(
+                padding: EdgeInsets.only(left: 10.w, right: 10.w),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _buildDropdown(
+                        'Balcony',
+                        _selectBalcony,
+                        ["1", "2", "3", "4+"],
+                        (v) {
+                          setState(() {
+                            _selectBalcony = v;
+                            _balconyController.text = v ?? "";
+                          });
+                        },
+                        isRequired: false,
+                      ),
                     ),
-                  ),
-                  SizedBox(width: 10.w),
-                  Expanded(
-                    child: _buildDropdown(
-                      'Parking',
-                      _selectParking,
-                      ["1", "2", "3", "4+"],
-                      (v) {
-                        setState(() {
-                          _selectParking = v;
-                          _parkingController.text = v ?? "";
-                        });
-                      },
-                      isRequired: false,
+                    SizedBox(width: 10.w),
+                    Expanded(
+                      child: _buildDropdown(
+                        'Parking',
+                        _selectParking,
+                        ["1", "2", "3", "4+"],
+                        (v) {
+                          setState(() {
+                            _selectParking = v;
+                            _parkingController.text = v ?? "";
+                          });
+                        },
+                        isRequired: false,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            SizedBox(height: 10.h),
+              SizedBox(height: 10.h),
+            ],
             _buildCard(child: _buildMultiSelectAmenities()),
           ],
         );
