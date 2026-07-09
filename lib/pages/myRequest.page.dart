@@ -476,7 +476,7 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
                               children: [
                                 Expanded(
                                   child: SizedBox(
-                                    height: 48.h,
+                                    height: 45.h,
                                     child: OutlinedButton(
                                       onPressed: () {
                                         showRescheduleDialog(
@@ -486,22 +486,25 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
                                         );
                                       },
                                       style: OutlinedButton.styleFrom(
-                                        side: const BorderSide(
-                                          color: Color(0xFF24ADD7),
-                                          width: 1.5,
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: 8.h,
+                                        ),
+                                        side: BorderSide(
+                                          color: const Color(0xFF24ADD7),
+                                          width: 1.2.w,
                                         ),
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(
-                                            16.r,
+                                            12.r,
                                           ),
                                         ),
                                       ),
                                       child: Text(
                                         "Reschedule",
                                         style: TextStyle(
-                                          fontSize: 15.sp,
+                                          fontSize: 14.sp,
                                           fontWeight: FontWeight.w600,
-                                          color: Color(0xFF24ADD7),
+                                          color: const Color(0xFF24ADD7),
                                         ),
                                       ),
                                     ),
@@ -510,7 +513,7 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
                                 SizedBox(width: 16.w),
                                 Expanded(
                                   child: SizedBox(
-                                    height: 48.h,
+                                    height: 42.h,
                                     child: ElevatedButton(
                                       onPressed: () async {
                                         showGeneralDialog(
@@ -574,23 +577,25 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
                                           }
                                         }
                                       },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(
-                                          0xFF24ADD7,
-                                        ),
+                                      style: OutlinedButton.styleFrom(
+                                        backgroundColor: Color(0xFF24ADD7),
                                         foregroundColor: Colors.white,
                                         elevation: 0,
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: 8.h,
+                                        ),
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(
-                                            16.r,
+                                            12.r,
                                           ),
                                         ),
                                       ),
                                       child: Text(
                                         "Cancel",
                                         style: TextStyle(
-                                          fontSize: 15.sp,
+                                          fontSize: 14.sp,
                                           fontWeight: FontWeight.w600,
+                                          color: Colors.white,
                                         ),
                                       ),
                                     ),

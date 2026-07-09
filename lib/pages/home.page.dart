@@ -3052,16 +3052,24 @@ class _PropertyCardState extends State<PropertyCard> {
 
                 SizedBox(height: 10.h),
 
-                // SPECS
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // _spec(Icons.king_bed, "${data.bedRoom} Beds"),
-                    _spec(Icons.king_bed, "${widget.data.bedRoom} "),
-                    // _spec(Icons.bathtub, "${data.bathrooms} Baths"),
-                    _spec(Icons.bathtub, "${widget.data.bathrooms} "),
-                    _spec(Icons.square_foot, "${widget.data.area} sqft"),
-                    _spec(Icons.chair, widget.data.furnishing ?? ''),
+                    if (widget.data.bedRoom != null &&
+                        widget.data.bedRoom!.isNotEmpty)
+                      _spec(Icons.king_bed, widget.data.bedRoom!),
+
+                    if (widget.data.bathrooms != null &&
+                        widget.data.bathrooms!.isNotEmpty)
+                      _spec(Icons.bathtub, widget.data.bathrooms!),
+
+                    if (widget.data.area != null &&
+                        widget.data.area!.isNotEmpty)
+                      _spec(Icons.square_foot, "${widget.data.area} sqft"),
+
+                    if (widget.data.furnishing != null &&
+                        widget.data.furnishing!.isNotEmpty)
+                      _spec(Icons.chair, widget.data.furnishing!),
                   ],
                 ),
               ],

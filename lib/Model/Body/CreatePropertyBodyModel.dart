@@ -22,6 +22,7 @@ class CreatePropertyBodyModel {
   String? area;
   String? bedRoom;
   List<String>? amenities;
+  List<String>? furnishingItems;
   List<AroundProject>? aroundProject;
   String? permitNo;
   String? rera;
@@ -50,6 +51,7 @@ class CreatePropertyBodyModel {
     this.area,
     this.bedRoom,
     this.amenities,
+    this.furnishingItems,
     this.aroundProject,
     this.permitNo,
     this.rera,
@@ -80,6 +82,9 @@ class CreatePropertyBodyModel {
         amenities: json["amenities"] == null
             ? []
             : List<String>.from(json["amenities"]!.map((x) => x)),
+        furnishingItems: json["furnishingItems"] == null
+            ? []
+            : List<String>.from(json["furnishingItems"]!.map((x) => x)),
         aroundProject: json["aroundProject"] == null
             ? []
             : List<AroundProject>.from(
@@ -89,7 +94,7 @@ class CreatePropertyBodyModel {
         rera: json["rera"],
         ded: json["ded"],
         brn: json["brn"],
-        
+
         bathrooms: json["bathrooms"],
         kitchen: json["kitchen"],
         furnishing: json["furnishing"],
@@ -119,6 +124,9 @@ class CreatePropertyBodyModel {
     "amenities": amenities == null
         ? []
         : List<dynamic>.from(amenities!.map((x) => x)),
+    "furnishingItems": furnishingItems == null
+        ? []
+        : List<dynamic>.from(furnishingItems!.map((x) => x)),
     "aroundProject": aroundProject == null
         ? []
         : List<dynamic>.from(aroundProject!.map((x) => x.toJson())),

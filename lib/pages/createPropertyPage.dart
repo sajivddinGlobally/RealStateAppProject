@@ -4,17 +4,21 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:realstate/Controller/getMyPropertyController.dart';
+import 'package:realstate/Controller/locationProvider.dart';
 import 'package:realstate/Model/Body/UpdatePropertyBodyModel.dart';
 import 'package:realstate/Model/Body/saveAddCustomAreaBodyModel.dart';
-import '../Model/getMyPropertyResModel.dart';
+import 'package:realstate/Model/createCityBodyModel.dart';
+import 'package:realstate/Model/createCityResModel.dart';
+import '../CityProvider.dart';
 import '../Controller/getCityListController.dart';
 import '../Model/Body/CreatePropertyBodyModel.dart';
 import '../Model/CityResponseModel.dart';
 import '../Model/getPropertyResponsemodel.dart';
-import '../Model/saveServiceBodyModel.dart';
 import '../core/network/api.state.dart';
 import '../core/utils/preety.dio.dart';
 import 'package:realstate/Model/Body/CreatePropertyBodyModel.dart'
@@ -40,17 +44,16 @@ class CreatePropertyScreen extends ConsumerStatefulWidget {
 
 class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
   final _formKey = GlobalKey<FormState>(); // ← Added for validation
-
   bool get isEditMode =>
       widget.data != null && (widget.data?.id?.isNotEmpty ?? false);
   String? get propertyId => widget.data?.id;
-
   String? selectedPropertyType;
   String? selectedListingCategory;
   String? selectedFurnishing;
   String? selectedPropertySubType;
   String? selectedCity;
   String? selectedCityId;
+  bool _isLocationLoading = false;
   bool get isCitySelected => selectedCity != null && selectedCity!.isNotEmpty;
   final List<String> allAmenities = [
     "Swimming Pool",
@@ -154,6 +157,151 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
     }
   }
 
+  Future<void> _useCurrentLocation() async {
+    setState(() {
+      _isLocationLoading = true;
+    });
+    try {
+      // Check location service
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        await Geolocator.openLocationSettings();
+        return;
+      }
+
+      // Check permission
+      LocationPermission permission = await Geolocator.checkPermission();
+
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        return;
+      }
+
+      // Current Position
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      // Reverse Geocoding
+      final placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      if (placemarks.isEmpty) return;
+
+      final place = placemarks.first;
+
+      final city =
+          (place.locality ??
+                  place.subAdministrativeArea ??
+                  place.administrativeArea ??
+                  "")
+              .trim();
+
+      final locality = (place.subLocality ?? place.locality ?? "").trim();
+
+      final address = [
+        place.name,
+        place.street,
+        place.subLocality,
+        place.locality,
+        place.administrativeArea,
+        place.postalCode,
+        place.country,
+      ].where((e) => e != null && e!.trim().isNotEmpty).join(", ");
+
+      /// Save in Hive
+      await ref
+          .read(locationProvider.notifier)
+          .save(city: city, locality: locality, address: address);
+
+      /// Get City List
+      final cityResponse = await ref.read(getCityController.future);
+
+      if (cityResponse != null && cityResponse.data != null) {
+        try {
+          final cityData = cityResponse.data!.firstWhere(
+            (e) =>
+                (e.cityName ?? "").trim().toLowerCase() == city.toLowerCase(),
+          );
+          setState(() {
+            /// Select City
+            selectedCity = cityData.cityName;
+            selectedCityId = cityData.id;
+            cityController.text = cityData.cityName ?? "";
+
+            /// Locality List
+            localityList = cityData.areas ?? [];
+
+            /// Property Address
+            _propertyAddressController.text = address;
+
+            /// Match Locality
+            final matchedLocality = localityList.cast<String?>().firstWhere(
+              (e) => (e ?? "").toLowerCase() == locality.toLowerCase(),
+              orElse: () => null,
+            );
+
+            if (matchedLocality != null) {
+              selectedLocality = matchedLocality;
+              isLocalityFromDropdown = true;
+            } else {
+              selectedLocality = locality;
+              isLocalityFromDropdown = false;
+            }
+          });
+        } catch (e) {
+          // City not found in API list
+          setState(() {
+            selectedCity = city;
+            selectedCityId = null;
+            cityController.text = city;
+
+            localityList = [];
+
+            selectedLocality = locality;
+            isLocalityFromDropdown = false;
+
+            _propertyAddressController.text = address;
+          });
+        }
+      } else {
+        // City API not loaded
+        setState(() {
+          selectedCity = city;
+          selectedCityId = null;
+          cityController.text = city;
+
+          localityList = [];
+
+          selectedLocality = locality;
+          isLocalityFromDropdown = false;
+
+          _propertyAddressController.text = address;
+        });
+      }
+    } catch (e) {
+      debugPrint("Location Error: $e");
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Unable to fetch current location")),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLocationLoading = false;
+        });
+      }
+    }
+  }
+
   String? _capitalize(String? value) {
     if (value == null || value.isEmpty) return null;
     return value[0].toUpperCase() + value.substring(1).toLowerCase();
@@ -163,7 +311,6 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
     setState(() {
       selectedPropertyType = _capitalize(data.property);
       selectedPropertySubType = data.propertyType;
-
       selectedListingCategory = _normalizeListingCategory(data.listingCategory);
 
       /// ✅ fir mapping karo
@@ -172,9 +319,10 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
       } else if (selectedListingCategory == "Rent") {
         selectedType = 2;
       }
+
       selectedCity = data.city?.trim();
       selectedLocality = data.localityArea?.trim();
-      selectedFurnishing = _normalizeFurnishing(data.furnishing);
+      selectedFurnishing = _normalize(data.furnishing);
       _priceController.text = data.price ?? '';
       _bedroomsController.text = data.bedRoom ?? '';
       _selectedBhk = data.bedRoom ?? "";
@@ -201,11 +349,12 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
       if (data.amenities != null && data.amenities!.isNotEmpty) {
         selectedAmenities = List<String>.from(data.amenities!);
       }
-
+      if (data.furnishingItems != null && data.furnishingItems!.isNotEmpty) {
+        appliance = List<String>.from(data.furnishingItems!);
+      }
       if (data.uploadedPhotos != null && data.uploadedPhotos!.isNotEmpty) {
         propertyImages.addAll(data.uploadedPhotos!);
       }
-
       aroundProjectList.clear();
       if (data.aroundProject != null && data.aroundProject!.isNotEmpty) {
         for (final item in data.aroundProject!) {
@@ -221,12 +370,9 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
 
   String? _normalizeListingCategory(String? value) {
     if (value == null) return null;
-
     final lower = value.toLowerCase().trim();
-
     if (lower.contains('rent')) return 'Rent'; // ✅ FIX
     if (lower.contains('buy') || lower.contains('sell')) return 'Sell'; // ✅ FIX
-
     return value;
   }
 
@@ -238,6 +384,25 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
     if (lower.contains('semi-furnished')) return 'Semi-Furnished';
     if (lower.contains('unfurnished')) return 'Unfurnished';
     return value;
+  }
+
+  String? _normalize(String? value) {
+    if (value == null || value.trim().isEmpty) return null;
+
+    switch (value.trim().toLowerCase()) {
+      case "furnished":
+        return "Furnished";
+
+      case "semi-furnished":
+      case "semi furnished":
+        return "Semi-Furnished";
+
+      case "unfurnished":
+        return "Unfurnished";
+
+      default:
+        return null;
+    }
   }
 
   void addAroundProjectRow() {
@@ -367,6 +532,30 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
     try {
       final service = APIStateNetwork(createDio());
 
+      if (selectedCityId == null &&
+          selectedCity != null &&
+          selectedCity!.trim().isNotEmpty) {
+        final CreateCityResponseModel cityRes = await service.createCity(
+          CreateCityBodyModel(cityName: selectedCity!.trim()),
+        );
+        if (cityRes.error == false &&
+            cityRes.data != null &&
+            cityRes.data!.id != null) {
+          setState(() {
+            selectedCityId = cityRes.data!.id;
+          });
+        } else {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(cityRes.message ?? "Failed to create city"),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+      }
+
       List<String> finalImageUrls = propertyImages.whereType<String>().toList();
       final newFiles = propertyImages.whereType<File>().toList();
 
@@ -430,6 +619,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
         kitchen: _selectkitchen,
         furnishing: selectedFurnishing?.toLowerCase(),
         amenities: selectedAmenities,
+        furnishingItems: appliance,
         aroundProject: aroundProjects,
         permitNo: _permitNoController.text.trim(),
         rera: _reraController.text.trim(),
@@ -491,6 +681,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
             isBroker: isBroker == true ? "yes" : "no",
             balcony: _selectBalcony,
             parking: _selectParking,
+            furnishingItems: appliance,
           ),
         );
       } else {
@@ -1102,6 +1293,40 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  SizedBox(
+                    height: 40.h,
+                    child: ElevatedButton(
+                      onPressed: _isLocationLoading
+                          ? null
+                          : () {
+                              _useCurrentLocation();
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF24ADD7),
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor: Color(0xFF24ADD7),
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                      ),
+                      child: _isLocationLoading
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text("Use my current location"),
+                    ),
+                  ),
+                ],
+              ),
               _buildCityDropdown(cityAsync),
               const SizedBox(height: 12),
 
@@ -1453,7 +1678,6 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                   keyboardType: TextInputType.text,
                   textInputAction: TextInputAction.done,
                   onSaved: (_) => addAppliance(),
-
                   autovalidateMode: AutovalidateMode.onUserInteraction,
                   decoration: InputDecoration(
                     suffixIcon: IconButton(
@@ -1990,7 +2214,6 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
   }
 
   TextEditingController cityController = TextEditingController();
-
   Widget _buildCityDropdown(AsyncValue<CityResponseModel> cityAsync) {
     return cityAsync.when(
       data: (cityRes) {
@@ -2010,6 +2233,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
             const SizedBox(height: 8),
 
             Autocomplete<String>(
+              key: const ValueKey('city_autocomplete'),
               initialValue: TextEditingValue(text: selectedCity ?? ""),
               optionsBuilder: (TextEditingValue textEditingValue) {
                 if (textEditingValue.text.isEmpty) {
@@ -2026,22 +2250,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                       ),
                     );
               },
-              // onSelected: (String city) {
-              //   setState(() {
-              //     selectedCity = city;
-              //     selectedLocality = null;
-              //
-              //     final selectedCityObj = cities.firstWhere(
-              //           (c) =>
-              //       (c.cityName ?? "").toLowerCase() ==
-              //           city.toLowerCase(),
-              //       orElse: () => cities.first,
-              //     );
-              //
-              //     localityList =
-              //     List<String>.from(selectedCityObj.areas ?? []);
-              //   });
-              // },
+
               onSelected: (String city) {
                 setState(() {
                   selectedCity = city;
@@ -2095,17 +2304,17 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
 
                         errorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12.r),
-                          borderSide: const BorderSide(color: Colors.red),
+                          borderSide: BorderSide(color: Colors.red),
                         ),
-
                         focusedErrorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12.r),
-                          borderSide: const BorderSide(
-                            color: Colors.red,
-                            width: 1.5,
-                          ),
+                          borderSide: BorderSide(color: Colors.red, width: 1.5),
                         ),
 
+                        errorStyle: TextStyle(
+                          fontSize: 12.sp,
+                          color: Colors.red,
+                        ),
                         contentPadding: EdgeInsets.symmetric(
                           horizontal: 14.w,
                           vertical: 14.h,
@@ -2119,6 +2328,12 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                           // abhi kisi city ki id confirm nahi hai
                           selectedCityId = null;
                         });
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return "City is required";
+                        }
+                        return null;
                       },
                     );
                   },

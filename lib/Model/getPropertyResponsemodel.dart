@@ -69,6 +69,7 @@ class ListElement {
   String? permitNo;
   String? bedRoom;
   List<String>? amenities;
+  List<String>? furnishingItems;
   String? permitNoUploadBy;
   String? rera;
   String? ded;
@@ -116,6 +117,7 @@ class ListElement {
     this.area,
     this.bedRoom,
     this.amenities,
+    this.furnishingItems,
     // this.permitNo,
     this.rera,
     this.ded,
@@ -161,6 +163,9 @@ class ListElement {
     amenities: json["amenities"] == null
         ? []
         : List<String>.from(json["amenities"]!.map((x) => x)),
+    furnishingItems: json["furnishingItems"] == null
+        ? []
+        : List<String>.from(json["furnishingItems"]!.map((x) => x)),
     // permitNo: json["permitNo"],
     rera: json["rera"],
     ded: json["ded"],
@@ -215,7 +220,9 @@ class ListElement {
     "amenities": amenities == null
         ? []
         : List<dynamic>.from(amenities!.map((x) => x)),
-    // "permitNo": permitNo,
+    "furnishingItems": furnishingItems == null
+        ? []
+        : List<dynamic>.from(furnishingItems!.map((x) => x)),
     "rera": rera,
     "ded": ded,
     "brn": brn,

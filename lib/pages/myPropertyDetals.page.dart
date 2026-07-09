@@ -239,45 +239,44 @@ class _MyPropertyDetalsPageState extends ConsumerState<MyPropertyDetalsPage> {
                           mainAxisSpacing: 8,
                           childAspectRatio: 0.9,
                           children: [
-                            if (item.bedRoom != null)
+                            if ((item.bedRoom ?? "").trim().isNotEmpty)
                               _spec(
                                 Icons.king_bed,
                                 "Beds",
                                 item.bedRoom.toString(),
                               ),
 
-                            if (item.bathrooms != null)
+                            if ((item.bathrooms ?? "").trim().isNotEmpty)
                               _spec(
                                 Icons.bathtub,
                                 "Bath",
                                 item.bathrooms.toString(),
                               ),
 
-                            if (item.kitchen != null &&
-                                item.kitchen.toString().isNotEmpty)
+                            if ((item.kitchen ?? "").trim().isNotEmpty)
                               _spec(
                                 Icons.kitchen,
                                 "Kitchen",
                                 item.kitchen.toString(),
                               ),
 
-                            if (item.area != null)
+                            if ((item.area ?? "").trim().isNotEmpty)
                               _spec(Icons.square_foot, "Area", "${item.area}"),
 
-                            if (item.furnishing != null)
+                            if ((item.furnishing ?? "").trim().isNotEmpty)
                               _spec(
                                 Icons.chair,
                                 "Furnish",
                                 item.furnishing.toString(),
                               ),
-                            if (item.parking != null)
+                            if ((item.parking ?? "").trim().isNotEmpty)
                               _spec(
                                 Icons.park_outlined,
                                 "Parking",
                                 item.parking.toString(),
                               ),
 
-                            if (item.balcony != null)
+                            if ((item.balcony ?? "").trim().isNotEmpty)
                               _spec(
                                 Icons.balcony,
                                 "Balcony",
@@ -369,7 +368,8 @@ class _MyPropertyDetalsPageState extends ConsumerState<MyPropertyDetalsPage> {
           return Center(child: Text("Something went wrong"));
         },
 
-        loading: () => Center(child: CircularProgressIndicator()),
+        loading: () =>
+            Center(child: CircularProgressIndicator(color: Color(0xFF24ADD7))),
       ),
     );
   }

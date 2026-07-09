@@ -14,6 +14,8 @@ import 'package:realstate/Model/cancelServiceBookingResModel.dart';
 import 'package:realstate/Model/checkSlotResModel.dart';
 import 'package:realstate/Model/contactUsBodyModel.dart';
 import 'package:realstate/Model/contactUsResModel.dart';
+import 'package:realstate/Model/createCityBodyModel.dart';
+import 'package:realstate/Model/createCityResModel.dart';
 import 'package:realstate/Model/editProfileBodyModel.dart';
 import 'package:realstate/Model/editProfileResModel.dart';
 import 'package:realstate/Model/forgotPassSentOtpResModel.dart';
@@ -229,4 +231,7 @@ abstract class APIStateNetwork {
   Future<MyListingProperyDeleteResModel> myListingPropertyDelete(
     @Body() MyListingProperyDeleteBodyModel,
   );
+
+  @POST("/user/createCity")
+  Future<CreateCityResponseModel> createCity(@Body() CreateCityBodyModel body);
 }

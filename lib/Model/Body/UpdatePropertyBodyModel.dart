@@ -23,6 +23,7 @@ class UpdatePropertyBodyModel {
   String? area;
   String? bedRoom;
   List<String>? amenities;
+  List<String>? furnishingItems;
   List<AroundProject>? aroundProject;
   String? permitNo;
   String? rera;
@@ -52,6 +53,7 @@ class UpdatePropertyBodyModel {
     this.area,
     this.bedRoom,
     this.amenities,
+    this.furnishingItems,
     this.aroundProject,
     this.permitNo,
     this.rera,
@@ -83,6 +85,9 @@ class UpdatePropertyBodyModel {
         amenities: json["amenities"] == null
             ? []
             : List<String>.from(json["amenities"]!.map((x) => x)),
+        furnishingItems: json["furnishingItems"] == null
+            ? []
+            : List<String>.from(json["furnishingItems"]!.map((x) => x)),
         aroundProject: json["aroundProject"] == null
             ? []
             : List<AroundProject>.from(
@@ -121,6 +126,9 @@ class UpdatePropertyBodyModel {
     "amenities": amenities == null
         ? []
         : List<dynamic>.from(amenities!.map((x) => x)),
+    "furnishingItems": furnishingItems == null
+        ? []
+        : List<dynamic>.from(furnishingItems!.map((x) => x)),
     "aroundProject": aroundProject == null
         ? []
         : List<dynamic>.from(aroundProject!.map((x) => x.toJson())),
