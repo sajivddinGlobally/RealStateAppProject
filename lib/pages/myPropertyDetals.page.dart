@@ -313,6 +313,26 @@ class _MyPropertyDetalsPageState extends ConsumerState<MyPropertyDetalsPage> {
                               .toList(),
                         ),
                       ],
+                      if (item.furnishingItems != null &&
+                          item.furnishingItems!.isNotEmpty) ...[
+                        SizedBox(height: 16.h),
+                        _title("Furnishing Items"),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: item.furnishingItems!
+                              .map(
+                                (e) => Chip(
+                                  label: Text(
+                                    e.toString(),
+                                    style: TextStyle(fontSize: 10.sp),
+                                  ),
+                                  backgroundColor: primary.withOpacity(.1),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      ],
 
                       /// DESCRIPTION
                       if (item.description != null &&

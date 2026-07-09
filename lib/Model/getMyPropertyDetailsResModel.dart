@@ -288,6 +288,7 @@ class Data {
     String? area;
     String? bedRoom;
     List<String>? amenities;
+    List<String>? furnishingItems;
     String? permitNo;
     String? rera;
     String? ded;
@@ -322,6 +323,7 @@ class Data {
         this.listingCategory,
         this.localityArea,
         this.balcony,
+        this.furnishingItems,
         this.parking,
         this.city,
         this.price,
@@ -369,6 +371,7 @@ class Data {
         kitchen: json["kitchen"],
         isBroker: json["isBroker"],
         amenities: json["amenities"] == null ? [] : List<String>.from(json["amenities"]!.map((x) => x)),
+        furnishingItems: json["furnishingItems"] == null ? [] : List<String>.from(json["furnishingItems"]!.map((x) => x)),
         permitNo: json["permitNo"],
         rera: json["rera"],
         ded: json["ded"],
@@ -408,6 +411,7 @@ class Data {
         "kitchen": kitchen,
         "isBroker": isBroker,
         "amenities": amenities == null ? [] : List<dynamic>.from(amenities!.map((x) => x)),
+        "furnishingItems": furnishingItems == null ? [] : List<dynamic>.from(amenities!.map((x) => x)),
         "permitNo": permitNo,
         "rera": rera,
         "ded": ded,
