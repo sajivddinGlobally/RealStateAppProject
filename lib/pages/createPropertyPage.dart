@@ -14,7 +14,6 @@ import 'package:realstate/Model/Body/UpdatePropertyBodyModel.dart';
 import 'package:realstate/Model/Body/saveAddCustomAreaBodyModel.dart';
 import 'package:realstate/Model/createCityBodyModel.dart';
 import 'package:realstate/Model/createCityResModel.dart';
-import '../CityProvider.dart';
 import '../Controller/getCityListController.dart';
 import '../Model/Body/CreatePropertyBodyModel.dart';
 import '../Model/CityResponseModel.dart';
@@ -371,8 +370,8 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
   String? _normalizeListingCategory(String? value) {
     if (value == null) return null;
     final lower = value.toLowerCase().trim();
-    if (lower.contains('rent')) return 'Rent'; // ✅ FIX
-    if (lower.contains('buy') || lower.contains('sell')) return 'Sell'; // ✅ FIX
+    if (lower.contains('rent')) return 'Rent'; 
+    if (lower.contains('buy') || lower.contains('sell')) return 'Sell'; 
     return value;
   }
 

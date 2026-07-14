@@ -466,7 +466,11 @@ class _SavedDetailsPageState extends State<SavedDetailsPage> {
                   SizedBox(height: 10.h),
                   Text(
                     // HTML tags remove karne ke liye regex use kar sakte hain
-                    data.description!.replaceAll(RegExp(r'<[^>]*>|&nbsp;'), ""),
+                    // data.description!.replaceAll(RegExp(r'<[^>]*>|&nbsp;'), ""),
+                    (data.description ?? "N/A")
+                        .replaceAll(RegExp(r'<[^>]*>'), '')
+                        .replaceAll('&nbsp;', ' ')
+                        .trim(),
                     style: TextStyle(
                       fontSize: 15.sp,
                       color: Colors.grey[700],
