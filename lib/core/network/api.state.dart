@@ -22,7 +22,6 @@ import 'package:realstate/Model/forgotPassSentOtpResModel.dart';
 import 'package:realstate/Model/getLikeProperyResModel.dart';
 import 'package:realstate/Model/getMyPropertyBodyModel.dart';
 import 'package:realstate/Model/getMyPropertyDetailsResModel.dart';
-import 'package:realstate/Model/getMyPropertyResModel.dart';
 import 'package:realstate/Model/getNotificationModel.dart';
 import 'package:realstate/Model/homeBookingServiceBodyModel.dart';
 import 'package:realstate/Model/homeBookingServiceResModel.dart';

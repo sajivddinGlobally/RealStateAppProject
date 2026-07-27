@@ -370,8 +370,8 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
   String? _normalizeListingCategory(String? value) {
     if (value == null) return null;
     final lower = value.toLowerCase().trim();
-    if (lower.contains('rent')) return 'Rent'; 
-    if (lower.contains('buy') || lower.contains('sell')) return 'Sell'; 
+    if (lower.contains('rent')) return 'Rent';
+    if (lower.contains('buy') || lower.contains('sell')) return 'Sell';
     return value;
   }
 
@@ -874,8 +874,6 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                     ),
 
                   if (_currentStep > 0) SizedBox(width: 12.w),
-
-                  // SAVE & CONTINUE / SUBMIT Button
                   Expanded(
                     flex: _currentStep > 0 ? 2 : 1,
                     child: SizedBox(
@@ -918,7 +916,6 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 30),
             ],
           ),

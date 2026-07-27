@@ -1,5 +1,4 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -12,7 +11,7 @@ import 'package:realstate/core/utils/preety.dio.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class SavedDetailsPage extends StatefulWidget {
-  final Datum savedData; // Saved API ka pura object pass karein
+  final Datum savedData;
   const SavedDetailsPage({super.key, required this.savedData});
 
   @override

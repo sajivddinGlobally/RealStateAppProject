@@ -541,387 +541,6 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
   // ==================== HOME SCREEN ====================
   Widget HomeScreen(String? city) {
     final cityListState = ref.watch(getCityController);
-    // return SafeArea(
-    //   top: false,
-    //   child: Builder(
-    //     builder: (BuildContext context) {
-    //       return SingleChildScrollView(
-    //         child: Column(
-    //           children: [
-    //             Container(
-    //               padding: EdgeInsets.only(
-    //                 left: 16.w,
-    //                 right: 16.w,
-    //                 top: 8.h,
-    //                 bottom: 8.h,
-    //               ),
-    //               color: const Color(0xFF24ADD7),
-    //               child: SafeArea(
-    //                 bottom: false,
-    //                 child: Row(
-    //                   children: [
-    //                     InkWell(
-    //                       onTap: () {
-    //                         Scaffold.of(context).openDrawer();
-    //                       },
-    //                       child: Icon(
-    //                         Icons.menu,
-    //                         color: Colors.white,
-    //                         size: 22.sp,
-    //                       ),
-    //                     ),
-    //                     SizedBox(width: 10.w),
-    //                     /// Search Box
-    //                     Expanded(
-    //                       child: TextField(
-    //                         onTap: () {
-    //                           Navigator.push(
-    //                             context,
-    //                             MaterialPageRoute(
-    //                               builder: (context) => SearchPropertyPage(),
-    //                             ),
-    //                           );
-    //                         },
-    //                         style: GoogleFonts.inter(color: Colors.white),
-    //                         cursorColor: Colors.white,
-    //                         readOnly: true,
-    //                         decoration: InputDecoration(
-    //                           filled: true,
-    //                           fillColor: Colors.white.withOpacity(0.25),
-    //                           enabledBorder: OutlineInputBorder(
-    //                             borderRadius: BorderRadius.circular(30.r),
-    //                             borderSide: BorderSide.none,
-    //                           ),
-    //                           focusedBorder: OutlineInputBorder(
-    //                             borderRadius: BorderRadius.circular(30.r),
-    //                             borderSide: BorderSide.none,
-    //                           ),
-    //                           isDense: true,
-    //                           contentPadding: EdgeInsets.symmetric(
-    //                             vertical: 8.h,
-    //                             horizontal: 10.w,
-    //                           ),
-    //                           prefixIcon: Icon(
-    //                             Icons.search,
-    //                             color: Colors.white,
-    //                             size: 18.sp,
-    //                           ),
-    //                           prefixIconConstraints: BoxConstraints(
-    //                             minHeight: 30.h,
-    //                             minWidth: 40.w,
-    //                           ),
-    //                           hintText: "Search",
-    //                           hintStyle: GoogleFonts.inter(
-    //                             color: Colors.white.withOpacity(0.85),
-    //                             fontSize: 13.sp,
-    //                           ),
-    //                         ),
-    //                       ),
-    //                     ),
-    //                     SizedBox(width: 10.w),
-    //                     const Icon(
-    //                       Icons.notifications_none,
-    //                       color: Colors.white,
-    //                     ),
-    //                     /// City Location
-    //                     SizedBox(width: 8.w),
-    //                     cityListState.when(
-    //                       data: (cityList) {
-    //                         // if (selectedCity == null &&
-    //                         //     cityList.data!.isNotEmpty) {
-    //                         //   selectedCity =
-    //                         //       city ?? cityList.data!.first.cityName;
-    //                         // }
-    //                         final cityNames = cityList.data!
-    //                             .map((e) => e.cityName.toString())
-    //                             .toSet()
-    //                             .toList();
-    //                         // First time initialize
-    //                         if (selectedCity == null) {
-    //                           if (_currentCity != null &&
-    //                               _currentCity!.isNotEmpty) {
-    //                             selectedCity = _currentCity;
-    //                           } else if (cityNames.isNotEmpty) {
-    //                             selectedCity = cityNames.first;
-    //                           }
-    //                         }
-    //                        return Container(
-    //                           padding: EdgeInsets.symmetric(
-    //                             horizontal: 8.w,
-    //                             vertical: 2.h,
-    //                           ),
-    //                           decoration: BoxDecoration(
-    //                             color: Colors.white,
-    //                             borderRadius: BorderRadius.circular(20.r),
-    //                           ),
-    //                           child: DropdownButtonHideUnderline(
-    //                             child: DropdownButton<String>(
-    //                               isDense: true,
-    //                               value: cityNames.contains(selectedCity)
-    //                                   ? selectedCity
-    //                                   : null,
-    //                               hint: Row(
-    //                                 mainAxisSize: MainAxisSize.min,
-    //                                 children: [
-    //                                   Icon(
-    //                                     Icons.location_on,
-    //                                     size: 14.sp,
-    //                                     color: const Color(0xFF24ADD7),
-    //                                   ),
-    //                                   SizedBox(width: 4.w),
-    //                                   Text(
-    //                                     _currentCity ?? "Select City",
-    //                                     style: TextStyle(
-    //                                       color: const Color(0xFF24ADD7),
-    //                                       fontSize: 13.sp,
-    //                                       fontWeight: FontWeight.w600,
-    //                                     ),
-    //                                   ),
-    //                                 ],
-    //                               ),
-    //                               icon: Icon(
-    //                                 Icons.keyboard_arrow_down,
-    //                                 color: const Color(0xFF24ADD7),
-    //                                 size: 18.sp,
-    //                               ),
-    //                               items: cityNames.map((cityName) {
-    //                                 return DropdownMenuItem<String>(
-    //                                   value: cityName,
-    //                                   child: Row(
-    //                                     children: [
-    //                                       Icon(
-    //                                         Icons.location_on,
-    //                                         size: 14.sp,
-    //                                         color: const Color(0xFF24ADD7),
-    //                                       ),
-    //                                       SizedBox(width: 4.w),
-    //                                       Text(cityName),
-    //                                     ],
-    //                                   ),
-    //                                 );
-    //                               }).toList(),
-    //                               onChanged: (String? newValue) async {
-    //                                 if (newValue == null) return;
-    //                                 setState(() {
-    //                                   selectedCity = newValue;
-    //                                   _currentCity = newValue;
-    //                                 });
-    //                                 ref
-    //                                         .read(currentCityProvider.notifier)
-    //                                         .state =
-    //                                     newValue;
-    //                                 await saveCity(newValue);
-    //                               },
-    //                             ),
-    //                           ),
-    //                         );
-    //                       },
-    //                       error: (error, stackTrace) {
-    //                         return Center(child: Text(error.toString()));
-    //                       },
-    //                       loading: () => Center(
-    //                         child: SizedBox(
-    //                           height: 20,
-    //                           width: 20,
-    //                           child: CircularProgressIndicator(
-    //                             color: Colors.white,
-    //                             strokeWidth: 1.5,
-    //                           ),
-    //                         ),
-    //                       ),
-    //                     ),
-    //                   ],
-    //                 ),
-    //               ),
-    //             ),
-    //             Stack(
-    //               children: [
-    //                 /// 🔥 IMAGE SLIDER
-    //                 CarouselSlider(
-    //                   options: CarouselOptions(
-    //                     height: 260.h,
-    //                     viewportFraction: 1,
-    //                     autoPlay: true,
-    //                     autoPlayInterval: const Duration(seconds: 3),
-    //                     autoPlayAnimationDuration: const Duration(
-    //                       milliseconds: 800,
-    //                     ),
-    //                     onPageChanged: (index, reason) {
-    //                       setState(() {
-    //                         currentBannerIndex = index;
-    //                       });
-    //                     },
-    //                   ),
-    //                   items: currentImages.map((image) {
-    //                     return Stack(
-    //                       children: [
-    //                         Image.asset(
-    //                           image,
-    //                           height: 260.h,
-    //                           width: double.infinity,
-    //                           fit: BoxFit.cover,
-    //                         ),
-    //                         /// Gradient
-    //                         Container(
-    //                           height: 260.h,
-    //                           decoration: BoxDecoration(
-    //                             gradient: LinearGradient(
-    //                               colors: [
-    //                                 Colors.black.withOpacity(0.6),
-    //                                 Colors.transparent,
-    //                               ],
-    //                               begin: Alignment.bottomCenter,
-    //                               end: Alignment.topCenter,
-    //                             ),
-    //                           ),
-    //                         ),
-    //                         /// TEXT CONTENT
-    //                         Positioned(
-    //                           left: 16.w,
-    //                           bottom: 30.h,
-    //                           right: 16.w,
-    //                           child: Column(
-    //                             crossAxisAlignment: CrossAxisAlignment.start,
-    //                             children: [
-    //                               Chip(
-    //                                 labelPadding: EdgeInsets.zero,
-    //                                 label: Text(
-    //                                   selectIndex == 0
-    //                                       ? "Top Property"
-    //                                       : selectIndex == 1
-    //                                       ? "Best Service"
-    //                                       : "Easy Loan",
-    //                                 ),
-    //                                 backgroundColor: Colors.white.withOpacity(
-    //                                   0.8,
-    //                                 ),
-    //                               ),
-    //                               SizedBox(height: 6.h),
-    //                               Text(
-    //                                 selectIndex == 0
-    //                                     ? "Find Your Dream Property"
-    //                                     : selectIndex == 1
-    //                                     ? "Best Home Services"
-    //                                     : "Get Instant Loan",
-    //                                 style: TextStyle(
-    //                                   color: Colors.white,
-    //                                   fontSize: 18.sp,
-    //                                   fontWeight: FontWeight.bold,
-    //                                 ),
-    //                               ),
-    //                               SizedBox(height: 4.h),
-    //                               Text(
-    //                                 selectIndex == 0
-    //                                     ? "Buy, Rent & Sell properties"
-    //                                     : selectIndex == 1
-    //                                     ? "Cleaning, Plumbing, Electrician & more"
-    //                                     : "Home, Personal & Business Loan Available",
-    //                                 style: TextStyle(
-    //                                   color: Colors.white70,
-    //                                   fontSize: 13.sp,
-    //                                 ),
-    //                               ),
-    //                             ],
-    //                           ),
-    //                         ),
-    //                       ],
-    //                     );
-    //                   }).toList(),
-    //                 ),
-    //                 /// 🔥 FIXED DOT INDICATOR (ALWAYS SAME POSITION)
-    //                 Positioned(
-    //                   bottom: 10.h,
-    //                   left: 0,
-    //                   right: 0,
-    //                   child: Row(
-    //                     mainAxisAlignment: MainAxisAlignment.center,
-    //                     children: List.generate(
-    //                       currentImages.length,
-    //                       (index) => AnimatedContainer(
-    //                         duration: const Duration(milliseconds: 300),
-    //                         margin: EdgeInsets.symmetric(horizontal: 4.w),
-    //                         width: currentBannerIndex == index ? 12.w : 8.w,
-    //                         height: currentBannerIndex == index ? 12.h : 8.h,
-    //                         decoration: BoxDecoration(
-    //                           color: currentBannerIndex == index
-    //                               ? const Color(0xFF24ADD7)
-    //                               : Colors.white,
-    //                           shape: BoxShape.circle,
-    //                         ),
-    //                       ),
-    //                     ),
-    //                   ),
-    //                 ),
-    //               ],
-    //             ),
-    //             // MARQUEE
-    //             Container(
-    //               width: double.infinity,
-    //               height: 40.h,
-    //               color: const Color(0xFF24ADD7),
-    //               child: Marquee(
-    //                 text:
-    //                     "CALL US TODAY AT +91-9171719060 FOR PROPERTY INQUERY",
-    //                 style: GoogleFonts.inter(
-    //                   fontSize: 12.sp,
-    //                   fontWeight: FontWeight.w400,
-    //                   color: Colors.white,
-    //                 ),
-    //                 scrollAxis: Axis.horizontal,
-    //                 velocity: 40,
-    //                 blankSpace: 50,
-    //                 startPadding: 10,
-    //               ),
-    //             ),
-    //             SizedBox(height: 15.h),
-    //             // TABS
-    //             SingleChildScrollView(
-    //               scrollDirection: Axis.horizontal,
-    //               padding: EdgeInsets.symmetric(horizontal: 16.w),
-    //               child: Row(
-    //                 children: [
-    //                   _tab("Buy & Rent Property", 0),
-    //                   _tab("Home Services", 1),
-    //                   _tab("Loan Service", 2),
-    //                 ],
-    //               ),
-    //             ),
-    //             SizedBox(height: 16.h),
-    //             // TAB CONTENT
-    //             if (selectIndex == 0)
-    //               Padding(
-    //                 padding: EdgeInsets.all(16.w),
-    //                 child: GridView.count(
-    //                   padding: EdgeInsets.zero,
-    //                   shrinkWrap: true,
-    //                   physics: const NeverScrollableScrollPhysics(),
-    //                   crossAxisCount: 3,
-    //                   crossAxisSpacing: 12,
-    //                   mainAxisSpacing: 12,
-    //                   children: [
-    //                     _gridItem("assets/png/home.png", "Buy House"),
-    //                     _gridItem("assets/png/apartment.png", "Rent Studio"),
-    //                     _gridItem("assets/png/buyFlat.png", "Buy Flats"),
-    //                     _gridItem("assets/png/buyPlot.png", "Buy Plots"),
-    //                     _gridItem("assets/png/commercial.png", "Commercial"),
-    //                     _gridItem("assets/png/buyHotel.png", "residential"),
-    //                     _gridItem("assets/png/rentCondos.png", "Rent Condos"),
-    //                     _gridItem("assets/png/buyDuplex.png", "Buy Duplex"),
-    //                     _gridItem("assets/png/rentHouse.png", "Rent House"),
-    //                   ],
-    //                 ),
-    //               )
-    //             else if (selectIndex == 1)
-    //               const HomeService()
-    //             else if (selectIndex == 2)
-    //               const LoanService(),
-    //             SizedBox(height: 80.h),
-    //           ],
-    //         ),
-    //       );
-    //     },
-    //   ),
-    // );
 
     final notificationState = ref.watch(notificationController);
     final unreadCount = notificationState.maybeWhen(
@@ -1421,97 +1040,53 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
               ],
             ),
           ),
+
           Expanded(
-            child: Container(
-              color: Colors.white,
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  Padding(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                SingleChildScrollView(
+                  child: Padding(
                     padding: EdgeInsets.all(16.w),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          // SizedBox(
-                          //   width: double.infinity,
-                          //   height: 45.h,
-                          //   child: ElevatedButton.icon(
-                          //     onPressed: () {
-                          //       Navigator.push(
-                          //         context,
-                          //         CupertinoPageRoute(
-                          //           builder: (context) =>
-                          //               const MyListedPropertiesScreen(),
-                          //         ),
-                          //       );
-                          //     },
-                          //     icon: Icon(
-                          //       Icons.home_work_outlined,
-                          //       size: 18.sp,
-                          //       color: Colors.white,
-                          //     ),
-                          //     label: Text(
-                          //       "My Property Requests",
-                          //       style: TextStyle(
-                          //         fontSize: 13.sp,
-                          //         fontWeight: FontWeight.w600,
-                          //         color: Colors.white,
-                          //       ),
-                          //     ),
-                          //     style: ElevatedButton.styleFrom(
-                          //       backgroundColor: const Color(0xFF24ADD7),
-                          //       shape: RoundedRectangleBorder(
-                          //         borderRadius: BorderRadius.circular(10.r),
-                          //       ),
-                          //     ),
-                          //   ),
-                          // ),
-                          SizedBox(height: 10.h),
-                          GridView.count(
-                            padding: EdgeInsets.zero,
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            crossAxisCount: 3,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            children: [
-                              _gridItem("assets/png/home.png", "Buy House"),
-                              _gridItem(
-                                "assets/png/apartment.png",
-                                "Rent Studio",
-                              ),
-                              _gridItem("assets/png/buyFlat.png", "Buy Flats"),
-                              _gridItem("assets/png/buyPlot.png", "Buy Plots"),
-                              _gridItem(
-                                "assets/png/commercial.png",
-                                "Commercial",
-                              ),
-                              _gridItem(
-                                "assets/png/buyHotel.png",
-                                "residential",
-                              ),
-                              _gridItem(
-                                "assets/png/rentCondos.png",
-                                "Rent Condos",
-                              ),
-                              _gridItem(
-                                "assets/png/buyDuplex.png",
-                                "Buy Duplex",
-                              ),
-                              _gridItem(
-                                "assets/png/rentHouse.png",
-                                "Rent House",
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                    child: Column(
+                      children: [
+                        // SizedBox(height: 10.h),
+                        GridView.count(
+                          padding: EdgeInsets.zero,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          children: [
+                            _gridItem("assets/png/home.png", "Buy House"),
+                            _gridItem(
+                              "assets/png/apartment.png",
+                              "Rent Studio",
+                            ),
+                            _gridItem("assets/png/buyFlat.png", "Buy Flats"),
+                            _gridItem("assets/png/buyPlot.png", "Buy Plots"),
+                            _gridItem(
+                              "assets/png/commercial.png",
+                              "Commercial",
+                            ),
+                            _gridItem("assets/png/buyHotel.png", "residential"),
+                            _gridItem(
+                              "assets/png/rentCondos.png",
+                              "Rent Condos",
+                            ),
+                            _gridItem("assets/png/buyDuplex.png", "Buy Duplex"),
+                            _gridItem("assets/png/rentHouse.png", "Rent House"),
+                          ],
+                        ),
+                        SizedBox(height: 10.h),
+                      ],
                     ),
                   ),
-                  HomeService(),
-                  LoanService(),
-                ],
-              ),
+                ),
+                HomeService(),
+                LoanService(),
+              ],
             ),
           ),
         ],
@@ -2442,157 +2017,6 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
               ),
             ),
           ),
-          // Column(
-          //   mainAxisAlignment: MainAxisAlignment.center,
-          //   children: [
-          //     /// Icon
-          //     Container(
-          //       width: 110.w,
-          //       height: 110.w,
-          //       decoration: BoxDecoration(
-          //         shape: BoxShape.circle,
-          //         color: Colors.orange.withOpacity(0.1),
-          //       ),
-          //       child: Icon(
-          //         Icons.support_agent,
-          //         color: const Color(0xFF24ADD7),
-          //         size: 55.sp,
-          //       ),
-          //     ),
-          //     SizedBox(height: 25.h),
-          //     /// Title
-          //     Text(
-          //       "Need Help?",
-          //       style: GoogleFonts.inter(
-          //         fontSize: 22.sp,
-          //         fontWeight: FontWeight.bold,
-          //       ),
-          //     ),
-          //     SizedBox(height: 8.h),
-          //     /// Subtitle
-          //     Text(
-          //       "Our support team is here to help you.\nContact us via Call or WhatsApp.",
-          //       textAlign: TextAlign.center,
-          //       style: GoogleFonts.inter(
-          //         fontSize: 14.sp,
-          //         color: Colors.grey.shade600,
-          //       ),
-          //     ),
-          //     SizedBox(height: 35.h),
-          //     /// Buttons Row
-          //     Padding(
-          //       padding: EdgeInsets.only(left: 20.w, right: 20.w),
-          //       child: Row(
-          //         children: [
-          //           /// Call Button
-          //           Expanded(
-          //             child: SizedBox(
-          //               height: 50.h,
-          //               child: ElevatedButton.icon(
-          //                 style: ElevatedButton.styleFrom(
-          //                   backgroundColor: const Color(
-          //                     0xFF24ADD7,
-          //                   ),
-          //                   shape: RoundedRectangleBorder(
-          //                     borderRadius: BorderRadius.circular(
-          //                       30.r,
-          //                     ),
-          //                   ),
-          //                 ),
-          //                 // onPressed: () async {
-          //                 //   String phone = "9171719060";
-          //                 //   final Uri url = Uri.parse("tel:$phone");
-          //                 //   if (await canLaunchUrl(url)) {
-          //                 //     await launchUrl(url);
-          //                 //   }
-          //                 // },
-          //                 onPressed: () async {
-          //                   final Uri url = Uri(
-          //                     scheme: 'tel',
-          //                     path: '9171719060',
-          //                   );
-          //                   await launchUrl(url);
-          //                 },
-          //                 icon: Icon(
-          //                   Icons.call,
-          //                   size: 20.sp,
-          //                   color: Colors.white,
-          //                 ),
-          //                 label: Text(
-          //                   "Call",
-          //                   style: GoogleFonts.inter(
-          //                     fontSize: 15.sp,
-          //                     fontWeight: FontWeight.w600,
-          //                     color: Colors.white,
-          //                   ),
-          //                 ),
-          //               ),
-          //             ),
-          //           ),
-          //           SizedBox(width: 12.w),
-          //           /// WhatsApp Button
-          //           Expanded(
-          //             child: SizedBox(
-          //               height: 50.h,
-          //               child: ElevatedButton.icon(
-          //                 style: ElevatedButton.styleFrom(
-          //                   backgroundColor: const Color(
-          //                     0xff25D366,
-          //                   ),
-          //                   shape: RoundedRectangleBorder(
-          //                     borderRadius: BorderRadius.circular(
-          //                       30.r,
-          //                     ),
-          //                   ),
-          //                 ),
-          //                 // onPressed: () async {
-          //                 //   String phone = "9171719060";
-          //                 //   final Uri url = Uri.parse("https://wa.me/$phone");
-          //                 //   if (await canLaunchUrl(url)) {
-          //                 //     await launchUrl(url);
-          //                 //   }
-          //                 // },
-          //                 onPressed: () async {
-          //                   final Uri url = Uri.parse(
-          //                     "https://wa.me/9171719060",
-          //                   );
-          //                   await launchUrl(
-          //                     url,
-          //                     mode:
-          //                         LaunchMode.externalApplication,
-          //                   );
-          //                 },
-          //                 icon: Icon(
-          //                   Icons.chat,
-          //                   size: 20.sp,
-          //                   color: Colors.white,
-          //                 ),
-          //                 label: Text(
-          //                   "WhatsApp",
-          //                   style: GoogleFonts.inter(
-          //                     fontSize: 15.sp,
-          //                     fontWeight: FontWeight.w600,
-          //                     color: Colors.white,
-          //                   ),
-          //                 ),
-          //               ),
-          //             ),
-          //           ),
-          //         ],
-          //       ),
-          //     ),
-          //     SizedBox(height: 25.h),
-          //     /// Phone Text
-          //     Text(
-          //       "Support: +91 9171719060",
-          //       style: GoogleFonts.inter(
-          //         fontSize: 14.sp,
-          //         fontWeight: FontWeight.w500,
-          //         color: Colors.grey.shade700,
-          //       ),
-          //     ),
-          //   ],
-          // ),
         ],
       ),
     );
@@ -4343,9 +3767,14 @@ class _LoanServiceState extends ConsumerState<LoanService> {
   @override
   Widget build(BuildContext context) {
     final loanServiceProvider = ref.watch(loanServiceController);
-    return Padding(
-      padding: EdgeInsets.only(left: 20.w, right: 20.w, top: 20.h),
-      child: SingleChildScrollView(
+    return SingleChildScrollView(
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 20.w,
+          right: 20.w,
+          top: 20.h,
+          bottom: 80.h,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -4380,39 +3809,6 @@ class _LoanServiceState extends ConsumerState<LoanService> {
             ),
             SizedBox(height: 16.h),
 
-            // SizedBox(
-            //   width: double.infinity,
-            //   height: 45.h,
-            //   child: ElevatedButton.icon(
-            //     onPressed: () {
-            //       Navigator.push(
-            //         context,
-            //         CupertinoPageRoute(
-            //           builder: (context) => const MyLoanRequestsPage(),
-            //         ),
-            //       );
-            //     },
-            //     icon: Icon(
-            //       Icons.receipt_long,
-            //       size: 18.sp,
-            //       color: Colors.white,
-            //     ),
-            //     label: Text(
-            //       "MY Loan Requests",
-            //       style: TextStyle(
-            //         fontSize: 13.sp,
-            //         fontWeight: FontWeight.w600,
-            //         color: Colors.white,
-            //       ),
-            //     ),
-            //     style: ElevatedButton.styleFrom(
-            //       backgroundColor: const Color(0xFF24ADD7),
-            //       shape: RoundedRectangleBorder(
-            //         borderRadius: BorderRadius.circular(10.r),
-            //       ),
-            //     ),
-            //   ),
-            // ),
             SizedBox(height: 16.h),
             loanServiceProvider.when(
               data: (loan) {
@@ -4829,112 +4225,7 @@ class _VendorRegistrationBottomSheetState
 
                 /// DROPDOWN
                 fieldTitle("YOUR EXPERTISE"),
-                // FormField(
-                //   validator: (value) {
-                //     if (selectedExpertise == null ||
-                //         selectedExpertise == "Select Your Expertise") {
-                //       return "Expertise is required";
-                //     }
-                //     return null;
-                //   },
-                //   builder: (FormFieldState<String> state) {
-                //     return Column(
-                //       crossAxisAlignment: CrossAxisAlignment.start,
-                //       children: [
-                //         GestureDetector(
-                //           onTap: () async {
-                //             showModalBottomSheet(
-                //               context: context,
-                //               builder: (context) {
-                //                 return homeServiceProvider.when(
-                //                   data: (data) {
-                //                     return ListView.builder(
-                //                       itemCount: data.data!.list!.length,
-                //                       itemBuilder: (context, index) {
-                //                         return ListTile(
-                //                           title: Text(
-                //                             data.data!.list![index].name ??
-                //                                 "N/A",
-                //                           ),
-                //                           onTap: () {
-                //                             setState(() {
-                //                               selectedExpertise =
-                //                                   data
-                //                                       .data!
-                //                                       .list![index]
-                //                                       .name ??
-                //                                   "N/A";
-                //                               selectedExpertiseId = data
-                //                                   .data!
-                //                                   .list![index]
-                //                                   .id
-                //                                   .toString();
-                //                             });
-                //                             Navigator.pop(context);
-                //                           },
-                //                         );
-                //                       },
-                //                     );
-                //                   },
-                //                   error: (error, stackTrace) {
-                //                     return Center(
-                //                       child: Text(error.toString()),
-                //                     );
-                //                   },
-                //                   loading: () => Center(
-                //                     child: CircularProgressIndicator(),
-                //                   ),
-                //                 );
-                //               },
-                //             );
-                //           },
-                //           child: Container(
-                //             padding: EdgeInsets.symmetric(
-                //               horizontal: 15,
-                //               vertical: 16,
-                //             ),
-                //             decoration: BoxDecoration(
-                //               color: Colors.white,
-                //               borderRadius: BorderRadius.circular(12),
-                //               border: Border.all(
-                //                 color: state.hasError
-                //                     ? Colors.red
-                //                     : Colors.transparent,
-                //               ),
-                //             ),
-                //             child: Row(
-                //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                //               children: [
-                //                 Text(
-                //                   selectedExpertise ?? "Select Your Expertise",
-                //                   style: TextStyle(
-                //                     color: selectedExpertise == null
-                //                         ? Colors.grey
-                //                         : Colors.black,
-                //                     fontSize: selectedExpertise == null
-                //                         ? 12.sp
-                //                         : 15.sp,
-                //                   ),
-                //                 ),
-                //                 Icon(Icons.keyboard_arrow_down),
-                //               ],
-                //             ),
-                //           ),
-                //         ),
 
-                //         /// ERROR TEXT
-                //         if (state.hasError)
-                //           Padding(
-                //             padding: const EdgeInsets.only(top: 5, left: 5),
-                //             child: Text(
-                //               state.errorText!,
-                //               style: TextStyle(color: Colors.red, fontSize: 12),
-                //             ),
-                //           ),
-                //       ],
-                //     );
-                //   },
-                // ),
                 FormField(
                   validator: (value) {
                     if (selectedExpertise == null ||
@@ -5038,9 +4329,29 @@ class _VendorRegistrationBottomSheetState
                                           Icons.keyboard_arrow_down,
                                         ),
                                       ),
+
                                       // onChanged: (value) {
                                       //   setState(() {
                                       //     selectedExpertise = value;
+
+                                      //     final matchedItems = data.data?.list
+                                      //         ?.where(
+                                      //           (item) =>
+                                      //               (item.name ?? "")
+                                      //                   .toLowerCase() ==
+                                      //               value.toLowerCase(),
+                                      //         )
+                                      //         .toList();
+
+                                      //     if (matchedItems != null &&
+                                      //         matchedItems.isNotEmpty) {
+                                      //       selectedExpertiseId = matchedItems
+                                      //           .first
+                                      //           .id
+                                      //           ?.toString();
+                                      //     } else {
+                                      //       selectedExpertiseId = null;
+                                      //     }
                                       //   });
                                       //   state.didChange(value);
                                       // },
@@ -5048,17 +4359,20 @@ class _VendorRegistrationBottomSheetState
                                         setState(() {
                                           selectedExpertise = value;
 
-                                          final matchedItems = data.data?.list
-                                              ?.where(
-                                                (item) =>
-                                                    (item.name ?? "")
-                                                        .toLowerCase() ==
-                                                    value.toLowerCase(),
-                                              )
-                                              .toList();
+                                          final matchedItems =
+                                              data.data?.list
+                                                  ?.where(
+                                                    (item) =>
+                                                        (item.name ?? "")
+                                                            .toLowerCase() ==
+                                                        value
+                                                            .trim()
+                                                            .toLowerCase(),
+                                                  )
+                                                  .toList() ??
+                                              [];
 
-                                          if (matchedItems != null &&
-                                              matchedItems.isNotEmpty) {
+                                          if (matchedItems.isNotEmpty) {
                                             selectedExpertiseId = matchedItems
                                                 .first
                                                 .id
@@ -5157,18 +4471,31 @@ class _VendorRegistrationBottomSheetState
                             setState(() {
                               isLoading = true;
                             });
-                            final serviceTypeValue =
-                                (selectedExpertiseId != null &&
-                                    selectedExpertiseId!.isNotEmpty)
-                                ? selectedExpertiseId
-                                : selectedExpertise;
+                            // final serviceTypeValue =
+                            //     (selectedExpertiseId != null &&
+                            //         selectedExpertiseId!.isNotEmpty)
+                            //     ? selectedExpertiseId
+                            //     : selectedExpertise;
+
+                            final bool isCustomService =
+                                selectedExpertiseId == null ||
+                                selectedExpertiseId!.isEmpty;
 
                             final body = SaveServiceBodyModel(
                               email: emailController.text.trim(),
                               phone: phoneController.text.trim(),
                               name: nameController.text.trim(),
-                              // serviceType: selectedExpertiseId,
-                              serviceType: serviceTypeValue,
+                              // serviceType: serviceTypeValue,
+                              // customServiceType:
+                              // List se select hua hai to ID bhejo
+                              serviceType: isCustomService
+                                  ? "other"
+                                  : selectedExpertiseId!,
+
+                              // Manual type hua hai to yahan bhejo
+                              customServiceType: isCustomService
+                                  ? selectedExpertise?.trim()
+                                  : null,
                             );
                             try {
                               final service = APIStateNetwork(createDio());

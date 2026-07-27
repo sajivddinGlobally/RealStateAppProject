@@ -14,11 +14,8 @@ final getMyPropertyController =
       return await service.getMyProperty();
     });
 
-final getMyPropertyDetailsController =
-    FutureProvider.family.autoDispose<GetMyPropertyDetailsResModel, String>((
-      ref,
-      body,
-    ) async {
+final getMyPropertyDetailsController = FutureProvider.family
+    .autoDispose<GetMyPropertyDetailsResModel, String>((ref, body) async {
       final service = APIStateNetwork(createDio());
       return await service.getMyPropertyDetails(
         GetMyPropertyDetailsBodyModel(id: body),

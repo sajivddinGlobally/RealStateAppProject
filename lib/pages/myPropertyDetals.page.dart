@@ -212,8 +212,7 @@ class _MyPropertyDetalsPageState extends ConsumerState<MyPropertyDetalsPage> {
                         ),
 
                       SizedBox(height: 14.h),
-
-                      /// 🔥 DETAILS GRID
+                      
                       Container(
                         padding: EdgeInsets.only(
                           left: 12.w,
@@ -245,24 +244,20 @@ class _MyPropertyDetalsPageState extends ConsumerState<MyPropertyDetalsPage> {
                                 "Beds",
                                 item.bedRoom.toString(),
                               ),
-
                             if ((item.bathrooms ?? "").trim().isNotEmpty)
                               _spec(
                                 Icons.bathtub,
                                 "Bath",
                                 item.bathrooms.toString(),
                               ),
-
                             if ((item.kitchen ?? "").trim().isNotEmpty)
                               _spec(
                                 Icons.kitchen,
                                 "Kitchen",
                                 item.kitchen.toString(),
                               ),
-
                             if ((item.area ?? "").trim().isNotEmpty)
                               _spec(Icons.square_foot, "Area", "${item.area}"),
-
                             if ((item.furnishing ?? "").trim().isNotEmpty)
                               _spec(
                                 Icons.chair,
@@ -285,9 +280,7 @@ class _MyPropertyDetalsPageState extends ConsumerState<MyPropertyDetalsPage> {
                           ],
                         ),
                       ),
-
                       SizedBox(height: 16.h),
-
                       /// BROKER
                       if (item.isBroker != null)
                         _tag("Broker: ${item.isBroker}", primary),
@@ -333,7 +326,6 @@ class _MyPropertyDetalsPageState extends ConsumerState<MyPropertyDetalsPage> {
                               .toList(),
                         ),
                       ],
-
                       /// DESCRIPTION
                       if (item.description != null &&
                           item.description!.isNotEmpty) ...[

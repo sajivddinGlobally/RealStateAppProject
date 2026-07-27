@@ -435,36 +435,29 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(18.r),
                       gradient: LinearGradient(
-                        colors: isLoading
-                            ? [Colors.grey, Colors.grey]
-                            : [
-                                const Color(0xFF24ADD7),
-                                const Color(0xFF24ADD7),
-                              ],
+                        colors: [
+                          const Color(0xFF24ADD7),
+                          const Color(0xFF24ADD7),
+                        ],
                       ),
                       boxShadow: [
-                        if (!isLoading)
-                          BoxShadow(
-                            color: const Color(0xFF24ADD7).withOpacity(0.3),
-                            blurRadius: 15,
-                            offset: const Offset(0, 8),
-                          ),
+                        BoxShadow(
+                          color: const Color(0xFF24ADD7).withOpacity(0.3),
+                          blurRadius: 15,
+                          offset: const Offset(0, 8),
+                        ),
                       ],
                     ),
                     child: Center(
-                      child: isLoading
-                          ? const CupertinoActivityIndicator(
-                              color: Colors.white,
-                            )
-                          : Text(
-                              "Forgot Password",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
+                      child: Text(
+                        "Forgot Password",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
                     ),
                   ),
                 ),
