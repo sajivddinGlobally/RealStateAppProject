@@ -548,478 +548,455 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
           data.data?.where((item) => item.isRead == false).length ?? 0,
       orElse: () => 0,
     );
-    return NestedScrollView(
-      headerSliverBuilder: (context, _) => [
-        SliverToBoxAdapter(
-          child: Column(
-            children: [
-              Container(
-                padding: EdgeInsets.only(
-                  left: 16.w,
-                  right: 16.w,
-                  top: 8.h,
-                  bottom: 8.h,
-                ),
-                color: const Color(0xFF24ADD7),
-                child: SafeArea(
-                  bottom: false,
-                  child: Row(
-                    children: [
-                      InkWell(
-                        onTap: () {
-                          Scaffold.of(context).openDrawer();
-                        },
-                        child: Icon(
-                          Icons.menu,
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          Container(
+            padding: EdgeInsets.only(
+              left: 16.w,
+              right: 16.w,
+              top: 8.h,
+              bottom: 8.h,
+            ),
+            color: const Color(0xFF24ADD7),
+            child: SafeArea(
+              bottom: false,
+              child: Row(
+                children: [
+                  InkWell(
+                    onTap: () {
+                      _scaffoldKey.currentState?.openDrawer();
+                    },
+                    child: Icon(Icons.menu, color: Colors.white, size: 22.sp),
+                  ),
+                  SizedBox(width: 10.w),
+
+                  Expanded(
+                    child: TextField(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                SearchResultScreen(selectedCity),
+                          ),
+                        );
+                      },
+                      style: GoogleFonts.inter(color: Colors.white),
+                      cursorColor: Colors.white,
+                      readOnly: true,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.white.withOpacity(0.25),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30.r),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30.r),
+                          borderSide: BorderSide.none,
+                        ),
+                        isDense: true,
+                        contentPadding: EdgeInsets.symmetric(
+                          vertical: 8.h,
+                          horizontal: 10.w,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.search,
                           color: Colors.white,
-                          size: 22.sp,
+                          size: 18.sp,
+                        ),
+                        prefixIconConstraints: BoxConstraints(
+                          minHeight: 30.h,
+                          minWidth: 40.w,
+                        ),
+                        hintText: "Search",
+                        hintStyle: GoogleFonts.inter(
+                          color: Colors.white.withOpacity(0.85),
+                          fontSize: 13.sp,
                         ),
                       ),
-                      SizedBox(width: 10.w),
-
-                      Expanded(
-                        child: TextField(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    SearchResultScreen(selectedCity),
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                  InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        CupertinoPageRoute(
+                          builder: (context) => NotificationPage(),
+                        ),
+                      ).then((value) {
+                        ref.invalidate(notificationController);
+                      });
+                    },
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Icon(Icons.notifications_none, color: Colors.white),
+                        if (unreadCount > 0)
+                          Positioned(
+                            right: 0,
+                            top: -2,
+                            child: Container(
+                              padding: EdgeInsets.all(3),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.red,
                               ),
-                            );
-                          },
-                          style: GoogleFonts.inter(color: Colors.white),
-                          cursorColor: Colors.white,
-                          readOnly: true,
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: Colors.white.withOpacity(0.25),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30.r),
-                              borderSide: BorderSide.none,
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30.r),
-                              borderSide: BorderSide.none,
-                            ),
-                            isDense: true,
-                            contentPadding: EdgeInsets.symmetric(
-                              vertical: 8.h,
-                              horizontal: 10.w,
-                            ),
-                            prefixIcon: Icon(
-                              Icons.search,
-                              color: Colors.white,
-                              size: 18.sp,
-                            ),
-                            prefixIconConstraints: BoxConstraints(
-                              minHeight: 30.h,
-                              minWidth: 40.w,
-                            ),
-                            hintText: "Search",
-                            hintStyle: GoogleFonts.inter(
-                              color: Colors.white.withOpacity(0.85),
-                              fontSize: 13.sp,
+                              child: Text(
+                                unreadCount > 99
+                                    ? "99+"
+                                    : unreadCount.toString(),
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 8.sp,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
                           ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: 8.w),
+                  cityListState.when(
+                    data: (cityList) {
+                      final cityNames = cityList.data!
+                          .map((e) => e.cityName.toString())
+                          .toSet()
+                          .toList();
+
+                      // First time initialize
+                      if (selectedCity == null) {
+                        if (_currentCity != null && _currentCity!.isNotEmpty) {
+                          selectedCity = _currentCity;
+                        } else if (cityNames.isNotEmpty) {
+                          selectedCity = cityNames.first;
+                        }
+                      }
+
+                      // ✅ FIX: Dropdown ko responsive parent size dene ke liye aur design matching ke liye Container lagaya hai
+                      return Container(
+                        height: 34.h,
+                        width: 120.w,
+                        padding: EdgeInsets.symmetric(horizontal: 6.w),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20.r),
                         ),
-                      ),
-                      SizedBox(width: 10.w),
-                      InkWell(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            CupertinoPageRoute(
-                              builder: (context) => NotificationPage(),
-                            ),
-                          ).then((value) {
-                            ref.invalidate(notificationController);
-                          });
-                        },
-                        child: Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            Icon(Icons.notifications_none, color: Colors.white),
-                            if (unreadCount > 0)
-                              Positioned(
-                                right: 0,
-                                top: -2,
-                                child: Container(
-                                  padding: EdgeInsets.all(3),
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Colors.red,
-                                  ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton2<String>(
+                            isExpanded: true,
+                            isDense: true,
+
+                            value: cityNames.contains(selectedCity)
+                                ? selectedCity
+                                : null,
+                            hint: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.location_on,
+                                  size: 14.sp,
+                                  color: const Color(0xFF24ADD7),
+                                ),
+                                SizedBox(width: 4.w),
+                                SizedBox(
+                                  // width: 100.w,
                                   child: Text(
-                                    unreadCount > 99
-                                        ? "99+"
-                                        : unreadCount.toString(),
-                                    textAlign: TextAlign.center,
+                                    _currentCity ?? "Select",
+                                    overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 8.sp,
-                                      fontWeight: FontWeight.bold,
+                                      color: const Color(0xFF24ADD7),
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                 ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(width: 8.w),
-                      cityListState.when(
-                        data: (cityList) {
-                          final cityNames = cityList.data!
-                              .map((e) => e.cityName.toString())
-                              .toSet()
-                              .toList();
-
-                          // First time initialize
-                          if (selectedCity == null) {
-                            if (_currentCity != null &&
-                                _currentCity!.isNotEmpty) {
-                              selectedCity = _currentCity;
-                            } else if (cityNames.isNotEmpty) {
-                              selectedCity = cityNames.first;
-                            }
-                          }
-
-                          // ✅ FIX: Dropdown ko responsive parent size dene ke liye aur design matching ke liye Container lagaya hai
-                          return Container(
-                            height: 34.h,
-                            width: 120.w,
-                            padding: EdgeInsets.symmetric(horizontal: 6.w),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20.r),
+                              ],
                             ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton2<String>(
-                                isExpanded: true,
-                                isDense: true,
-
-                                value: cityNames.contains(selectedCity)
-                                    ? selectedCity
-                                    : null,
-                                hint: Row(
-                                  mainAxisSize: MainAxisSize.min,
+                            iconStyleData: IconStyleData(
+                              icon: Icon(
+                                Icons.keyboard_arrow_down,
+                                color: const Color(0xFF24ADD7),
+                                size: 16.sp,
+                              ),
+                            ),
+                            dropdownStyleData: DropdownStyleData(
+                              maxHeight: 280.h,
+                              width: 180.w,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12.r),
+                                color: Colors.white,
+                              ),
+                            ),
+                            items: cityNames.map((cityName) {
+                              return DropdownMenuItem<String>(
+                                value: cityName,
+                                child: Row(
                                   children: [
                                     Icon(
                                       Icons.location_on,
                                       size: 14.sp,
                                       color: const Color(0xFF24ADD7),
                                     ),
-                                    SizedBox(width: 4.w),
-                                    SizedBox(
-                                      // width: 100.w,
+                                    SizedBox(width: 6.w),
+                                    Expanded(
                                       child: Text(
-                                        _currentCity ?? "Select",
+                                        cityName,
                                         overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          color: const Color(0xFF24ADD7),
-                                          fontSize: 12.sp,
-                                          fontWeight: FontWeight.w600,
-                                        ),
+                                        style: TextStyle(fontSize: 13.sp),
                                       ),
                                     ),
                                   ],
                                 ),
-                                iconStyleData: IconStyleData(
-                                  icon: Icon(
-                                    Icons.keyboard_arrow_down,
-                                    color: const Color(0xFF24ADD7),
-                                    size: 16.sp,
-                                  ),
-                                ),
-                                dropdownStyleData: DropdownStyleData(
-                                  maxHeight: 280.h,
-                                  width: 180.w,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(12.r),
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                items: cityNames.map((cityName) {
-                                  return DropdownMenuItem<String>(
-                                    value: cityName,
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.location_on,
-                                          size: 14.sp,
-                                          color: const Color(0xFF24ADD7),
-                                        ),
-                                        SizedBox(width: 6.w),
-                                        Expanded(
-                                          child: Text(
-                                            cityName,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(fontSize: 13.sp),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }).toList(),
-                                onChanged: (String? newValue) async {
-                                  if (newValue == null) return;
+                              );
+                            }).toList(),
+                            onChanged: (String? newValue) async {
+                              if (newValue == null) return;
 
-                                  setState(() {
-                                    selectedCity = newValue;
-                                    _currentCity = newValue;
-                                  });
-                                  ref.read(currentCityProvider.notifier).state =
-                                      newValue;
-                                  await saveCity(newValue);
-                                },
-                                dropdownSearchData: DropdownSearchData<String>(
-                                  searchController: _citySearchController,
-                                  searchInnerWidgetHeight: 45.h,
-                                  searchInnerWidget: Container(
-                                    height: 45.h,
-                                    padding: EdgeInsets.only(
-                                      top: 6.h,
-                                      bottom: 4.h,
-                                      left: 8.w,
-                                      right: 8.w,
+                              setState(() {
+                                selectedCity = newValue;
+                                _currentCity = newValue;
+                              });
+                              ref.read(currentCityProvider.notifier).state =
+                                  newValue;
+                              await saveCity(newValue);
+                            },
+                            dropdownSearchData: DropdownSearchData<String>(
+                              searchController: _citySearchController,
+                              searchInnerWidgetHeight: 45.h,
+                              searchInnerWidget: Container(
+                                height: 45.h,
+                                padding: EdgeInsets.only(
+                                  top: 6.h,
+                                  bottom: 4.h,
+                                  left: 8.w,
+                                  right: 8.w,
+                                ),
+                                child: TextFormField(
+                                  controller: _citySearchController,
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    color: Colors.black,
+                                  ),
+                                  decoration: InputDecoration(
+                                    isDense: true,
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 8.w,
+                                      vertical: 8.h,
                                     ),
-                                    child: TextFormField(
-                                      controller: _citySearchController,
-                                      style: TextStyle(
-                                        fontSize: 12.sp,
-                                        color: Colors.black,
+                                    hintText: 'Search city...',
+                                    hintStyle: TextStyle(
+                                      fontSize: 11.sp,
+                                      color: Colors.grey,
+                                    ),
+                                    prefixIcon: Icon(
+                                      Icons.search,
+                                      size: 14.sp,
+                                      color: Colors.grey,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8.r),
+                                      borderSide: BorderSide(
+                                        color: Colors.grey.shade300,
                                       ),
-                                      decoration: InputDecoration(
-                                        isDense: true,
-                                        contentPadding: EdgeInsets.symmetric(
-                                          horizontal: 8.w,
-                                          vertical: 8.h,
-                                        ),
-                                        hintText: 'Search city...',
-                                        hintStyle: TextStyle(
-                                          fontSize: 11.sp,
-                                          color: Colors.grey,
-                                        ),
-                                        prefixIcon: Icon(
-                                          Icons.search,
-                                          size: 14.sp,
-                                          color: Colors.grey,
-                                        ),
-                                        border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            8.r,
-                                          ),
-                                          borderSide: BorderSide(
-                                            color: Colors.grey.shade300,
-                                          ),
-                                        ),
-                                        enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            8.r,
-                                          ),
-                                          borderSide: BorderSide(
-                                            color: Colors.grey.shade300,
-                                          ),
-                                        ),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            8.r,
-                                          ),
-                                          borderSide: const BorderSide(
-                                            color: Color(0xFF24ADD7),
-                                          ),
-                                        ),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8.r),
+                                      borderSide: BorderSide(
+                                        color: Colors.grey.shade300,
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8.r),
+                                      borderSide: const BorderSide(
+                                        color: Color(0xFF24ADD7),
                                       ),
                                     ),
                                   ),
-                                  searchMatchFn: (item, searchValue) {
-                                    return item.value
-                                        .toString()
-                                        .toLowerCase()
-                                        .contains(searchValue.toLowerCase());
-                                  },
                                 ),
-                                onMenuStateChange: (isOpen) {
-                                  if (!isOpen) {
-                                    _citySearchController.clear();
-                                  }
-                                },
                               ),
+                              searchMatchFn: (item, searchValue) {
+                                return item.value
+                                    .toString()
+                                    .toLowerCase()
+                                    .contains(searchValue.toLowerCase());
+                              },
                             ),
-                          );
-                        },
-                        error: (error, stackTrace) {
-                          return Center(child: Text(error.toString()));
-                        },
-                        loading: () => Center(
-                          child: SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 1.5,
-                            ),
+                            onMenuStateChange: (isOpen) {
+                              if (!isOpen) {
+                                _citySearchController.clear();
+                              }
+                            },
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              Stack(
-                children: [
-                  /// 🔥 IMAGE SLIDER
-                  CarouselSlider(
-                    options: CarouselOptions(
-                      height: 260.h,
-                      viewportFraction: 1,
-                      autoPlay: true,
-                      autoPlayInterval: const Duration(seconds: 3),
-                      autoPlayAnimationDuration: const Duration(
-                        milliseconds: 800,
-                      ),
-                      onPageChanged: (index, reason) {
-                        setState(() {
-                          currentBannerIndex = index;
-                        });
-                      },
-                    ),
-                    items: currentImages.map((image) {
-                      return Stack(
-                        children: [
-                          Image.asset(
-                            image,
-                            height: 260.h,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                          ),
-
-                          /// Gradient
-                          Container(
-                            height: 260.h,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.black.withOpacity(0.6),
-                                  Colors.transparent,
-                                ],
-                                begin: Alignment.bottomCenter,
-                                end: Alignment.topCenter,
-                              ),
-                            ),
-                          ),
-
-                          /// TEXT CONTENT
-                          Positioned(
-                            left: 16.w,
-                            bottom: 30.h,
-                            right: 16.w,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Chip(
-                                  labelPadding: EdgeInsets.zero,
-                                  label: Text(
-                                    selectIndex == 0
-                                        ? "Top Property"
-                                        : selectIndex == 1
-                                        ? "Best Service"
-                                        : "Easy Loan",
-                                  ),
-                                  backgroundColor: Colors.white.withOpacity(
-                                    0.8,
-                                  ),
-                                ),
-
-                                SizedBox(height: 6.h),
-
-                                Text(
-                                  selectIndex == 0
-                                      ? "Find Your Dream Property"
-                                      : selectIndex == 1
-                                      ? "Best Home Services"
-                                      : "Get Instant Loan",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18.sp,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-
-                                SizedBox(height: 4.h),
-
-                                Text(
-                                  selectIndex == 0
-                                      ? "Buy, Rent & Sell properties"
-                                      : selectIndex == 1
-                                      ? "Cleaning, Plumbing, Electrician & more"
-                                      : "Home, Personal & Business Loan Available",
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 13.sp,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
                       );
-                    }).toList(),
-                  ),
-
-                  /// 🔥 FIXED DOT INDICATOR (ALWAYS SAME POSITION)
-                  Positioned(
-                    bottom: 10.h,
-                    left: 0,
-                    right: 0,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(
-                        currentImages.length,
-                        (index) => AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          margin: EdgeInsets.symmetric(horizontal: 4.w),
-                          width: currentBannerIndex == index ? 12.w : 8.w,
-                          height: currentBannerIndex == index ? 12.h : 8.h,
-                          decoration: BoxDecoration(
-                            color: currentBannerIndex == index
-                                ? const Color(0xFF24ADD7)
-                                : Colors.white,
-                            shape: BoxShape.circle,
-                          ),
+                    },
+                    error: (error, stackTrace) {
+                      return Center(child: Text(error.toString()));
+                    },
+                    loading: () => Center(
+                      child: SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 1.5,
                         ),
                       ),
                     ),
                   ),
                 ],
               ),
+            ),
+          ),
 
-              // MARQUEE
-              Container(
-                width: double.infinity,
-                height: 40.h,
-                color: const Color(0xFF24ADD7),
-                child: Marquee(
-                  text: "CALL US TODAY AT +91-9171719060 FOR PROPERTY INQUERY",
-                  style: GoogleFonts.inter(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.white,
+          Stack(
+            children: [
+              /// 🔥 IMAGE SLIDER
+              CarouselSlider(
+                options: CarouselOptions(
+                  height: 260.h,
+                  viewportFraction: 1,
+                  autoPlay: true,
+                  autoPlayInterval: const Duration(seconds: 3),
+                  autoPlayAnimationDuration: const Duration(milliseconds: 800),
+                  onPageChanged: (index, reason) {
+                    setState(() {
+                      currentBannerIndex = index;
+                    });
+                  },
+                ),
+                items: currentImages.map((image) {
+                  return Stack(
+                    children: [
+                      Image.asset(
+                        image,
+                        height: 260.h,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+
+                      /// Gradient
+                      Container(
+                        height: 260.h,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.black.withOpacity(0.6),
+                              Colors.transparent,
+                            ],
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                          ),
+                        ),
+                      ),
+
+                      /// TEXT CONTENT
+                      Positioned(
+                        left: 16.w,
+                        bottom: 30.h,
+                        right: 16.w,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Chip(
+                              labelPadding: EdgeInsets.zero,
+                              label: Text(
+                                selectIndex == 0
+                                    ? "Top Property"
+                                    : selectIndex == 1
+                                    ? "Best Service"
+                                    : "Easy Loan",
+                              ),
+                              backgroundColor: Colors.white.withOpacity(0.8),
+                            ),
+
+                            SizedBox(height: 6.h),
+
+                            Text(
+                              selectIndex == 0
+                                  ? "Find Your Dream Property"
+                                  : selectIndex == 1
+                                  ? "Best Home Services"
+                                  : "Get Instant Loan",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+
+                            SizedBox(height: 4.h),
+
+                            Text(
+                              selectIndex == 0
+                                  ? "Buy, Rent & Sell properties"
+                                  : selectIndex == 1
+                                  ? "Cleaning, Plumbing, Electrician & more"
+                                  : "Home, Personal & Business Loan Available",
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 13.sp,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ),
+
+              /// 🔥 FIXED DOT INDICATOR (ALWAYS SAME POSITION)
+              Positioned(
+                bottom: 10.h,
+                left: 0,
+                right: 0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    currentImages.length,
+                    (index) => AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      margin: EdgeInsets.symmetric(horizontal: 4.w),
+                      width: currentBannerIndex == index ? 12.w : 8.w,
+                      height: currentBannerIndex == index ? 12.h : 8.h,
+                      decoration: BoxDecoration(
+                        color: currentBannerIndex == index
+                            ? const Color(0xFF24ADD7)
+                            : Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
                   ),
-                  scrollAxis: Axis.horizontal,
-                  velocity: 40,
-                  blankSpace: 50,
-                  startPadding: 10,
                 ),
               ),
-              SizedBox(height: 15.h),
             ],
           ),
-        ),
-      ],
-      body: Column(
-        children: [
+
+          // MARQUEE
+          Container(
+            width: double.infinity,
+            height: 40.h,
+            color: const Color(0xFF24ADD7),
+            child: Marquee(
+              text: "CALL US TODAY AT +91-9171719060 FOR PROPERTY INQUERY",
+              style: GoogleFonts.inter(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w400,
+                color: Colors.white,
+              ),
+              scrollAxis: Axis.horizontal,
+              velocity: 40,
+              blankSpace: 50,
+              startPadding: 10,
+            ),
+          ),
+          SizedBox(height: 15.h),
           SizedBox(height: 10.h),
           Padding(
             padding: EdgeInsets.only(left: 0, right: 0),
@@ -1041,53 +1018,40 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
             ),
           ),
 
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                SingleChildScrollView(
-                  child: Padding(
-                    padding: EdgeInsets.all(16.w),
-                    child: Column(
+          ExpandablePageView(
+            controller: _tabController,
+            children: [
+              Padding(
+                padding: EdgeInsets.all(16.w),
+                child: Column(
+                  children: [
+                    // SizedBox(height: 10.h),
+                    GridView.count(
+                      padding: EdgeInsets.zero,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: 3,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
                       children: [
-                        // SizedBox(height: 10.h),
-                        GridView.count(
-                          padding: EdgeInsets.zero,
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          crossAxisCount: 3,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                          children: [
-                            _gridItem("assets/png/home.png", "Buy House"),
-                            _gridItem(
-                              "assets/png/apartment.png",
-                              "Rent Studio",
-                            ),
-                            _gridItem("assets/png/buyFlat.png", "Buy Flats"),
-                            _gridItem("assets/png/buyPlot.png", "Buy Plots"),
-                            _gridItem(
-                              "assets/png/commercial.png",
-                              "Commercial",
-                            ),
-                            _gridItem("assets/png/buyHotel.png", "residential"),
-                            _gridItem(
-                              "assets/png/rentCondos.png",
-                              "Rent Condos",
-                            ),
-                            _gridItem("assets/png/buyDuplex.png", "Buy Duplex"),
-                            _gridItem("assets/png/rentHouse.png", "Rent House"),
-                          ],
-                        ),
-                        SizedBox(height: 10.h),
+                        _gridItem("assets/png/home.png", "Buy House"),
+                        _gridItem("assets/png/apartment.png", "Rent Studio"),
+                        _gridItem("assets/png/buyFlat.png", "Buy Flats"),
+                        _gridItem("assets/png/buyPlot.png", "Buy Plots"),
+                        _gridItem("assets/png/commercial.png", "Commercial"),
+                        _gridItem("assets/png/buyHotel.png", "residential"),
+                        _gridItem("assets/png/rentCondos.png", "Rent Condos"),
+                        _gridItem("assets/png/buyDuplex.png", "Buy Duplex"),
+                        _gridItem("assets/png/rentHouse.png", "Rent House"),
                       ],
                     ),
-                  ),
+                    SizedBox(height: 10.h),
+                  ],
                 ),
-                HomeService(),
-                LoanService(),
-              ],
-            ),
+              ),
+              HomeService(),
+              LoanService(),
+            ],
           ),
         ],
       ),
@@ -4622,5 +4586,135 @@ class _VendorRegistrationBottomSheetState
         ),
       ),
     );
+  }
+}
+
+class ExpandablePageView extends StatefulWidget {
+  final List<Widget> children;
+  final TabController controller;
+
+  const ExpandablePageView({
+    Key? key,
+    required this.children,
+    required this.controller,
+  }) : super(key: key);
+
+  @override
+  _ExpandablePageViewState createState() => _ExpandablePageViewState();
+}
+
+class _ExpandablePageViewState extends State<ExpandablePageView>
+    with TickerProviderStateMixin {
+  late PageController _pageController;
+  late List<double> _heights;
+  int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _heights = List.filled(widget.children.length, 0.0);
+    _currentPage = widget.controller.index;
+    _pageController = PageController(initialPage: _currentPage);
+
+    widget.controller.addListener(() {
+      if (widget.controller.indexIsChanging) {
+        _pageController.animateToPage(
+          widget.controller.index,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+      if (_currentPage != widget.controller.index) {
+        setState(() {
+          _currentPage = widget.controller.index;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      curve: Curves.easeInOutCubic,
+      duration: const Duration(milliseconds: 300),
+      tween: Tween<double>(
+        begin: _heights.isNotEmpty ? _heights.first : 0.0,
+        end: _heights[_currentPage] > 0 ? _heights[_currentPage] : 200,
+      ),
+      builder: (context, value, child) {
+        return SizedBox(height: value, child: child);
+      },
+      child: PageView(
+        controller: _pageController,
+        onPageChanged: (index) {
+          widget.controller.index = index;
+        },
+        children: _sizeReportingChildren(),
+      ),
+    );
+  }
+
+  List<Widget> _sizeReportingChildren() {
+    return widget.children
+        .asMap()
+        .map(
+          (index, child) => MapEntry(
+            index,
+            OverflowBox(
+              minHeight: 0,
+              maxHeight: double.infinity,
+              alignment: Alignment.topCenter,
+              child: SizeReportingWidget(
+                onSizeChange: (size) {
+                  if (mounted && _heights[index] != size.height) {
+                    setState(() => _heights[index] = size.height);
+                  }
+                },
+                child: child,
+              ),
+            ),
+          ),
+        )
+        .values
+        .toList();
+  }
+}
+
+class SizeReportingWidget extends StatefulWidget {
+  final Widget child;
+  final ValueChanged<Size> onSizeChange;
+
+  const SizeReportingWidget({
+    Key? key,
+    required this.child,
+    required this.onSizeChange,
+  }) : super(key: key);
+
+  @override
+  _SizeReportingWidgetState createState() => _SizeReportingWidgetState();
+}
+
+class _SizeReportingWidgetState extends State<SizeReportingWidget> {
+  Size? _oldSize;
+
+  @override
+  Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) => _notifySize());
+    return widget.child;
+  }
+
+  void _notifySize() {
+    if (!mounted) return;
+    final size = context.size;
+    if (_oldSize != size && size != null) {
+      _oldSize = size;
+      widget.onSizeChange(size);
+    }
   }
 }

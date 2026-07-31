@@ -469,6 +469,7 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
                             ref,
                             status,
                           ),
+                        ///////// reschedule dialog
                         if (status == "pending")
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: 12.w),
@@ -870,10 +871,8 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
       currentStepIndex = 4;
     }
 
-    // 2. CUSTOM LOGIC: Agar status 'assigned' hai, toh hum 3rd circle (index 2) ko
-    // FORCEfully active mark karenge taaki UI par "On Way" fill dikhe.
     int activeUntil = currentStepIndex;
-    if (status == 'in_progress') {
+    if (status == 'on_the_way') {
       activeUntil = 2; // Yeh "On Way" wale container aur line ko fill kar dega
     } else if (status == 'working' || status == 'complete') {
       activeUntil = currentStepIndex; // 'working' par index 3 tak sab fill hoga
@@ -1333,29 +1332,30 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
                     ],
                     SizedBox(height: 16.h),
                     // Action / Status indicator
-                    if (isAssigned)
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () => _showVerifyDialog(
-                            context,
-                            technicianName,
-                            item.id,
-                            ref,
-                          ),
-                          icon: const Icon(Icons.verified_user, size: 18),
-                          label: Text("VERIFY TECHNICIAN ARRIVAL"),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue.shade100,
-                            foregroundColor: Colors.blue.shade800,
-                            padding: EdgeInsets.symmetric(vertical: 12.h),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.r),
-                            ),
-                          ),
-                        ),
-                      )
-                    else if (isCompleted) ...[
+                    // if (isAssigned)
+                    //   SizedBox(
+                    //     width: double.infinity,
+                    //     child: ElevatedButton.icon(
+                    //       onPressed: () => _showVerifyDialog(
+                    //         context,
+                    //         technicianName,
+                    //         item.id,
+                    //         ref,
+                    //       ),
+                    //       icon: const Icon(Icons.verified_user, size: 18),
+                    //       label: Text("VERIFY TECHNICIAN ARRIVAL"),
+                    //       style: ElevatedButton.styleFrom(
+                    //         backgroundColor: Colors.blue.shade100,
+                    //         foregroundColor: Colors.blue.shade800,
+                    //         padding: EdgeInsets.symmetric(vertical: 12.h),
+                    //         shape: RoundedRectangleBorder(
+                    //           borderRadius: BorderRadius.circular(12.r),
+                    //         ),
+                    //       ),
+                    //     ),
+                    //   )
+                    // else
+                    if (isCompleted) ...[
                       _statusIndicator(
                         Icons.check_circle,
                         "SERVICE COMPLETED SUCCESSFULLY",
