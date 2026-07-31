@@ -4,258 +4,342 @@
 
 import 'dart:convert';
 
-MyBookingServiceRequestResModel myBookingServiceRequestResModelFromJson(
-  String str,
-) => MyBookingServiceRequestResModel.fromJson(json.decode(str));
+MyBookingServiceRequestResModel myBookingServiceRequestResModelFromJson(String str) => MyBookingServiceRequestResModel.fromJson(json.decode(str));
 
-String myBookingServiceRequestResModelToJson(
-  MyBookingServiceRequestResModel data,
-) => json.encode(data.toJson());
+String myBookingServiceRequestResModelToJson(MyBookingServiceRequestResModel data) => json.encode(data.toJson());
 
 class MyBookingServiceRequestResModel {
-  String? message;
-  int? code;
-  bool? error;
-  Data? data;
+    String message;
+    int code;
+    bool error;
+    Data data;
 
-  MyBookingServiceRequestResModel({
-    this.message,
-    this.code,
-    this.error,
-    this.data,
-  });
+    MyBookingServiceRequestResModel({
+        required this.message,
+        required this.code,
+        required this.error,
+        required this.data,
+    });
 
-  factory MyBookingServiceRequestResModel.fromJson(Map<String, dynamic> json) =>
-      MyBookingServiceRequestResModel(
+    factory MyBookingServiceRequestResModel.fromJson(Map<String, dynamic> json) => MyBookingServiceRequestResModel(
         message: json["message"],
         code: json["code"],
         error: json["error"],
-        data: json["data"] == null ? null : Data.fromJson(json["data"]),
-      );
+        data: Data.fromJson(json["data"]),
+    );
 
-  Map<String, dynamic> toJson() => {
-    "message": message,
-    "code": code,
-    "error": error,
-    "data": data?.toJson(),
-  };
+    Map<String, dynamic> toJson() => {
+        "message": message,
+        "code": code,
+        "error": error,
+        "data": data.toJson(),
+    };
 }
 
 class Data {
-  List<ListElement>? list;
-  int? total;
+    List<ListElement> list;
+    int total;
 
-  Data({this.list, this.total});
+    Data({
+        required this.list,
+        required this.total,
+    });
 
-  factory Data.fromJson(Map<String, dynamic> json) => Data(
-    list: json["list"] == null
-        ? []
-        : List<ListElement>.from(
-            json["list"]!.map((x) => ListElement.fromJson(x)),
-          ),
-    total: json["total"],
-  );
+    factory Data.fromJson(Map<String, dynamic> json) => Data(
+        list: List<ListElement>.from(json["list"].map((x) => ListElement.fromJson(x))),
+        total: json["total"],
+    );
 
-  Map<String, dynamic> toJson() => {
-    "list": list == null
-        ? []
-        : List<dynamic>.from(list!.map((x) => x.toJson())),
-    "total": total,
-  };
+    Map<String, dynamic> toJson() => {
+        "list": List<dynamic>.from(list.map((x) => x.toJson())),
+        "total": total,
+    };
 }
 
 class ListElement {
-  String? id;
-  String? address;
-  DateTime? serviceDate;
-  String? serviceTimeSlot;
-  String? problemImgae;
-  ServiceType? serviceType;
-  String? message;
-  String? status;
-  int? serviceFee;
-  String? paymentStatus;
-  bool? isDisable;
-  bool? isDeleted;
-  int? date;
-  int? month;
-  int? year;
-  int? createdAt;
-  int? updatedAt;
-  String? bookingId;
-  int? v;
-  List<Rating>? ratings;
-  ServiceBoy? serviceBoy;
-  String? serviceProviderImage;
+    String id;
+    String address;
+    DateTime serviceDate;
+    String serviceTimeSlot;
+    String problemImgae;
+    ServiceType serviceType;
+    String message;
+    String status;
+    int serviceFee;
+    PaymentStatus paymentStatus;
+    bool? isVerified;
+    List<Item> items;
+    bool isDisable;
+    bool isDeleted;
+    int date;
+    int month;
+    int year;
+    int createdAt;
+    int updatedAt;
+    String bookingId;
+    int v;
+    ServiceBoy? serviceBoy;
+    String? serviceProviderImage;
+    String? verificationOtp;
+    List<Rating> ratings;
+    String? beforeImage;
+    String? afterImage;
 
-  ListElement({
-    this.id,
-    this.address,
-    this.serviceDate,
-    this.serviceTimeSlot,
-    this.problemImgae,
-    this.serviceType,
-    this.message,
-    this.status,
-    this.serviceFee,
-    this.paymentStatus,
-    this.isDisable,
-    this.isDeleted,
-    this.date,
-    this.month,
-    this.year,
-    this.createdAt,
-    this.updatedAt,
-    this.bookingId,
-    this.v,
-    this.ratings,
-    this.serviceBoy,
-    this.serviceProviderImage,
-  });
+    ListElement({
+        required this.id,
+        required this.address,
+        required this.serviceDate,
+        required this.serviceTimeSlot,
+        required this.problemImgae,
+        required this.serviceType,
+        required this.message,
+        required this.status,
+        required this.serviceFee,
+        required this.paymentStatus,
+        required this.isVerified,
+        required this.items,
+        required this.isDisable,
+        required this.isDeleted,
+        required this.date,
+        required this.month,
+        required this.year,
+        required this.createdAt,
+        required this.updatedAt,
+        required this.bookingId,
+        required this.v,
+        this.serviceBoy,
+        this.serviceProviderImage,
+        this.verificationOtp,
+        required this.ratings,
+        this.beforeImage,
+        this.afterImage,
+    });
 
-  factory ListElement.fromJson(Map<String, dynamic> json) => ListElement(
-    id: json["_id"],
-    address: json["address"],
-    serviceDate: json["serviceDate"] == null
-        ? null
-        : DateTime.parse(json["serviceDate"]),
-    serviceTimeSlot: json["serviceTimeSlot"],
-    problemImgae: json["problemImgae"],
-    serviceType: json["serviceType"] == null
-        ? null
-        : ServiceType.fromJson(json["serviceType"]),
-    message: json["message"],
-    status: json["status"],
-    serviceFee: json["serviceFee"],
-    paymentStatus: json["paymentStatus"],
-    isDisable: json["isDisable"],
-    isDeleted: json["isDeleted"],
-    date: json["date"],
-    month: json["month"],
-    year: json["year"],
-    createdAt: json["createdAt"],
-    updatedAt: json["updatedAt"],
-    bookingId: json["bookingId"],
-    v: json["__v"],
-    ratings: json["ratings"] == null
-        ? []
-        : List<Rating>.from(json["ratings"]!.map((x) => Rating.fromJson(x))),
-    serviceBoy: json["serviceBoy"] == null
-        ? null
-        : ServiceBoy.fromJson(json["serviceBoy"]),
-    serviceProviderImage: json["serviceProviderImage"],
-  );
+    factory ListElement.fromJson(Map<String, dynamic> json) => ListElement(
+        id: json["_id"],
+        address: json["address"],
+        serviceDate: DateTime.parse(json["serviceDate"]),
+        serviceTimeSlot: json["serviceTimeSlot"],
+        problemImgae: json["problemImgae"],
+        serviceType: ServiceType.fromJson(json["serviceType"]),
+        message: json["message"],
+        status: json["status"],
+        serviceFee: json["serviceFee"],
+        paymentStatus: paymentStatusValues.map[json["paymentStatus"]]!,
+        isVerified: json["isVerified"],
+       items: json["items"] == null
+    ? []
+    : List<Item>.from(
+        (json["items"] as List).map((x) => Item.fromJson(x)),
+      ),
+        isDisable: json["isDisable"],
+        isDeleted: json["isDeleted"],
+        date: json["date"],
+        month: json["month"],
+        year: json["year"],
+        createdAt: json["createdAt"],
+        updatedAt: json["updatedAt"],
+        bookingId: json["bookingId"],
+        v: json["__v"],
+        serviceBoy: json["serviceBoy"] == null ? null : ServiceBoy.fromJson(json["serviceBoy"]),
+        serviceProviderImage: json["serviceProviderImage"],
+        verificationOtp: json["verificationOTP"],
+        ratings: List<Rating>.from(json["ratings"].map((x) => Rating.fromJson(x))),
+        beforeImage: json["beforeImage"],
+        afterImage: json["afterImage"],
+    );
 
-  Map<String, dynamic> toJson() => {
-    "_id": id,
-    "address": address,
-    "serviceDate": serviceDate?.toIso8601String(),
-    "serviceTimeSlot": serviceTimeSlot,
-    "problemImgae": problemImgae,
-    "serviceType": serviceType?.toJson(),
-    "message": message,
-    "status": status,
-    "serviceFee": serviceFee,
-    "paymentStatus": paymentStatus,
-    "isDisable": isDisable,
-    "isDeleted": isDeleted,
-    "date": date,
-    "month": month,
-    "year": year,
-    "createdAt": createdAt,
-    "updatedAt": updatedAt,
-    "bookingId": bookingId,
-    "__v": v,
-    "ratings": ratings == null
-        ? []
-        : List<dynamic>.from(ratings!.map((x) => x.toJson())),
-    "serviceBoy": serviceBoy?.toJson(),
-    "serviceProviderImage": serviceProviderImage,
-  };
+    Map<String, dynamic> toJson() => {
+        "_id": id,
+        "address": address,
+        "serviceDate": serviceDate.toIso8601String(),
+        "serviceTimeSlot": serviceTimeSlot,
+        "problemImgae": problemImgae,
+        "serviceType": serviceType.toJson(),
+        "message": message,
+        "status": status,
+        "serviceFee": serviceFee,
+        "paymentStatus": paymentStatusValues.reverse[paymentStatus],
+        "isVerified": isVerified,
+        "items": List<dynamic>.from(items.map((x) => x.toJson())),
+        "isDisable": isDisable,
+        "isDeleted": isDeleted,
+        "date": date,
+        "month": month,
+        "year": year,
+        "createdAt": createdAt,
+        "updatedAt": updatedAt,
+        "bookingId": bookingId,
+        "__v": v,
+        "serviceBoy": serviceBoy?.toJson(),
+        "serviceProviderImage": serviceProviderImage,
+        "verificationOTP": verificationOtp,
+        "ratings": List<dynamic>.from(ratings.map((x) => x.toJson())),
+        "beforeImage": beforeImage,
+        "afterImage": afterImage,
+    };
 }
 
+class Item {
+    String title;
+    int price;
+    String image;
+    String description;
+    String id;
+    String serviceId;
+
+    Item({
+        required this.title,
+        required this.price,
+        required this.image,
+        required this.description,
+        required this.id,
+        required this.serviceId,
+    });
+
+    factory Item.fromJson(Map<String, dynamic> json) => Item(
+        title: json["title"],
+        price: json["price"],
+        image: json["image"],
+        description: json["description"],
+        id: json["_id"],
+        serviceId: json["serviceId"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "title": title,
+        "price": price,
+        "image": image,
+        "description": description,
+        "_id": id,
+        "serviceId": serviceId,
+    };
+}
+
+enum PaymentStatus {
+    PENDING
+}
+
+final paymentStatusValues = EnumValues({
+    "pending": PaymentStatus.PENDING
+});
+
 class Rating {
-  String? id;
-  String? userId;
-  int? rating;
-  dynamic review;
-  String? image;
-  Rating({this.id, this.userId, this.rating, this.review, this.image});
+    String id;
+    String userId;
+    int rating;
+    String? review;
+    dynamic image;
 
-  factory Rating.fromJson(Map<String, dynamic> json) => Rating(
-    id: json["_id"],
-    userId: json["userId"],
-    rating: json["rating"],
-    review: json["review"],
-    image: json["image"],
-  );
+    Rating({
+        required this.id,
+        required this.userId,
+        required this.rating,
+        required this.review,
+        required this.image,
+    });
 
-  Map<String, dynamic> toJson() => {
-    "_id": id,
-    "userId": userId,
-    "rating": rating,
-    "review": review,
-    "image": image,
-  };
+    factory Rating.fromJson(Map<String, dynamic> json) => Rating(
+        id: json["_id"],
+        userId: json["userId"],
+        rating: json["rating"],
+        review: json["review"],
+        image: json["image"],
+    );
+
+    Map<String, dynamic> toJson() => {
+        "_id": id,
+        "userId": userId,
+        "rating": rating,
+        "review": review,
+        "image": image,
+    };
 }
 
 class ServiceBoy {
-  String? id;
-  String? name;
-  String? phone;
+    String id;
+    String name;
+    String phone;
 
-  ServiceBoy({this.id, this.name, this.phone});
+    ServiceBoy({
+        required this.id,
+        required this.name,
+        required this.phone,
+    });
 
-  factory ServiceBoy.fromJson(Map<String, dynamic> json) =>
-      ServiceBoy(id: json["_id"], name: json["name"], phone: json["phone"]);
+    factory ServiceBoy.fromJson(Map<String, dynamic> json) => ServiceBoy(
+        id: json["_id"],
+        name: json["name"],
+        phone: json["phone"],
+    );
 
-  Map<String, dynamic> toJson() => {"_id": id, "name": name, "phone": phone};
+    Map<String, dynamic> toJson() => {
+        "_id": id,
+        "name": name,
+        "phone": phone,
+    };
 }
 
 class ServiceType {
-  String? id;
-  String? name;
-  String? image;
-  List<Slots>? slots;
+    String id;
+    String name;
+    String image;
+    List<Slot> slots;
 
-  ServiceType({this.id, this.name, this.image, this.slots});
+    ServiceType({
+        required this.id,
+        required this.name,
+        required this.image,
+        required this.slots,
+    });
 
-  factory ServiceType.fromJson(Map<String, dynamic> json) => ServiceType(
-    id: json["_id"],
-    name: json["name"],
-    image: json["image"],
+    factory ServiceType.fromJson(Map<String, dynamic> json) => ServiceType(
+        id: json["_id"],
+        name: json["name"],
+        image: json["image"],
+        slots: List<Slot>.from(json["slots"].map((x) => Slot.fromJson(x))),
+    );
 
-    slots: json["slots"] == null
-        ? []
-        : List<Slots>.from(json["slots"].map((x) => Slots.fromJson(x))),
-  );
-
-  Map<String, dynamic> toJson() => {
-    "_id": id,
-    "name": name,
-    "image": image,
-    "slots": slots == null
-        ? []
-        : List<dynamic>.from(slots!.map((x) => x.toJson())),
-  };
+    Map<String, dynamic> toJson() => {
+        "_id": id,
+        "name": name,
+        "image": image,
+        "slots": List<dynamic>.from(slots.map((x) => x.toJson())),
+    };
 }
 
-class Slots {
-  String? id;
-  String? timeSlot;
-  int? slotCount;
+class Slot {
+    String timeSlot;
+    int slotCount;
+    String id;
 
-  Slots({this.id, this.timeSlot, this.slotCount});
+    Slot({
+        required this.timeSlot,
+        required this.slotCount,
+        required this.id,
+    });
 
-  factory Slots.fromJson(Map<String, dynamic> json) {
-    return Slots(
-      id: json["_id"],
-      timeSlot: json["timeSlot"],
-      slotCount: json["slotCount"],
+    factory Slot.fromJson(Map<String, dynamic> json) => Slot(
+        timeSlot: json["timeSlot"],
+        slotCount: json["slotCount"],
+        id: json["_id"],
     );
-  }
 
-  Map<String, dynamic> toJson() {
-    return {"_id": id, "timeSlot": timeSlot, "slotCount": slotCount};
-  }
+    Map<String, dynamic> toJson() => {
+        "timeSlot": timeSlot,
+        "slotCount": slotCount,
+        "_id": id,
+    };
+}
+
+class EnumValues<T> {
+    Map<String, T> map;
+    late Map<T, String> reverseMap;
+
+    EnumValues(this.map);
+
+    Map<T, String> get reverse {
+            reverseMap = map.map((k, v) => MapEntry(v, k));
+            return reverseMap;
+    }
 }

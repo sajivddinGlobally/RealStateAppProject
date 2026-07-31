@@ -377,15 +377,18 @@ class _SearchResultScreenState extends ConsumerState<SearchResultScreen> {
                                           Expanded(
                                             child: InkWell(
                                               onTap: () {
-                                                // Navigator.push(
-                                                //   context,
-                                                //   MaterialPageRoute(
-                                                //     builder: (context) =>
-                                                //         PerticulerPropertyPage(
-                                                //           data: property,
-                                                //         ),
-                                                //   ),
-                                                // );
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        PerticulerPropertyPage(
+                                                          data:
+                                                              PropertyDetailsModel.fromProperty(
+                                                                property,
+                                                              ),
+                                                        ),
+                                                  ),
+                                                );
                                               },
                                               child: Container(
                                                 decoration: BoxDecoration(
@@ -414,13 +417,18 @@ class _SearchResultScreenState extends ConsumerState<SearchResultScreen> {
                                           Expanded(
                                             child: InkWell(
                                               onTap: () {
-                                                // Navigator.push(
-                                                //   context,
-                                                //   MaterialPageRoute(
-                                                //     builder: (context) =>
-                                                //         PerticulerPropertyPage(data: property),
-                                                //   ),
-                                                // );
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        PerticulerPropertyPage(
+                                                          data:
+                                                              PropertyDetailsModel.fromProperty(
+                                                                property,
+                                                              ),
+                                                        ),
+                                                  ),
+                                                );
                                               },
                                               child: Container(
                                                 decoration: BoxDecoration(

@@ -19,7 +19,7 @@ final myLoanRequestsProvider = FutureProvider<List<LoanItem>>((ref) async {
 });
 
 class MyLoanRequestsPage extends ConsumerWidget {
-  const MyLoanRequestsPage({super.key});
+  const  MyLoanRequestsPage({super.key});
 
   Color getStatusColor(String? status) {
     switch (status?.toLowerCase()) {
@@ -28,7 +28,7 @@ class MyLoanRequestsPage extends ConsumerWidget {
       case 'approved':
       case 'approved_by_admin':
         return Colors.green;
-      case 'rejected':
+      case 'rejected': 
         return Colors.red;
       case 'in_process':
       case 'processing':

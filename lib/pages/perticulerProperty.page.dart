@@ -301,15 +301,20 @@ class _PerticulerPropertyPageState
                                       isValid = false;
                                     }
                                     // 2. Email Validation
-                                    if (emailController.text.trim().isEmpty) {
-                                      emailError = "Email is required";
-                                      isValid = false;
-                                    } else if (!emailController.text.contains(
-                                      "@",
-                                    )) {
-                                      emailError = "Enter a valid email";
-                                      isValid = false;
-                                    }
+                                    // if (emailController.text.trim().isEmpty) {
+                                    //   emailError = "Email is required";
+                                    //   isValid = false;
+                                    // } else if (!emailController.text.contains(
+                                    //   "@",
+                                    // )) {
+                                    //   emailError = "Enter a valid email";
+                                    //   isValid = false;
+                                    // }
+                                    // 2. Email Validation (No Validation)
+
+                                    
+                                    // No email validation 
+                                    emailError = null;
                                     // 3. Phone Validation
                                     if (phoneController.text.trim().length <
                                         10) {

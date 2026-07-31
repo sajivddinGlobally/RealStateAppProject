@@ -104,7 +104,7 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
 
   void showRescheduleDialog(
     BuildContext context,
-    List<Slots> slots,
+    List<Slot> slots,
     String bookingId,
   ) {
     showDialog(
@@ -1295,6 +1295,42 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
                           ),
                       ],
                     ),
+                    if (isAssigned &&
+                        item.verificationOtp != null &&
+                        item.verificationOtp!.isNotEmpty) ...[
+                      SizedBox(height: 12.h),
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(5.w),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14.r),
+                          border: Border.all(color: Colors.blue.shade200),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              "SHARE THIS OTP WITH AGENT",
+                              style: GoogleFonts.inter(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.blue,
+                              ),
+                            ),
+                            SizedBox(height: 5.h),
+                            Text(
+                              item.verificationOtp!,
+                              style: GoogleFonts.inter(
+                                fontSize: 25.sp,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 8,
+                                color: Colors.blue,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     SizedBox(height: 16.h),
                     // Action / Status indicator
                     if (isAssigned)

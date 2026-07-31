@@ -3076,7 +3076,7 @@ class _HomeServiceState extends ConsumerState<HomeService> {
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 3,
-                          childAspectRatio: 0.75,
+                          childAspectRatio: 0.73,
                           crossAxisSpacing: 16,
                           mainAxisSpacing: 16,
                         ),
