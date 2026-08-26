@@ -208,6 +208,7 @@ class _SearchResultScreenState extends ConsumerState<SearchResultScreen> {
                                   MaterialPageRoute(
                                     builder: (context) =>
                                         PerticulerPropertyPage(
+                                          propertyId: property.slug ?? property.id ?? "",
                                           data:
                                               PropertyDetailsModel.fromProperty(
                                                 property,
@@ -260,12 +261,17 @@ class _SearchResultScreenState extends ConsumerState<SearchResultScreen> {
                                                   CrossAxisAlignment.start,
                                               children: [
                                                 Text(
-                                                  "${int.tryParse(property.bedRoom ?? '0') ?? '?'} BHK ${property.propertyType ?? ""}",
+                                                  // "${int.tryParse(property.bedRoom ?? '0') ?? '?'} BHK ${property.propertyType ?? ""}",
+                                                  property.propertyType
+                                                              ?.toLowerCase() ==
+                                                          'land'
+                                                      ? "${property.propertyType ?? ""}"
+                                                      : "${property.bedRoom ?? ""} BHK ${property.propertyType ?? ""}",
                                                   style: GoogleFonts.inter(
                                                     fontWeight: FontWeight.w600,
                                                     fontSize: 10.sp,
                                                   ),
-                                                  maxLines: 1,
+                                                  maxLines: 2,
                                                   overflow:
                                                       TextOverflow.ellipsis,
                                                 ),
@@ -329,12 +335,21 @@ class _SearchResultScreenState extends ConsumerState<SearchResultScreen> {
                                               ),
                                               height: 25.h,
                                               child: Center(
-                                                child: Text(
-                                                  '${property.bedRoom} BHK',
-                                                  // "3 BHK",
-                                                  style: GoogleFonts.inter(
-                                                    color: Colors.white,
-                                                    fontSize: 8.sp,
+                                                child: Padding(
+                                                  padding: EdgeInsets.symmetric(
+                                                    horizontal: 4.w,
+                                                  ),
+                                                  child: FittedBox(
+                                                    fit: BoxFit.scaleDown,
+                                                    child: Text(
+                                                      '${property.bedRoom} BHK',
+                                                      // "3 BHK",
+                                                      style: GoogleFonts.inter(
+                                                        color: Colors.white,
+                                                        fontSize: 8.sp,
+                                                      ),
+                                                      maxLines: 1,
+                                                    ),
                                                   ),
                                                 ),
                                               ),
@@ -350,12 +365,21 @@ class _SearchResultScreenState extends ConsumerState<SearchResultScreen> {
                                               ),
                                               height: 25.h,
                                               child: Center(
-                                                child: Text(
-                                                  '${property.propertyType}',
-                                                  // "Apartment",
-                                                  style: GoogleFonts.inter(
-                                                    color: Colors.white,
-                                                    fontSize: 8.sp,
+                                                child: Padding(
+                                                  padding: EdgeInsets.symmetric(
+                                                    horizontal: 4.w,
+                                                  ),
+                                                  child: FittedBox(
+                                                    fit: BoxFit.scaleDown,
+                                                    child: Text(
+                                                      '${property.propertyType}',
+                                                      // "Apartment",
+                                                      style: GoogleFonts.inter(
+                                                        color: Colors.white,
+                                                        fontSize: 8.sp,
+                                                      ),
+                                                      maxLines: 1,
+                                                    ),
                                                   ),
                                                 ),
                                               ),
@@ -382,6 +406,7 @@ class _SearchResultScreenState extends ConsumerState<SearchResultScreen> {
                                                   MaterialPageRoute(
                                                     builder: (context) =>
                                                         PerticulerPropertyPage(
+                                                          propertyId: property.slug ?? property.id ?? "",
                                                           data:
                                                               PropertyDetailsModel.fromProperty(
                                                                 property,
@@ -422,6 +447,7 @@ class _SearchResultScreenState extends ConsumerState<SearchResultScreen> {
                                                   MaterialPageRoute(
                                                     builder: (context) =>
                                                         PerticulerPropertyPage(
+                                                          propertyId: property.slug ?? property.id ?? "",
                                                           data:
                                                               PropertyDetailsModel.fromProperty(
                                                                 property,
@@ -594,9 +620,9 @@ class _SearchResultScreenState extends ConsumerState<SearchResultScreen> {
                                     context,
                                     MaterialPageRoute(
                                       builder: (_) => LoanServiceDetailsPage(
-                                        item: CommonLoanModel.fromSearchLoan(
-                                          loan,
-                                        ),
+                                        // item: CommonLoanModel.fromSearchLoan(
+                                        //   loan,
+                                        // ),
                                       ),
                                     ),
                                   );

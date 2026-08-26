@@ -13,12 +13,14 @@ class LoanQueryBodyModel {
     String loanType;
     String name;
     String city;
+    String? bankName;
 
     LoanQueryBodyModel({
         required this.phone,
         required this.loanType,
         required this.name,
         required this.city,
+        this.bankName,
     });
 
     factory LoanQueryBodyModel.fromJson(Map<String, dynamic> json) => LoanQueryBodyModel(
@@ -26,6 +28,7 @@ class LoanQueryBodyModel {
         loanType: json["loanType"],
         name: json["name"],
         city: json["city"],
+        bankName: json["bankName"],
     );
 
     Map<String, dynamic> toJson() => {
@@ -33,5 +36,6 @@ class LoanQueryBodyModel {
         "loanType": loanType,
         "name": name,
         "city": city,
+        if (bankName != null) "bankName": bankName,
     };
 }

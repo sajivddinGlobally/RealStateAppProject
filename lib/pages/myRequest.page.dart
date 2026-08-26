@@ -10,15 +10,14 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:realstate/Controller/myRequestBookingSerivceController.dart';
-import 'package:realstate/Model/Body/serviceRatingBodyModel.dart';
 import 'package:realstate/Model/cancelServiceBookingBodyModel.dart';
 import 'package:realstate/Model/reseduleServiceBookingBodyModel.dart';
 import 'package:realstate/Model/verfiyServiceAgenetBodyModel.dart';
 import 'package:realstate/core/network/api.state.dart';
 import 'package:realstate/core/utils/preety.dio.dart';
 import 'package:url_launcher/url_launcher.dart';
-
 import '../Model/myBookingServiceRequestResModel.dart';
+import 'rating.page.dart';
 
 class MyrequestPage extends ConsumerStatefulWidget {
   const MyrequestPage({super.key});
@@ -454,9 +453,10 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
                     child: Column(
                       children: [
                         _buildCardHeader(item, status, primaryColor),
+                        _buildItemsList(item, primaryColor),
                         // 2. Status Stepper (new chain)
                         if (status != "cancelled")
-                          _buildStatusStepper(status, primaryColor),
+                          _buildStatusStepper(item, status, primaryColor),
 
                         const Divider(height: 1),
 
@@ -659,12 +659,18 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
 
   Widget _buildCardHeader(dynamic item, String status, Color primaryColor) {
     final lowerStatus = status.toLowerCase();
+    final bool hasServiceBoy =
+        item.serviceBoy != null && item.serviceBoy?.name != null;
 
-    final bool isPending = lowerStatus == 'pending';
-    final bool isAssigned = lowerStatus == 'in_progress';
-    // final bool isOnWay = lowerStatus == 'on_way';
-    final bool isWorking = lowerStatus == 'working';
     final bool isCompleted = lowerStatus == 'complete';
+    final bool isWorking =
+        lowerStatus == 'working' || lowerStatus == 'waiting_for_approval';
+    final bool isAssigned =
+        lowerStatus == 'in_progress' ||
+        lowerStatus == 'assigned' ||
+        lowerStatus == 'on_the_way' ||
+        hasServiceBoy;
+    final bool isPending = lowerStatus == 'pending' && !hasServiceBoy;
 
     return Padding(
       padding: EdgeInsets.all(12.w),
@@ -686,28 +692,46 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
                 ),
               ),
               Container(
-                padding: EdgeInsets.all(5.w),
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
                 decoration: BoxDecoration(
                   color: isCompleted
                       ? Colors.green.shade50
                       : isWorking
-                      ? Colors.blue.shade50
+                      ? Colors.purple.shade50
                       : isAssigned
                       ? Colors.blue.shade50
+                      : lowerStatus == 'cancelled' || lowerStatus == 'rejected'
+                      ? Colors.red.shade50
                       : Colors.orange.shade50,
                   borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(
+                    color: isCompleted
+                        ? Colors.green.shade200
+                        : isWorking
+                        ? Colors.purple.shade200
+                        : isAssigned
+                        ? Colors.blue.shade200
+                        : lowerStatus == 'cancelled' ||
+                              lowerStatus == 'rejected'
+                        ? Colors.red.shade200
+                        : Colors.orange.shade200,
+                  ),
                 ),
                 child: Text(
-                  "${(item.status ?? "")}",
+                  "${(item.status ?? "").toUpperCase()}",
                   style: TextStyle(
                     color: isCompleted
-                        ? Colors.green
+                        ? Colors.green.shade700
                         : isWorking
-                        ? Colors.blue
+                        ? Colors.purple.shade700
                         : isAssigned
-                        ? Colors.blue
-                        : Colors.orange,
+                        ? Colors.blue.shade700
+                        : lowerStatus == 'cancelled' ||
+                              lowerStatus == 'rejected'
+                        ? Colors.red.shade700
+                        : Colors.orange.shade700,
                     fontSize: 10.sp,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
@@ -762,28 +786,41 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
                     ),
                     SizedBox(height: 5.h),
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildDetailChip(
-                          icon: Icons.location_on,
-                          text: item.address,
-                          iconColor: Colors.orange,
-                        ),
-                        Container(
-                          padding: EdgeInsets.only(
-                            left: 5.w,
-                            right: 5.w,
-                            top: 4.h,
-                            bottom: 4.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.green.shade50,
-                            borderRadius: BorderRadius.circular(8.r),
-                          ),
-                          child: Text(
-                            "₹${(item.serviceFee ?? "")}",
-                            style: TextStyle(
-                              color: Colors.green,
-                              fontSize: 10.sp,
+                        Expanded(
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 8.w,
+                              vertical: 5.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8F9FB),
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Padding(
+                                  padding: EdgeInsets.only(top: 2.h),
+                                  child: Icon(
+                                    Icons.location_on,
+                                    size: 10.sp,
+                                    color: Colors.orange,
+                                  ),
+                                ),
+                                SizedBox(width: 5.w),
+                                Expanded(
+                                  child: Text(
+                                    item.address ?? "",
+                                    style: GoogleFonts.roboto(
+                                      fontSize: 10.sp,
+                                      fontWeight: FontWeight.w500,
+                                      color: const Color(0xFF37474F),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -793,6 +830,192 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItemsList(dynamic item, Color primaryColor) {
+    final items = item.items;
+    if (items == null || items.isEmpty) return const SizedBox.shrink();
+
+    final mainItems = items.where((e) => e.isExtra != true).toList();
+    final extraItems = items.where((e) => e.isExtra == true).toList();
+
+    int totalServiceCharges = 0;
+    for (var i in items) {
+      if (i.serviceFee != null) {
+        totalServiceCharges += (i.serviceFee as int);
+      }
+    }
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (mainItems.isNotEmpty) ...[
+              Padding(
+                padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 4.h),
+                child: Text(
+                  "BOOKED SERVICES",
+                  style: GoogleFonts.inter(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey.shade500,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+              ...mainItems.map(
+                (item) => _buildItemRow(item, false, primaryColor),
+              ),
+            ],
+            if (extraItems.isNotEmpty) ...[
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+                child: const Divider(height: 1, color: Colors.black12),
+              ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 4.h),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.add_circle_outline,
+                      color: Colors.orange.shade700,
+                      size: 14.sp,
+                    ),
+                    SizedBox(width: 6.w),
+                    Text(
+                      "ADDITIONAL EXTRA WORK",
+                      style: GoogleFonts.inter(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.orange.shade700,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ...extraItems.map(
+                (item) => _buildItemRow(item, true, primaryColor),
+              ),
+            ],
+            if (totalServiceCharges > 0) ...[
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+                child: const Divider(height: 1, color: Colors.black12),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 5.h),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "Service Charges",
+                      style: GoogleFonts.inter(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    Text(
+                      "₹$totalServiceCharges",
+                      style: GoogleFonts.inter(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.bold,
+                        color: primaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            SizedBox(height: 4.h),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+              decoration: BoxDecoration(
+                color: Colors.green.shade50,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(16.r),
+                  bottomRight: Radius.circular(16.r),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Amount Payable",
+                    style: GoogleFonts.inter(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.green.shade800,
+                    ),
+                  ),
+                  Text(
+                    "₹${item.serviceFee ?? 0}",
+                    style: GoogleFonts.inter(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.green.shade700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildItemRow(dynamic item, bool isExtra, Color primaryColor) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 5.h),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            margin: EdgeInsets.only(top: 4.h, right: 10.w),
+            width: 8.w,
+            height: 8.w,
+            decoration: BoxDecoration(
+              color: isExtra ? Colors.orange.shade400 : primaryColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              item.title ?? "Item",
+              style: GoogleFonts.inter(
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w500,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+          Text(
+            "₹${item.price ?? 0}",
+            style: GoogleFonts.inter(
+              fontSize: 13.sp,
+              fontWeight: FontWeight.bold,
+              color: isExtra ? Colors.orange.shade700 : primaryColor,
+            ),
           ),
         ],
       ),
@@ -828,8 +1051,12 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
     );
   }
 
-  Widget _buildStatusStepper(String status, Color primaryColor) {
-    if (status == 'rejected') {
+  Widget _buildStatusStepper(dynamic item, String status, Color primaryColor) {
+    final lowerStatus = status.toLowerCase();
+    final bool hasServiceBoy =
+        item.serviceBoy != null && item.serviceBoy?.name != null;
+
+    if (lowerStatus == 'rejected') {
       return Padding(
         padding: EdgeInsets.symmetric(vertical: 16.h),
         child: Center(
@@ -861,113 +1088,138 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
     }
 
     int currentStepIndex = 0;
-    if (status == 'pending') {
-      currentStepIndex = 0;
-    } else if (status == 'in_progress') {
-      currentStepIndex = 1;
-    } else if (status == 'working') {
-      currentStepIndex = 3; // On Way (index 2) ko skip karke seedha 3 par
-    } else if (status == 'complete') {
+    bool isPaymentState =
+        lowerStatus == 'waiting_for_approval' ||
+        (item.afterImage != null && item.afterImage!.trim().isNotEmpty);
+
+    if (lowerStatus == 'complete') {
       currentStepIndex = 4;
+    } else if (isPaymentState) {
+      currentStepIndex = 3;
+    } else if (lowerStatus == 'in_progress' || lowerStatus == 'working') {
+      if (item.beforeImage != null && item.beforeImage!.trim().isNotEmpty) {
+        currentStepIndex = 2;
+      } else {
+        currentStepIndex = 1;
+      }
+    } else if (lowerStatus == 'assigned' || lowerStatus == 'on_the_way') {
+      currentStepIndex = 1;
+    } else if (lowerStatus == 'pending') {
+      currentStepIndex = hasServiceBoy ? 1 : 0;
     }
 
-    int activeUntil = currentStepIndex;
-    if (status == 'on_the_way') {
-      activeUntil = 2; // Yeh "On Way" wale container aur line ko fill kar dega
-    } else if (status == 'working' || status == 'complete') {
-      activeUntil = currentStepIndex; // 'working' par index 3 tak sab fill hoga
-    }
+    final int activeUntil = currentStepIndex;
 
     final stepTitles = [
-      "Pending",
+      "Confirmed",
       "Assigned",
-      "On Way",
+      // "On Way",
       "Working",
+      "Payment",
       "Completed",
     ];
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 16.h),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(stepTitles.length, (i) {
-            // Circle Fill Logic
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: List.generate(stepTitles.length * 2 - 1, (index) {
+          if (index.isOdd) {
+            final lineIndex = index ~/ 2;
+            final bool isLineActive = lineIndex < activeUntil;
+            return Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(top: 20.w),
+                child: Container(
+                  height: 3.h,
+                  margin: EdgeInsets.symmetric(horizontal: 2.w),
+                  decoration: BoxDecoration(
+                    color: isLineActive ? primaryColor : Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(2.r),
+                  ),
+                ),
+              ),
+            );
+          } else {
+            final i = index ~/ 2;
             final bool isCircleActive = i <= activeUntil;
+            final bool isCurrent = i == activeUntil && activeUntil < 4;
+            final bool isCompleted = i < activeUntil || activeUntil == 4;
 
-            // Line Fill Logic: Previous step se current step tak ki line
-            final bool isLineActive = i < activeUntil;
-
-            final bool isLast = i == stepTitles.length - 1;
-
-            return Row(
+            return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Column(
-                  children: [
-                    // --- CIRCLE (Container) ---
-                    Container(
-                      width: 32.w,
-                      height: 32.w,
+                SizedBox(
+                  height: 40.w,
+                  child: Center(
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      width: isCurrent ? 36.w : 28.w,
+                      height: isCurrent ? 36.w : 28.w,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        // Yahan isCircleActive se container fill hoga
-                        color: isCircleActive
+                        color: (isCompleted || isCurrent)
                             ? primaryColor
-                            : Colors.grey.shade200,
+                            : Colors.white,
                         border: Border.all(
-                          color: isCircleActive
+                          color: (isCompleted || isCurrent)
                               ? primaryColor
-                              : Colors.grey.shade400,
-                          width: 2.5,
+                              : Colors.grey.shade300,
+                          width: 2.w,
                         ),
+                        boxShadow: isCurrent
+                            ? [
+                                BoxShadow(
+                                  color: primaryColor.withOpacity(0.4),
+                                  blurRadius: 8,
+                                  spreadRadius: 2,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ]
+                            : null,
                       ),
                       child: Center(
-                        child: Text(
-                          '${i + 1}',
-                          style: TextStyle(
-                            color: isCircleActive
-                                ? Colors.white
-                                : Colors.grey.shade600,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15.sp,
-                          ),
-                        ),
+                        child: isCompleted
+                            ? Icon(
+                                Icons.check_rounded,
+                                color: Colors.white,
+                                size: 18.sp,
+                              )
+                            : isCurrent
+                            ? Icon(
+                                Icons.sync_rounded,
+                                color: Colors.white,
+                                size: 18.sp,
+                              )
+                            : Text(
+                                '${i + 1}',
+                                style: GoogleFonts.inter(
+                                  color: Colors.grey.shade400,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12.sp,
+                                ),
+                              ),
                       ),
                     ),
-                    SizedBox(height: 8.h),
-                    // --- TITLE ---
-                    Text(
-                      stepTitles[i],
-                      style: GoogleFonts.inter(
-                        fontSize: 11.sp,
-                        color: isCircleActive
-                            ? primaryColor
-                            : Colors.grey.shade700,
-                        fontWeight: isCircleActive
-                            ? FontWeight.w600
-                            : FontWeight.normal,
-                      ),
-                    ),
-                  ],
-                ),
-                // --- CONNECTING LINE ---
-                if (!isLast)
-                  Container(
-                    width: 50.w,
-                    height: 3.h,
-                    margin: EdgeInsets.only(
-                      left: 4.w,
-                      right: 4.w,
-                      bottom: 20.h,
-                    ),
-                    color: isLineActive ? primaryColor : Colors.grey.shade300,
                   ),
+                ),
+                SizedBox(height: 8.h),
+                Text(
+                  stepTitles[i],
+                  style: GoogleFonts.inter(
+                    fontSize: isCurrent ? 11.sp : 10.sp,
+                    color: (isCompleted || isCurrent)
+                        ? primaryColor
+                        : Colors.grey.shade500,
+                    fontWeight: isCurrent || isCompleted
+                        ? FontWeight.bold
+                        : FontWeight.w500,
+                  ),
+                ),
               ],
             );
-          }),
-        ),
+          }
+        }),
       ),
     );
   }
@@ -999,17 +1251,25 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
     String status,
   ) {
     final lowerStatus = status.toLowerCase();
+    final bool hasServiceBoy =
+        item.serviceBoy != null && item.serviceBoy?.name != null;
 
-    final bool isPending = lowerStatus == 'pending';
-    final bool isAssigned = lowerStatus == 'in_progress';
-    final bool isCancelled = lowerStatus == 'cancelled';
-    final bool isWorking = lowerStatus == 'working';
     final bool isCompleted = lowerStatus == 'complete';
+    final bool isWorking =
+        lowerStatus == 'working' ||
+        lowerStatus == 'waiting_for_approval' ||
+        lowerStatus == 'in_progress';
+    final bool isCancelled = lowerStatus == 'cancelled';
+    final bool isAssigned =
+        lowerStatus == 'assigned' ||
+        lowerStatus == 'on_the_way' ||
+        hasServiceBoy;
+    final bool isPending = lowerStatus == 'pending' && !hasServiceBoy;
 
     final serviceCategory = item.serviceType?.name ?? "Technician";
     final technicianName =
         item.serviceBoy?.name ?? "Assigning $serviceCategory...";
-    final technicianImage = item.serviceProviderImage ?? "";
+    final technicianImage = item.serviceBoy?.image ?? "";
 
     final existingRating = (item.ratings != null && item.ratings!.isNotEmpty)
         ? item.ratings!.first
@@ -1064,9 +1324,7 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
                   color: isCompleted
                       ? Colors.green.shade50
                       : isWorking
-                      // ? Colors.indigo.shade50
-                      // : isOnWay
-                      ? Colors.blue.shade50
+                      ? Colors.purple.shade50
                       : isAssigned
                       ? Colors.blue.shade50
                       : Colors.orange.shade50,
@@ -1075,11 +1333,9 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
                     color: isCompleted
                         ? Colors.green.shade200
                         : isWorking
-                        // ? Colors.indigo.shade200
-                        // : isOnWay
-                        ? Colors.blue.shade200
+                        ? Colors.purple.shade200
                         : isAssigned
-                        ? Colors.blue.shade50
+                        ? Colors.blue.shade200
                         : Colors.orange.shade200,
                   ),
                 ),
@@ -1257,14 +1513,16 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
                               Text(
                                 isPending
                                     ? "Finding technician..."
-                                    : isAssigned
-                                    ? "Technician is on the way"
-                                    // : isOnWay
-                                    // ? "Technician is on the way"
-                                    : isWorking
-                                    ? "Service in progress"
                                     : isCompleted
                                     ? "Service completed"
+                                    : isWorking
+                                    ? (lowerStatus == 'waiting_for_approval'
+                                          ? "Waiting for your approval"
+                                          : "Service in progress")
+                                    : isAssigned
+                                    ? (lowerStatus == 'on_the_way'
+                                          ? "Technician is on the way"
+                                          : "Technician assigned")
                                     : "Status updating...",
                                 style: TextStyle(
                                   fontSize: 12.sp,
@@ -1295,6 +1553,9 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
                       ],
                     ),
                     if (isAssigned &&
+                        !isCompleted &&
+                        !isWorking &&
+                        lowerStatus != 'in_progress' &&
                         item.verificationOtp != null &&
                         item.verificationOtp!.isNotEmpty) ...[
                       SizedBox(height: 12.h),
@@ -1307,6 +1568,8 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
                           border: Border.all(color: Colors.blue.shade200),
                         ),
                         child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
                               "SHARE THIS OTP WITH AGENT",
@@ -1330,7 +1593,7 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
                         ),
                       ),
                     ],
-                    SizedBox(height: 16.h),
+                    // SizedBox(height: 10.h),
                     // Action / Status indicator
                     // if (isAssigned)
                     //   SizedBox(
@@ -1355,268 +1618,199 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
                     //     ),
                     //   )
                     // else
-                    if (isCompleted) ...[
-                      _statusIndicator(
-                        Icons.check_circle,
-                        "SERVICE COMPLETED SUCCESSFULLY",
-                        Colors.green.shade800,
-                        Colors.green.shade100,
-                      ),
+                    if (isCompleted ||
+                        lowerStatus == 'waiting_for_approval') ...[
+                      // _statusIndicator(
+                      //   isCompleted ? Icons.check_circle : Icons.hourglass_top,
+                      //   isCompleted
+                      //       ? "SERVICE COMPLETED SUCCESSFULLY"
+                      //       : "WAITING FOR APPROVAL",
+                      //   isCompleted
+                      //       ? Colors.green.shade800
+                      //       : Colors.orange.shade800,
+                      //   isCompleted
+                      //       ? Colors.green.shade100
+                      //       : Colors.orange.shade50,
+                      // ),
                       SizedBox(height: 12.h),
-
                       // ⭐ REVIEW CARD
-                      Container(
-                        width: double.infinity,
-                        padding: EdgeInsets.all(14.w),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(14.r),
-                          border: Border.all(color: Colors.green.shade200),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              isAlreadyRated
-                                  ? "Your Review"
-                                  : "Rate Your Experience",
-                              style: GoogleFonts.inter(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14.sp,
+                      if (isAlreadyRated)
+                        Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.all(20.w),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20.r),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.04),
+                                blurRadius: 15,
+                                offset: const Offset(0, 5),
                               ),
+                            ],
+                            border: Border.all(
+                              color: Colors.green.shade100,
+                              width: 1.5,
                             ),
-
-                            SizedBox(height: 10.h),
-
-                            Row(
-                              children: List.generate(5, (index) {
-                                return IconButton(
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(),
-                                  icon: Icon(
-                                    index < rating
-                                        ? Icons.star
-                                        : Icons.star_border,
-                                    color: Colors.orange,
-                                    size: 26.sp,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.star_rate_rounded,
+                                    color: Colors.green.shade600,
+                                    size: 22.sp,
                                   ),
-                                  onPressed: isAlreadyRated
-                                      ? null
-                                      : () {
-                                          ref
-                                                  .read(
-                                                    ratingProvider(
-                                                      item.id ?? "",
-                                                    ).notifier,
-                                                  )
-                                                  .state =
-                                              index + 1;
-                                        },
-                                );
-                              }),
-                            ),
-                            SizedBox(height: 10.h),
-                            TextField(
-                              controller:
-                                  TextEditingController(text: reviewText)
-                                    ..selection = TextSelection.collapsed(
-                                      offset: reviewText.length,
+                                  SizedBox(width: 8.w),
+                                  Text(
+                                    "Your Review",
+                                    style: GoogleFonts.inter(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.grey.shade800,
+                                      fontSize: 15.sp,
                                     ),
-                              enabled: !isAlreadyRated,
-                              maxLines: 3,
-                              onChanged: (val) {
-                                ref
-                                        .read(
-                                          reviewTextProvider(
-                                            item.id ?? "",
-                                          ).notifier,
-                                        )
-                                        .state =
-                                    val;
-                              },
-                              decoration: InputDecoration(
-                                hintText: "Write your review...",
-                                filled: true,
-                                fillColor: Colors.grey.shade100,
-                                contentPadding: EdgeInsets.all(10.w),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10.r),
-                                  borderSide: BorderSide(),
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 12.h),
-                            Text(
-                              isAlreadyRated
-                                  ? "Problem Solve Photo"
-                                  : "Upload Problem Solve Photo",
-                              style: GoogleFonts.inter(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14.sp,
-                              ),
-                            ),
-                            SizedBox(height: 10.h),
-                            Center(
-                              child: Container(
-                                width: double.infinity,
-                                height: 180.h,
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(20.r),
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      const Color(0xffE86A34).withOpacity(0.5),
-                                      Colors.transparent,
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
                                   ),
-                                ),
-                                child: Container(
+                                ],
+                              ),
+                              if (rating > 0) ...[
+                                SizedBox(height: 14.h),
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 12.w,
+                                    vertical: 8.h,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: Colors.grey.shade100,
-                                    borderRadius: BorderRadius.circular(18.r),
-                                    image: showImage
-                                        ? DecorationImage(
-                                            fit: BoxFit.cover,
-                                            image: problemSolvePhtot != null
-                                                ? FileImage(problemSolvePhtot!)
-                                                : NetworkImage(apiImage!)
-                                                      as ImageProvider,
-                                          )
-                                        : null,
+                                    color: Colors.amber.shade50,
+                                    borderRadius: BorderRadius.circular(10.r),
+                                    border: Border.all(
+                                      color: Colors.amber.shade200,
+                                    ),
                                   ),
-                                  child: !showImage
-                                      ? InkWell(
-                                          onTap: isAlreadyRated
-                                              ? null
-                                              : () => showImagePicker(),
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              Icon(
-                                                Icons.cloud_upload_outlined,
-                                                size: 40.sp,
-                                                color: Colors.grey.shade400,
-                                              ),
-                                              SizedBox(height: 8.h),
-                                              Text(
-                                                "Upload Solve Photo",
-                                                style: TextStyle(
-                                                  color: Colors.grey.shade500,
-                                                  fontSize: 14.sp,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        )
-                                      : null,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.star_rounded,
+                                        color: Colors.amber.shade700,
+                                        size: 20.sp,
+                                      ),
+                                      SizedBox(width: 4.w),
+                                      Text(
+                                        rating.toString(),
+                                        style: GoogleFonts.inter(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.amber.shade900,
+                                          fontSize: 14.sp,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
+                              ],
+                              if (reviewText.isNotEmpty) ...[
+                                SizedBox(height: 16.h),
+                                Container(
+                                  width: double.infinity,
+                                  padding: EdgeInsets.all(16.w),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade50,
+                                    borderRadius: BorderRadius.circular(16.r),
+                                    border: Border.all(
+                                      color: Colors.grey.shade200,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    reviewText,
+                                    style: GoogleFonts.inter(
+                                      color: Colors.grey.shade800,
+                                      fontSize: 14.sp,
+                                      height: 1.5,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              if (showImage) ...[
+                                SizedBox(height: 20.h),
+                                Text(
+                                  "Problem Resolution Photo",
+                                  style: GoogleFonts.inter(
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey.shade700,
+                                    fontSize: 13.sp,
+                                  ),
+                                ),
+                                SizedBox(height: 12.h),
+                                Center(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(16.r),
+                                    child: Image.network(
+                                      apiImage!,
+                                      width: double.infinity,
+                                      height: 180.h,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        )
+                      else
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                CupertinoPageRoute(
+                                  builder: (context) => RatingPage(item: item),
+                                ),
+                              ).then((_) {
+                                ref.invalidate(
+                                  myRequestBookingServiceContorller,
+                                );
+                              });
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green.shade600,
+                              elevation: 0,
+                              padding: EdgeInsets.symmetric(vertical: 14.h),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12.r),
                               ),
                             ),
-                            SizedBox(height: 12.h),
-                            if (!isAlreadyRated)
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton(
-                                  onPressed: () async {
-                                    if (rating == 0) {
-                                      Fluttertoast.showToast(
-                                        msg: "Please give rating",
-                                      );
-                                      return;
-                                    }
-                                    final serivce = APIStateNetwork(
-                                      createDio(),
-                                    );
-                                    if (problemSolvePhtot != null) {
-                                      final imgResponse = await serivce
-                                          .uploadImage(problemSolvePhtot!);
-                                      if (imgResponse.code == 0 &&
-                                          imgResponse.error == false) {
-                                        existingImage = imgResponse
-                                            .data!
-                                            .imageUrl
-                                            .toString();
-                                      } else {
-                                        Fluttertoast.showToast(
-                                          msg:
-                                              "Image upload failed, trying again.",
-                                        );
-                                      }
-                                    }
-                                    final body = ServiceRatingBodyModel(
-                                      serviceBooking: item.id,
-                                      rating: rating,
-                                      review: reviewText,
-                                      image: existingImage,
-                                    );
-
-                                    try {
-                                      final resposne = await serivce
-                                          .createServiceRating(body);
-                                      if (resposne.code == 0 &&
-                                          resposne.error == false) {
-                                        Fluttertoast.showToast(
-                                          msg: resposne.message ?? "Sucess",
-                                        );
-                                        ref.invalidate(
-                                          myRequestBookingServiceContorller,
-                                        );
-                                      } else {
-                                        Fluttertoast.showToast(
-                                          msg: resposne.message ?? "Error",
-                                        );
-                                      }
-                                    } catch (e, st) {
-                                      log(st.toString());
-                                      log(e.toString());
-                                      Fluttertoast.showToast(
-                                        msg: "Rating failed $e",
-                                      );
-                                    }
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.green,
-                                    padding: EdgeInsets.symmetric(
-                                      vertical: 12.h,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10.r),
-                                    ),
-                                  ),
-                                  child: Text("Submit Review"),
-                                ),
-                              )
-                            else
-                              Center(
-                                child: Text(
-                                  "✅ Review Submitted",
-                                  style: TextStyle(
-                                    color: Colors.green,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                            child: Text(
+                              "Give Rating & Review",
+                              style: GoogleFonts.inter(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15.sp,
+                                color: Colors.white,
                               ),
-                          ],
+                            ),
+                          ),
                         ),
-                      ),
-                    ] else if (isWorking)
-                      _statusIndicator(
-                        Icons.engineering,
-                        "TECHNICIAN WORKING ON SITE",
-                        Colors.indigo.shade800,
-                        Colors.indigo.shade50,
-                      )
-                    else if (isAssigned)
-                      _statusIndicator(
-                        Icons.directions_car,
-                        "TECHNICIAN IS ON THE WAY",
-                        Colors.blue.shade800,
-                        Colors.blue.shade50,
-                      )
+                    ]
+                    // else if (isWorking &&
+                    //     lowerStatus != 'waiting_for_approval')
+                    //   _statusIndicator(
+                    //     Icons.engineering,
+                    //     "TECHNICIAN WORKING ON SITE",
+                    //     Colors.indigo.shade800,
+                    //     Colors.indigo.shade50,
+                    //   )
+                    // else if (isAssigned)
+                    //   _statusIndicator(
+                    //     lowerStatus == 'on_the_way'
+                    //         ? Icons.directions_car
+                    //         : Icons.assignment_ind,
+                    //     lowerStatus == 'on_the_way'
+                    //         ? "TECHNICIAN IS ON THE WAY"
+                    //         : "TECHNICIAN ASSIGNED",
+                    //     Colors.blue.shade800,
+                    //     Colors.blue.shade50,
+                    //   )
                     else if (isPending)
                       _statusIndicator(
                         Icons.sync,
@@ -1683,7 +1877,7 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
               style: GoogleFonts.inter(
                 color: textColor,
                 fontWeight: FontWeight.w600,
-                fontSize: 13.sp,
+                fontSize: 12.sp,
               ),
               textAlign: TextAlign.center,
             ),

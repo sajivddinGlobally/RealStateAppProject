@@ -16,11 +16,15 @@ class SaveServiceBodyModel {
   String? serviceType;
   String? name;
   String? customServiceType;
+  List<String>? serviceTypeArray;
 
-  SaveServiceBodyModel({this.email, this.phone, this.serviceType, 
-  this.name,
-  this.customServiceType,
-  
+  SaveServiceBodyModel({
+    this.email,
+    this.phone,
+    this.serviceType,
+    this.name,
+    this.customServiceType,
+    this.serviceTypeArray,
   });
 
   factory SaveServiceBodyModel.fromJson(Map<String, dynamic> json) =>
@@ -30,6 +34,9 @@ class SaveServiceBodyModel {
         serviceType: json["serviceType"],
         name: json["name"],
         customServiceType: json["customServiceType"],
+        serviceTypeArray: json["serviceTypeArray"] == null
+            ? []
+            : List<String>.from(json["serviceTypeArray"].map((x) => x)),
       );
 
   Map<String, dynamic> toJson() => {
@@ -37,6 +44,7 @@ class SaveServiceBodyModel {
     "phone": phone,
     "serviceType": serviceType,
     "name": name,
-    "customServiceType":customServiceType
+    "customServiceType": customServiceType,
+    "serviceTypeArray": serviceTypeArray,
   };
 }

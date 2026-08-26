@@ -114,7 +114,7 @@ class Data {
     "year": year,
     "createdAt": createdAt,
     "updatedAt": updatedAt,
-    "serviceFee":serviceFee,
+    "serviceFee": serviceFee,
     "pricingOptions": pricingOptions == null
         ? []
         : List<dynamic>.from(pricingOptions!.map((x) => x.toJson())),
@@ -132,6 +132,7 @@ class PricingOption {
   String? image;
   String? description;
   String? id;
+  int? serviceFee;
 
   PricingOption({
     this.title,
@@ -139,6 +140,7 @@ class PricingOption {
     this.image,
     this.description,
     this.id,
+    this.serviceFee,
   });
 
   factory PricingOption.fromJson(Map<String, dynamic> json) => PricingOption(
@@ -147,6 +149,7 @@ class PricingOption {
     image: json["image"],
     description: json["description"],
     id: json["_id"],
+    serviceFee: json["serviceFee"],
   );
 
   Map<String, dynamic> toJson() => {
@@ -155,6 +158,7 @@ class PricingOption {
     "image": image,
     "description": description,
     "_id": id,
+    "serviceFee": serviceFee,
   };
 }
 

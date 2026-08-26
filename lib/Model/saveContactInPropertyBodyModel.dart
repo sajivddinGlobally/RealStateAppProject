@@ -13,12 +13,14 @@ class SaveContactInPropertyBodyModel {
     String name;
     String phone;
     String propertyId;
+    bool interested;
 
     SaveContactInPropertyBodyModel({
         required this.email,
         required this.name,
         required this.phone,
         required this.propertyId,
+        required this.interested,
     });
 
     factory SaveContactInPropertyBodyModel.fromJson(Map<String, dynamic> json) => SaveContactInPropertyBodyModel(
@@ -26,6 +28,7 @@ class SaveContactInPropertyBodyModel {
         name: json["name"],
         phone: json["phone"],
         propertyId: json["propertyId"],
+        interested: json["interested"],
     );
 
     Map<String, dynamic> toJson() => {
@@ -33,5 +36,6 @@ class SaveContactInPropertyBodyModel {
         "name": name,
         "phone": phone,
         "propertyId": propertyId,
+        "interested": interested,
     };
 }

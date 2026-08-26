@@ -309,7 +309,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
   void _preFillData(ListElement data) {
     setState(() {
       selectedPropertyType = _capitalize(data.property);
-      selectedPropertySubType = data.propertyType;
+      selectedPropertySubType = data.propertyType?.toLowerCase();
       selectedListingCategory = _normalizeListingCategory(data.listingCategory);
 
       /// ✅ fir mapping karo
@@ -323,8 +323,14 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
       selectedLocality = data.localityArea?.trim();
       selectedFurnishing = _normalize(data.furnishing);
       _priceController.text = data.price ?? '';
-      _bedroomsController.text = data.bedRoom ?? '';
-      _selectedBhk = data.bedRoom ?? "";
+      String? bedRoomValue = data.bedRoom;
+      if (bedRoomValue != null &&
+          bedRoomValue.isNotEmpty &&
+          !bedRoomValue.contains("BHK")) {
+        bedRoomValue = "$bedRoomValue BHK";
+      }
+      _bedroomsController.text = bedRoomValue ?? '';
+      _selectedBhk = bedRoomValue ?? "";
       _bathroomsController.text = data.bathrooms ?? '';
       _selectBathroom = data.bathrooms ?? "";
       _selectBalcony = data.balcony ?? "";
@@ -608,12 +614,14 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
       final body = CreatePropertyBodyModel(
         localityArea: selectedLocality,
         property: selectedPropertyType?.toLowerCase(),
-        propertyType: selectedPropertySubType,
+        propertyType: selectedPropertySubType?.toLowerCase() == 'home'
+            ? 'Home'
+            : selectedPropertySubType,
         listingCategory: selectedType == 1 ? "sell" : "rent",
         city: selectedCity ?? "",
         price: _priceController.text.trim(),
         area: _areaController.text.trim(),
-        bedRoom: _bedroomsController.text.trim(),
+        bedRoom: _bedroomsController.text.replaceAll(" BHK", "").trim(),
         bathrooms: _bathroomsController.text.trim(),
         kitchen: _selectkitchen,
         furnishing: selectedFurnishing?.toLowerCase(),
@@ -658,12 +666,14 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
             id: propertyId,
             localityArea: selectedLocality,
             property: selectedPropertyType!.toLowerCase(),
-            propertyType: selectedPropertySubType,
+            propertyType: selectedPropertySubType?.toLowerCase() == 'home'
+                ? 'Home'
+                : selectedPropertySubType,
             listingCategory: selectedListingCategory!.toLowerCase(),
             city: selectedCity ?? "",
             price: _priceController.text.trim(),
             area: _areaController.text.trim(),
-            bedRoom: _bedroomsController.text.trim(),
+            bedRoom: _bedroomsController.text.replaceAll(" BHK", "").trim(),
             bathrooms: _bathroomsController.text.trim(),
             kitchen: _selectkitchen,
             furnishing: selectedFurnishing!.toLowerCase(),
@@ -1089,6 +1099,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                                             "land",
                                             "building",
                                             "villa",
+                                            "home",
                                             "penthouse",
                                             "hotel-apartment",
                                             "floor",
@@ -1097,10 +1108,17 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                                         : [
                                             "office",
                                             "warehouse",
+                                            "industrial-land",
                                             "showroom",
                                             "shop",
+                                            "labour-camp",
+                                            "bulk-unit",
                                             "factory",
+                                            "mixed-use-land",
                                             "other-commercial",
+                                            "floor",
+                                            "building",
+                                            "villa",
                                           ])
                                     .length,
                             gridDelegate:
@@ -1120,18 +1138,27 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                                       "land",
                                       "building",
                                       "villa",
+                                      "home",
                                       "penthouse",
                                       "hotel-apartment",
                                       "floor",
                                       "studio",
+                                      "condos",
                                     ]
                                   : [
                                       "office",
                                       "warehouse",
+                                      "industrial-land",
                                       "showroom",
                                       "shop",
+                                      "labour-camp",
+                                      "bulk-unit",
                                       "factory",
+                                      "mixed-use-land",
                                       "other-commercial",
+                                      "floor",
+                                      "building",
+                                      "villa",
                                     ];
 
                               final item = options[index];
@@ -1493,6 +1520,88 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                 type: TextInputType.number,
                 isRequired: true,
               ),
+              if (isEditMode) ...[
+                SizedBox(height: 20.h),
+                Text(
+                  "Avenue Overview",
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF24ADD7),
+                  ),
+                ),
+                SizedBox(height: 12.h),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildTextField(
+                        'Project Area',
+                        _projectAreaController,
+                        isRequired: false,
+                        contentPaddingVertical: 10,
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: _buildTextField(
+                        'Size',
+                        _unitSizesController,
+                        isRequired: false,
+                        contentPaddingVertical: 10,
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: _buildTextField(
+                        'Project Size',
+                        _projectSizeController,
+                        isRequired: false,
+                        contentPaddingVertical: 10,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 12.h),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildTextField(
+                        'Launch Date',
+                        _launchDateController,
+                        isRequired: false,
+                        hint: "mm/dd/yyyy",
+                        hintStyle: TextStyle(fontSize: 12.sp),
+                        readOnly: true,
+                        contentPaddingVertical: 10,
+                        onTap: () => _selectDate(_launchDateController),
+                        suffixIcon: Icon(
+                          Icons.calendar_today,
+                          color: Colors.black,
+                          size: 16.sp,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: _buildTextField(
+                        'Possession Start',
+                        _possessionDateController,
+                        isRequired: false,
+                        hint: "mm/dd/yyyy",
+                        hintStyle: TextStyle(fontSize: 12.sp),
+                        readOnly: true,
+                        contentPaddingVertical: 10,
+                        onTap: () => _selectDate(_possessionDateController),
+                        suffixIcon: Icon(
+                          Icons.calendar_today,
+                          color: Colors.black,
+                          size: 16.sp,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         );
@@ -2053,6 +2162,10 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
     VoidCallback? onTap,
     bool readOnly = false,
     bool isRequired = true,
+    Widget? suffixIcon,
+    TextStyle? hintStyle,
+    TextStyle? style,
+    double contentPaddingVertical = 14,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2068,6 +2181,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
         const SizedBox(height: 6),
         TextFormField(
           // Changed to TextFormField
+          style: style,
           controller: controller,
           maxLines: maxLines,
           keyboardType: type ?? TextInputType.text,
@@ -2078,12 +2192,14 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
               : null,
           autovalidateMode: AutovalidateMode.onUserInteraction,
           decoration: InputDecoration(
+            suffixIcon: suffixIcon,
             hintText: hint,
+            hintStyle: hintStyle,
             filled: true,
             fillColor: const Color(0xFFF8F9FA),
-            contentPadding: const EdgeInsets.symmetric(
+            contentPadding: EdgeInsets.symmetric(
               horizontal: 16,
-              vertical: 14,
+              vertical: contentPaddingVertical,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),

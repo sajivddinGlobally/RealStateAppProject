@@ -102,7 +102,11 @@ class PropertyId {
     String? ded;
     String? brn;
     String? bathrooms;
+    String? kitchen;
+    String? balcony;
+    String? parking;
     String? furnishing;
+    List<String>? furnishingItems;
     String? description;
     List<AroundProject>? aroundProject;
     String? fullName;
@@ -139,7 +143,11 @@ class PropertyId {
         this.ded,
         this.brn,
         this.bathrooms,
+        this.kitchen,
+        this.balcony,
+        this.parking,
         this.furnishing,
+        this.furnishingItems,
         this.description,
         this.aroundProject,
         this.fullName,
@@ -177,7 +185,11 @@ class PropertyId {
         ded: json["ded"],
         brn: json["brn"],
         bathrooms: json["bathrooms"],
+        kitchen: json["kitchen"],
+        balcony: json["balcony"],
+        parking: json["parking"],
         furnishing: json["furnishing"],
+        furnishingItems: json["furnishingItems"] == null ? [] : List<String>.from(json["furnishingItems"]!.map((x) => x)),
         description: json["description"],
         aroundProject: json["aroundProject"] == null ? [] : List<AroundProject>.from(json["aroundProject"]!.map((x) => AroundProject.fromJson(x))),
         fullName: json["fullName"],
@@ -215,7 +227,11 @@ class PropertyId {
         "ded": ded,
         "brn": brn,
         "bathrooms": bathrooms,
+        "kitchen": kitchen,
+        "balcony": balcony,
+        "parking": parking,
         "furnishing": furnishing,
+        "furnishingItems": furnishingItems == null ? [] : List<dynamic>.from(furnishingItems!.map((x) => x)),
         "description": description,
         "aroundProject": aroundProject == null ? [] : List<dynamic>.from(aroundProject!.map((x) => x.toJson())),
         "fullName": fullName,
@@ -263,25 +279,37 @@ class AroundProject {
 
 class AveneuOverView {
     dynamic size;
-    double? projectSize;
+    dynamic projectSize;
     double? avgPrice;
+    String? projectArea;
+    String? launchDate;
+    String? possessionStart;
 
     AveneuOverView({
         this.size,
         this.projectSize,
         this.avgPrice,
+        this.projectArea,
+        this.launchDate,
+        this.possessionStart,
     });
 
     factory AveneuOverView.fromJson(Map<String, dynamic> json) => AveneuOverView(
         size: json["size"],
-        projectSize: _toDouble(json["projectSize"]),
-      avgPrice: _toDouble(json["avgPrice"]),
+        projectSize: json["projectSize"],
+        avgPrice: _toDouble(json["avgPrice"]),
+        projectArea: json["projectArea"]?.toString(),
+        launchDate: json["launchDate"]?.toString(),
+        possessionStart: json["possessionStart"]?.toString(),
     );
 
     Map<String, dynamic> toJson() => {
         "size": size,
         "projectSize": projectSize,
         "avgPrice": avgPrice,
+        "projectArea": projectArea,
+        "launchDate": launchDate,
+        "possessionStart": possessionStart,
     };
 }
 

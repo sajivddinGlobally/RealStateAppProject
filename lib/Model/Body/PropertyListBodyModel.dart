@@ -38,7 +38,6 @@ class PropertyListBodyModel {
 }
 */
 
-
 // To parse this JSON data, do
 //
 //     final propertyListBodyModel = propertyListBodyModelFromJson(jsonString);
@@ -56,15 +55,19 @@ class PropertyListBodyModel {
   int? pageNo;
   String? sortBy;
   String? sortOrder;
-  // ── Filter fields (these must match what backend expects) ────────
+  // ── Filter fields (matching exactly what backend expects) ────────
   String? minPrice;
   String? maxPrice;
-  String? bedrooms;       // comma-separated e.g. "2,3,4"
-  String? cities;         // comma-separated e.g. "Jaipur,Gwalior,Delhi"
-  // Optional: add more filters later if needed
-  String? listingCategory;   // "buy", "rent"
-  String? propertyType;      // "apartment", "villa", ...
-  String? localityAreas;     // comma-separated localities
+  List<String>? bedroom; 
+  String? city; 
+  String? listingCategory;
+  String? propertyType;
+  String? keyWord;
+  List<String>? balcony;
+  List<String>? bathrooms;
+  List<String>? kitchen;
+  List<String>? locality;
+  List<String>? parking;
 
   PropertyListBodyModel({
     this.size,
@@ -73,11 +76,16 @@ class PropertyListBodyModel {
     this.sortOrder,
     this.minPrice,
     this.maxPrice,
-    this.bedrooms,
-    this.cities,
+    this.bedroom,
+    this.city,
     this.listingCategory,
     this.propertyType,
-    this.localityAreas,
+    this.keyWord,
+    this.balcony,
+    this.bathrooms,
+    this.kitchen,
+    this.locality,
+    this.parking,
   });
 
   factory PropertyListBodyModel.fromJson(Map<String, dynamic> json) =>
@@ -88,11 +96,16 @@ class PropertyListBodyModel {
         sortOrder: json["sortOrder"],
         minPrice: json["minPrice"],
         maxPrice: json["maxPrice"],
-        bedrooms: json["bedrooms"],
-        cities: json["cities"],
+        bedroom: json["bedroom"] == null ? [] : List<String>.from(json["bedroom"]!.map((x) => x)),
+        city: json["city"],
         listingCategory: json["listingCategory"],
         propertyType: json["propertyType"],
-        localityAreas: json["localityAreas"],
+        keyWord: json["keyWord"],
+        balcony: json["balcony"] == null ? [] : List<String>.from(json["balcony"]!.map((x) => x)),
+        bathrooms: json["bathrooms"] == null ? [] : List<String>.from(json["bathrooms"]!.map((x) => x)),
+        kitchen: json["kitchen"] == null ? [] : List<String>.from(json["kitchen"]!.map((x) => x)),
+        locality: json["locality"] == null ? [] : List<String>.from(json["locality"]!.map((x) => x)),
+        parking: json["parking"] == null ? [] : List<String>.from(json["parking"]!.map((x) => x)),
       );
 
   Map<String, dynamic> toJson() {
@@ -103,11 +116,16 @@ class PropertyListBodyModel {
     if (sortOrder != null) data["sortOrder"] = sortOrder;
     if (minPrice != null) data["minPrice"] = minPrice;
     if (maxPrice != null) data["maxPrice"] = maxPrice;
-    if (bedrooms != null) data["bedrooms"] = bedrooms;
-    if (cities != null) data["cities"] = cities;
+    if (bedroom != null) data["bedroom"] = bedroom;
+    if (city != null) data["city"] = city;
     if (listingCategory != null) data["listingCategory"] = listingCategory;
     if (propertyType != null) data["propertyType"] = propertyType;
-    if (localityAreas != null) data["localityAreas"] = localityAreas;
+    if (keyWord != null) data["keyWord"] = keyWord;
+    if (balcony != null) data["balcony"] = balcony;
+    if (bathrooms != null) data["bathrooms"] = bathrooms;
+    if (kitchen != null) data["kitchen"] = kitchen;
+    if (locality != null) data["locality"] = locality;
+    if (parking != null) data["parking"] = parking;
     return data;
   }
 }

@@ -39,6 +39,9 @@ class LoanItem {
   String? userId;
   String? loanType;
   String? city;
+  String? bankName;
+  String? manualBankName;
+  String? rejectedReason;
   String? status;
   bool? isDisable;
   bool? isDeleted;
@@ -55,6 +58,9 @@ class LoanItem {
     this.userId,
     this.loanType,
     this.city,
+    this.bankName,
+    this.manualBankName,
+    this.rejectedReason,
     this.status,
     this.isDisable,
     this.isDeleted,
@@ -73,6 +79,9 @@ class LoanItem {
       userId: json['userId'],
       loanType: json['loanType'],
       city: json['city'],
+      bankName: json['bankName'],
+      manualBankName: json['manualBankName'],
+      rejectedReason: json['rejectedReason'],
       status: json['status'],
       isDisable: json['isDisable'],
       isDeleted: json['isDeleted'],

@@ -17,6 +17,8 @@ import 'package:realstate/core/network/api.state.dart';
 import 'package:realstate/core/utils/preety.dio.dart';
 import 'package:realstate/pages/myRequest.page.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 
 class HomeServiceDetailsPage extends ConsumerStatefulWidget {
   final String id;
@@ -67,6 +69,7 @@ class _HomeServiceDetailsPageState
   }
 
   File? selectedImage;
+  bool isFetchingLocation = false;
   final ImagePicker _picker = ImagePicker();
 
   Future<void> pickImage(ImageSource source, StateSetter dialogState) async {
@@ -126,11 +129,90 @@ class _HomeServiceDetailsPageState
     }
   }
 
+  Future<String?> _getCurrentLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      Fluttertoast.showToast(msg: "Location services are disabled.");
+      return null;
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        Fluttertoast.showToast(msg: "Location permissions are denied");
+        return null;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      Fluttertoast.showToast(
+        msg: "Location permissions are permanently denied.",
+      );
+      return null;
+    }
+
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.best,
+      );
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks.first;
+
+        List<String> addressParts = [];
+        if (place.subThoroughfare != null &&
+            place.subThoroughfare!.isNotEmpty) {
+          addressParts.add(place.subThoroughfare!);
+        }
+        if (place.thoroughfare != null && place.thoroughfare!.isNotEmpty) {
+          addressParts.add(place.thoroughfare!);
+        }
+        if (place.name != null &&
+            place.name!.isNotEmpty &&
+            !addressParts.contains(place.name)) {
+          addressParts.add(place.name!);
+        }
+        if (place.street != null &&
+            place.street!.isNotEmpty &&
+            !addressParts.contains(place.street)) {
+          addressParts.add(place.street!);
+        }
+        if (place.subLocality != null && place.subLocality!.isNotEmpty) {
+          addressParts.add(place.subLocality!);
+        }
+        if (place.locality != null && place.locality!.isNotEmpty) {
+          addressParts.add(place.locality!);
+        }
+        if (place.postalCode != null && place.postalCode!.isNotEmpty) {
+          addressParts.add(place.postalCode!);
+        }
+        if (place.administrativeArea != null &&
+            place.administrativeArea!.isNotEmpty) {
+          addressParts.add(place.administrativeArea!);
+        }
+
+        return addressParts.join(', ');
+      }
+    } catch (e) {
+      Fluttertoast.showToast(msg: "Failed to get location: $e");
+    }
+    return null;
+  }
+
   void showBookingDialog(
     BuildContext context,
     List slots,
     String id,
     int amount,
+    String? serviceFees,
   ) {
     final addressController = TextEditingController();
     final issueController = TextEditingController();
@@ -360,13 +442,13 @@ class _HomeServiceDetailsPageState
                                             Text(
                                               "Service Charge",
                                               style: TextStyle(
-                                                fontSize: 14.sp, // 18 -> 14
+                                                fontSize: 14.sp,
                                                 color: const Color(0xff70798B),
                                               ),
                                             ),
 
                                             Text(
-                                              "₹0",
+                                              "₹$serviceFees",
                                               style: TextStyle(
                                                 fontSize: 14.sp,
                                                 fontWeight: FontWeight.w600,
@@ -397,9 +479,9 @@ class _HomeServiceDetailsPageState
                                             ),
 
                                             Text(
-                                              "₹$cartTotal",
+                                              "₹${cartTotal + (int.tryParse(serviceFees ?? '0') ?? 0)}",
                                               style: TextStyle(
-                                                fontSize: 20.sp, // 34 -> 24
+                                                fontSize: 20.sp,
                                                 fontWeight: FontWeight.bold,
                                                 color: const Color(0xff11B8F4),
                                               ),
@@ -561,10 +643,26 @@ class _HomeServiceDetailsPageState
                                     message: issueController.text.trim(),
                                     problemImgae: uploadedImageUrl,
                                     serviceDate: selectedDate,
-                                    // serviceFee: amount,
-                                    serviceFee: cartTotal,
+                                    serviceFee:
+                                        cartTotal +
+                                        (int.tryParse(serviceFees ?? '0') ?? 0),
                                     serviceTimeSlot: selectedSlot,
                                     serviceType: id,
+                                    items: cartItems.map((e) {
+                                      return Item(
+                                        id: e.id,
+                                        serviceId: id,
+                                        title: e.title,
+                                        price:
+                                            int.tryParse(e.price.toString()) ??
+                                            0,
+                                        image: e.image,
+                                        description: e.description,
+                                        serviceFee:
+                                            int.tryParse(serviceFees ?? '0') ??
+                                            0,
+                                      );
+                                    }).toList(),
                                   );
 
                                   try {
@@ -644,30 +742,84 @@ class _HomeServiceDetailsPageState
           ),
 
           SizedBox(height: 10.h),
-          _sectionLabel("VISIT ADDRESS"),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _sectionLabel("VISIT ADDRESS"),
+              TextButton.icon(
+                onPressed: isFetchingLocation
+                    ? null
+                    : () async {
+                        setState(() => isFetchingLocation = true);
+                        String? addr = await _getCurrentLocation();
+                        if (addr != null) {
+                          address.text = addr;
+                        }
+                        setState(() => isFetchingLocation = false);
+                      },
+                icon: isFetchingLocation
+                    ? const SizedBox(
+                        height: 14,
+                        width: 14,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Color(0xFF24ADD7),
+                        ),
+                      )
+                    : const Icon(Icons.my_location, size: 16),
+                label: Text(
+                  isFetchingLocation ? "Fetching..." : "Current Location",
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: isFetchingLocation
+                        ? Colors.grey
+                        : const Color(0xFF24ADD7),
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF24ADD7),
+                  padding: EdgeInsets.zero,
+                  minimumSize: const Size(50, 30),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 5.h),
           TextField(
             controller: address,
+            style: TextStyle(fontSize: 14.sp),
             decoration: InputDecoration(
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 15.w,
+                vertical: 15.h,
+              ),
               hintText: "Enter address",
+              hintStyle: TextStyle(
+                fontSize: 14.sp,
+                color: Colors.grey.shade500,
+              ),
               filled: true,
               fillColor: Colors.grey[50],
               prefixIcon: Icon(
                 Icons.location_on,
-                size: 16,
+                size: 20.sp,
                 color: Colors.grey.shade500,
               ),
+              prefixIconConstraints: BoxConstraints(minWidth: 35.w),
+
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(12.r),
                 borderSide: BorderSide(color: Colors.grey.shade400),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(12.r),
                 borderSide: BorderSide(color: Colors.black),
               ),
             ),
           ),
           SizedBox(height: 20.h),
-          _sectionLabel("SELECT DAY"),
+          _sectionLabel("SELECT DATE"),
           InkWell(
             onTap: () async {
               DateTime? picked = await showDatePicker(
@@ -679,10 +831,10 @@ class _HomeServiceDetailsPageState
               if (picked != null) setState(() => onDateChange(picked));
             },
             child: Container(
-              padding: EdgeInsets.all(15.h),
+              padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 15.h),
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.grey.shade400),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(12.r),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -691,8 +843,18 @@ class _HomeServiceDetailsPageState
                     date == null
                         ? "Select Date"
                         : DateFormat('dd/MM/yyyy').format(date),
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: date == null
+                          ? Colors.grey.shade600
+                          : Colors.black87,
+                    ),
                   ),
-                  const Icon(Icons.calendar_month, color: Colors.black54),
+                  Icon(
+                    Icons.calendar_month,
+                    color: Colors.black54,
+                    size: 20.sp,
+                  ),
                 ],
               ),
             ),
@@ -706,14 +868,14 @@ class _HomeServiceDetailsPageState
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(12.r),
                   ),
                   child: Column(
                     children: [
                       Icon(
                         Icons.info_outline,
                         color: Colors.grey[400],
-                        size: 30,
+                        size: 30.sp,
                       ),
                       SizedBox(height: 10.h),
                       Text(
@@ -732,11 +894,11 @@ class _HomeServiceDetailsPageState
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: slots.length,
                   padding: EdgeInsets.zero,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     childAspectRatio: 3.5,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
+                    crossAxisSpacing: 10.w,
+                    mainAxisSpacing: 10.h,
                   ),
                   itemBuilder: (context, index) {
                     final slot = slots[index].timeSlot;
@@ -747,7 +909,7 @@ class _HomeServiceDetailsPageState
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: isSelected ? Color(0xFF24ADD7) : Colors.white,
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(10.r),
                           border: Border.all(
                             color: isSelected
                                 ? Color(0xFF24ADD7)
@@ -757,8 +919,8 @@ class _HomeServiceDetailsPageState
                               ? [
                                   BoxShadow(
                                     color: Color(0xFF24ADD7).withOpacity(0.3),
-                                    blurRadius: 5,
-                                    offset: const Offset(0, 3),
+                                    blurRadius: 5.r,
+                                    offset: Offset(0, 3.h),
                                   ),
                                 ]
                               : [],
@@ -768,6 +930,7 @@ class _HomeServiceDetailsPageState
                           style: TextStyle(
                             color: isSelected ? Colors.white : Colors.blueGrey,
                             fontWeight: FontWeight.bold,
+                            fontSize: 14.sp,
                           ),
                         ),
                       ),
@@ -1007,6 +1170,9 @@ class _HomeServiceDetailsPageState
             data.data?.slots ?? [],
             data.data!.id ?? "",
             data.data!.serviceFee ?? 0,
+            data.data!.serviceFee != null
+                ? (data.data!.serviceFee ?? "").toString()
+                : "0",
           ),
           body: CustomScrollView(
             slivers: [
@@ -1152,14 +1318,25 @@ class _HomeServiceDetailsPageState
                             InkWell(
                               borderRadius: BorderRadius.circular(100.r),
                               onTap: () async {
+                                final String msg =
+                                    "Hi, I am interested in your services: ${data.data!.name ?? ''}";
                                 final Uri url = Uri.parse(
-                                  "https://wa.me/9171719060",
+                                  "whatsapp://send?phone=919171719060&text=${Uri.encodeComponent(msg)}",
                                 );
-
-                                await launchUrl(
-                                  url,
-                                  mode: LaunchMode.externalApplication,
-                                );
+                                try {
+                                  await launchUrl(
+                                    url,
+                                    mode: LaunchMode.externalApplication,
+                                  );
+                                } catch (e) {
+                                  final Uri webUrl = Uri.parse(
+                                    "https://wa.me/919171719060?text=${Uri.encodeComponent(msg)}",
+                                  );
+                                  await launchUrl(
+                                    webUrl,
+                                    mode: LaunchMode.externalApplication,
+                                  );
+                                }
                               },
                               child: Container(
                                 width: 40.w,
@@ -1182,49 +1359,6 @@ class _HomeServiceDetailsPageState
 
                         const Divider(height: 40, thickness: 1),
 
-                        /// --- Price Section ---
-                        Container(
-                          padding: EdgeInsets.all(20.w),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [darkBlue, darkBlue.withOpacity(0.8)],
-                            ),
-                            borderRadius: BorderRadius.circular(20.r),
-                            boxShadow: [
-                              BoxShadow(
-                                color: darkBlue.withOpacity(0.2),
-                                blurRadius: 15,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Estimated Cost",
-                                    style: TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 13.sp,
-                                    ),
-                                  ),
-                                  SizedBox(height: 4.h),
-                                  Text(
-                                    "₹${data.data!.serviceFee ?? 0}",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 24.sp,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
                         SizedBox(height: 10.h),
 
                         /// --- Service Features ---
@@ -1768,7 +1902,12 @@ class _HomeServiceDetailsPageState
     );
   }
 
-  Widget _buildBottomAction(List slots, String id, int amount) {
+  Widget _buildBottomAction(
+    List slots,
+    String id,
+    int amount,
+    String? serviceFees,
+  ) {
     return SafeArea(
       child: Container(
         padding: EdgeInsets.all(20.w),
@@ -1792,7 +1931,7 @@ class _HomeServiceDetailsPageState
             elevation: 0,
           ),
           onPressed: () {
-            showBookingDialog(context, slots, id, amount);
+            showBookingDialog(context, slots, id, amount, serviceFees);
           },
           child: Text(
             "Book Now",

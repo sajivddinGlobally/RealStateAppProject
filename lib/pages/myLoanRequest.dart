@@ -19,20 +19,22 @@ final myLoanRequestsProvider = FutureProvider<List<LoanItem>>((ref) async {
 });
 
 class MyLoanRequestsPage extends ConsumerWidget {
-  const  MyLoanRequestsPage({super.key});
+  const MyLoanRequestsPage({super.key});
 
   Color getStatusColor(String? status) {
     switch (status?.toLowerCase()) {
       case 'pending':
         return Colors.orange;
-      case 'approved':
-      case 'approved_by_admin':
-        return Colors.green;
-      case 'rejected': 
-        return Colors.red;
-      case 'in_process':
-      case 'processing':
+      case 'documents collection':
+      case 'documents_collection':
+      case 'eligibility check':
+      case 'eligibility_check':
         return Colors.blue;
+      case 'approved':
+      case 'disbursement':
+        return Colors.green;
+      case 'rejected':
+        return Colors.red;
       default:
         return Colors.blueGrey;
     }
@@ -156,7 +158,7 @@ class MyLoanRequestsPage extends ConsumerWidget {
                           ],
                         ),
                       ),
-                      _buildStatusStepper(status, primaryColor),
+                      _buildStatusStepper(item, primaryColor),
                       const Divider(height: 1),
                       // Details
                       Padding(
@@ -179,6 +181,17 @@ class MyLoanRequestsPage extends ConsumerWidget {
                               Icons.location_on_outlined,
                               "City",
                               item.city ?? "—",
+                            ),
+                            SizedBox(height: 10.h),
+                            _infoRow(
+                              Icons.account_balance_outlined,
+                              "Bank",
+                              (item.bankName != null &&
+                                      item.bankName!.isNotEmpty)
+                                  ? item.bankName!
+                                  : (item.manualBankName?.isNotEmpty == true
+                                        ? item.manualBankName!
+                                        : "—"),
                             ),
                           ],
                         ),
@@ -266,33 +279,50 @@ class MyLoanRequestsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatusStepper(String status, Color primaryColor) {
+  Widget _buildStatusStepper(LoanItem item, Color primaryColor) {
+    final status = item.status?.toLowerCase() ?? 'pending';
+
     if (status == 'rejected') {
       return Padding(
-        padding: EdgeInsets.symmetric(vertical: 16.h),
-        child: Center(
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
-            decoration: BoxDecoration(
-              color: Colors.red.shade50,
-              borderRadius: BorderRadius.circular(30.r),
-              border: Border.all(color: Colors.red.shade300),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.cancel, color: Colors.red, size: 22.sp),
-                SizedBox(width: 10.w),
+        padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 14.w),
+        child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+          decoration: BoxDecoration(
+            color: Colors.red.shade50,
+            borderRadius: BorderRadius.circular(16.r),
+            border: Border.all(color: Colors.red.shade200, width: 1.5),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.cancel, color: Colors.red, size: 20.sp),
+                  SizedBox(width: 8.w),
+                  Text(
+                    "REQUEST REJECTED",
+                    style: GoogleFonts.inter(
+                      color: Colors.red.shade800,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14.sp,
+                    ),
+                  ),
+                ],
+              ),
+              if (item.rejectedReason != null &&
+                  item.rejectedReason!.isNotEmpty) ...[
+                SizedBox(height: 8.h),
                 Text(
-                  "REQUEST REJECTED",
+                  "Reason: ${item.rejectedReason}",
                   style: GoogleFonts.inter(
-                    color: Colors.red.shade800,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14.sp,
+                    color: Colors.red.shade700,
+                    fontSize: 12.5.sp,
+                    height: 1.4,
                   ),
                 ),
               ],
-            ),
+            ],
           ),
         ),
       );
@@ -305,12 +335,22 @@ class MyLoanRequestsPage extends ConsumerWidget {
         currentStep = 0;
         break;
 
-      case 'in_process':
+      case 'documents collection':
+      case 'documents_collection':
         currentStep = 1;
         break;
 
-      case 'approved':
+      case 'eligibility check':
+      case 'eligibility_check':
         currentStep = 2;
+        break;
+
+      case 'approved':
+        currentStep = 3;
+        break;
+
+      case 'disbursement':
+        currentStep = 4;
         break;
 
       default:
@@ -318,86 +358,118 @@ class MyLoanRequestsPage extends ConsumerWidget {
     }
 
     final steps = [
-      _Step(
-        title: "Pending",
-        active: currentStep >= 0,
-        icon: Icons.pending_actions,
-      ),
-      _Step(title: "In Process", active: currentStep >= 1, icon: Icons.build),
-      _Step(
-        title: "Approved",
-        active: currentStep >= 2,
-        icon: Icons.check_circle,
-      ),
+      _Step(title: "Pending", icon: Icons.schedule),
+      _Step(title: "Documents\nCollection", icon: Icons.description),
+      _Step(title: "Eligibility\nCheck", icon: Icons.manage_search),
+      _Step(title: "Loan\nApproved", icon: Icons.check_circle),
+      _Step(title: "Disbursement", icon: Icons.payments),
     ];
 
     return Padding(
       padding: EdgeInsets.fromLTRB(12.w, 16.h, 12.w, 16.h),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(steps.length, (i) {
-            final step = steps[i];
-            final isLast = i == steps.length - 1;
+        physics: const BouncingScrollPhysics(),
+        child: Padding(
+          padding: EdgeInsets.only(bottom: 8.h), // for shadow
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: List.generate(steps.length, (i) {
+              final step = steps[i];
+              final isLast = i == steps.length - 1;
+              final isCompleted = i < currentStep;
+              final isCurrent = i == currentStep;
 
-            return Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Column(
-                  children: [
-                    Container(
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Column(
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        width: isCurrent ? 38.w : 32.w,
+                        height: isCurrent ? 38.w : 32.w,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(
+                            isCurrent ? 12.r : 10.r,
+                          ),
+                          color: isCurrent
+                              ? primaryColor
+                              : (isCompleted
+                                    ? primaryColor.withOpacity(0.15)
+                                    : Colors.white),
+                          boxShadow: isCurrent
+                              ? [
+                                  BoxShadow(
+                                    color: primaryColor.withOpacity(0.35),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ]
+                              : [],
+                          border: Border.all(
+                            color: isCurrent
+                                ? primaryColor
+                                : (isCompleted
+                                      ? primaryColor.withOpacity(0.3)
+                                      : Colors.grey.shade300),
+                            width: isCurrent ? 2 : 1.5,
+                          ),
+                        ),
+                        child: Center(
+                          child: Icon(
+                            step.icon,
+                            color: isCurrent
+                                ? Colors.white
+                                : (isCompleted
+                                      ? primaryColor
+                                      : Colors.grey.shade400),
+                            size: isCurrent ? 20.sp : 16.sp,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(
+                        step.title,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(
+                          fontSize: isCurrent ? 10.5.sp : 10.sp,
+                          color: isCurrent
+                              ? primaryColor
+                              : (isCompleted
+                                    ? Colors.black87
+                                    : Colors.grey.shade500),
+                          fontWeight: isCurrent
+                              ? FontWeight.w700
+                              : (isCompleted
+                                    ? FontWeight.w600
+                                    : FontWeight.w500),
+                          height: 1.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (!isLast)
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
                       width: 32.w,
-                      height: 32.w,
+                      height: i < currentStep ? 4.h : 2.5.h,
+                      margin: EdgeInsets.symmetric(horizontal: 6.w).copyWith(
+                        top: isCurrent ? 17.w : 15.w,
+                      ), // align with icon center
                       decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: step.active
+                        color: i < currentStep
                             ? primaryColor
                             : Colors.grey.shade200,
-                        border: Border.all(
-                          color: step.active
-                              ? primaryColor
-                              : Colors.grey.shade400,
-                          width: 2.5,
-                        ),
-                      ),
-                      child: Center(
-                        child: Icon(
-                          step.icon,
-                          color: step.active
-                              ? Colors.white
-                              : Colors.grey.shade600,
-                          size: 16.sp,
-                        ),
+                        borderRadius: BorderRadius.circular(2.r),
                       ),
                     ),
-                    SizedBox(height: 8.h),
-                    Text(
-                      step.title,
-                      style: GoogleFonts.inter(
-                        fontSize: 11.sp,
-                        color: step.active
-                            ? primaryColor
-                            : Colors.grey.shade700,
-                        fontWeight: step.active
-                            ? FontWeight.w600
-                            : FontWeight.normal,
-                      ),
-                    ),
-                  ],
-                ),
-                if (!isLast)
-                  Container(
-                    width: 50.w,
-                    height: 3.h,
-                    margin: EdgeInsets.symmetric(horizontal: 4.w),
-                    color: steps[i + 1].active
-                        ? primaryColor
-                        : Colors.grey.shade300,
-                  ),
-              ],
-            );
-          }),
+                ],
+              );
+            }),
+          ),
         ),
       ),
     );
@@ -433,8 +505,7 @@ class MyLoanRequestsPage extends ConsumerWidget {
 
 class _Step {
   final String title;
-  final bool active;
   final IconData icon;
 
-  _Step({required this.title, required this.active, required this.icon});
+  _Step({required this.title, required this.icon});
 }

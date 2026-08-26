@@ -136,6 +136,7 @@ class Property {
   String? area;
   String? bedRoom;
   List<String>? amenities;
+  List<String>? furnishingItems;
   String? permitNo;
   String? rera;
   String? ded;
@@ -174,6 +175,7 @@ class Property {
     this.area,
     this.bedRoom,
     this.amenities,
+    this.furnishingItems,
     this.permitNo,
     this.rera,
     this.ded,
@@ -213,6 +215,7 @@ class Property {
     area: json["area"],
     bedRoom: json["bedRoom"],
     amenities: json["amenities"] == null ? [] : List<String>.from(json["amenities"]!.map((x) => x)),
+    furnishingItems: json["furnishingItems"] == null ? [] : List<String>.from(json["furnishingItems"]!.map((x) => x)),
     permitNo: json["permitNo"],
     rera: json["rera"],
     ded: json["ded"],
@@ -252,6 +255,7 @@ class Property {
     "area": area,
     "bedRoom": bedRoom,
     "amenities": amenities == null ? [] : List<dynamic>.from(amenities!.map((x) => x)),
+    "furnishingItems": furnishingItems == null ? [] : List<dynamic>.from(furnishingItems!.map((x) => x)),
     "permitNo": permitNo,
     "rera": rera,
     "ded": ded,

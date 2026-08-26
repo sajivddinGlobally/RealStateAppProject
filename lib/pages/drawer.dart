@@ -25,6 +25,7 @@ class AppDrawer extends ConsumerStatefulWidget {
 }
 
 class _AppDrawerState extends ConsumerState<AppDrawer> {
+
   Future<void> showLogoutDialog() async {
     const primaryColor = Color(0xFF24ADD7);
     await showDialog(
@@ -34,28 +35,29 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
         return AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(
-              20,
+              20.r,
             ), // Rounded corners for modern look
           ),
           title: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.logout_rounded, color: primaryColor, size: 50),
-              const SizedBox(height: 15),
-              const Text(
+              Icon(Icons.logout_rounded, color: primaryColor, size: 50.sp),
+              SizedBox(height: 15.h),
+              Text(
                 "Logout",
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20.sp),
               ),
             ],
           ),
-          content: const Text(
+          content: Text(
             "Are you sure you want to logout?\nYou will need to login again to access your data.",
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(color: Colors.grey, fontSize: 14.sp),
           ),
-          actionsPadding: const EdgeInsets.only(
-            bottom: 20,
-            left: 20,
-            right: 20,
+          actionsPadding: EdgeInsets.only(
+            bottom: 20.h,
+            left: 20.w,
+            right: 20.w,
           ),
           actions: [
             Row(
@@ -66,18 +68,18 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: primaryColor),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(12.r),
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
                     ),
                     onPressed: () => Navigator.pop(context),
-                    child: const Text(
+                    child: Text(
                       "Cancel",
-                      style: TextStyle(color: primaryColor),
+                      style: TextStyle(color: primaryColor, fontSize: 14.sp),
                     ),
                   ),
                 ),
-                const SizedBox(width: 15),
+                SizedBox(width: 15.w),
                 // Logout Button
                 Expanded(
                   child: ElevatedButton(
@@ -86,9 +88,9 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(12.r),
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
                     ),
                     onPressed: () async {
                       Navigator.pop(context); // Dialog close
@@ -105,9 +107,12 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                         (route) => false,
                       );
                     },
-                    child: const Text(
+                    child: Text(
                       "Logout",
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14.sp,
+                      ),
                     ),
                   ),
                 ),
@@ -154,7 +159,6 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                     );
                   },
                 ),
-
                 _drawerItem(
                   icon: Icons.house_outlined,
                   label: 'My Property Request',
@@ -169,7 +173,6 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                     );
                   },
                 ),
-
                 _drawerItem(
                   icon: Icons.account_balance_wallet,
                   label: 'My Loan Request',
@@ -184,7 +187,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                     );
                   },
                 ),
-
+                
                 const Divider(
                   height: 30,
                   thickness: 1,

@@ -26,6 +26,7 @@ import 'package:realstate/Model/contactUsBodyModel.dart';
 import 'package:realstate/Model/getLikeProperyResModel.dart';
 import 'package:realstate/Model/getPropertyResponsemodel.dart';
 import 'package:realstate/Model/myListingPropertyDeleteBodyModel.dart';
+import 'package:realstate/Model/propertyDetailModel.dart';
 import 'package:realstate/Model/saveServiceBodyModel.dart';
 import 'package:realstate/core/network/api.state.dart';
 import 'package:realstate/core/utils/preety.dio.dart';
@@ -39,6 +40,7 @@ import 'package:realstate/pages/notification.page.dart';
 import 'package:realstate/pages/perticulerProperty.page.dart';
 import 'package:realstate/pages/pricePlan.page.dart';
 import 'package:realstate/pages/propertyCat.page.dart';
+import 'package:realstate/pages/listingPage.dart';
 import 'package:realstate/pages/savedDetails.page.dart';
 import 'package:realstate/pages/search_screen.dart';
 import 'package:shimmer/shimmer.dart';
@@ -77,7 +79,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
       _loadSavedCity();
     });
     _fetchAndSaveCurrentCity();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
 
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
@@ -162,17 +164,37 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
         //   );
         // }
         if (city != null && city.isNotEmpty) {
-          setState(() {
-            _currentCity = city;
-            // sirf first time set karo
-            selectedCity ??= city;
-          });
-          ref.read(currentCityProvider.notifier).state = city;
-          await saveCity(city);
-          Fluttertoast.showToast(
-            msg: "Location set to $city",
-            gravity: ToastGravity.BOTTOM,
-          );
+          try {
+            final cityResponse = await ref.read(getCityController.future);
+            bool isCityValid = false;
+            if (cityResponse.data != null) {
+              final validCities = cityResponse.data!
+                  .map((e) => e.cityName?.toString().toLowerCase())
+                  .toList();
+              if (validCities.contains(city.toLowerCase())) {
+                isCityValid = true;
+              }
+            }
+
+            if (isCityValid && mounted) {
+              setState(() {
+                _currentCity = city;
+                selectedCity = city; // Force update UI with actual location
+              });
+              ref.read(currentCityProvider.notifier).state = city;
+              await saveCity(city);
+              Fluttertoast.showToast(
+                msg: "Location set to $city",
+                gravity: ToastGravity.BOTTOM,
+              );
+            } else {
+              log(
+                "City $city from GPS is not in the allowed city list. Ignoring.",
+              );
+            }
+          } catch (e) {
+            log("Error checking city validity: $e");
+          }
         }
       }
     } catch (e) {
@@ -422,7 +444,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
             backgroundColor: const Color(0xFF24ADD7),
             shape: const CircleBorder(),
             onPressed: () {
-              if (selectIndex == 1) {
+              if (selectIndex == 2) {
                 showModalBottomSheet(
                   context: context,
                   isScrollControlled: true,
@@ -437,7 +459,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
             },
             child: Icon(
               // Icons.add,
-              selectIndex == 1 ? Icons.person_add : Icons.add,
+              selectIndex == 2 ? Icons.person_add : Icons.add,
               size: 22.sp,
               color: Colors.white,
             ),
@@ -672,7 +694,8 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                       if (selectedCity == null) {
                         if (_currentCity != null && _currentCity!.isNotEmpty) {
                           selectedCity = _currentCity;
-                        } else if (cityNames.isNotEmpty) {
+                        } else if (!_isFetchingLocation &&
+                            cityNames.isNotEmpty) {
                           selectedCity = cityNames.first;
                         }
                       }
@@ -706,7 +729,9 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                                 SizedBox(
                                   // width: 100.w,
                                   child: Text(
-                                    _currentCity ?? "Select",
+                                    _isFetchingLocation
+                                        ? "Fetching..."
+                                        : (_currentCity ?? "Select"),
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       color: const Color(0xFF24ADD7),
@@ -934,8 +959,10 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
 
                             Text(
                               selectIndex == 0
-                                  ? "Buy, Rent & Sell properties"
+                                  ? "Buy properties"
                                   : selectIndex == 1
+                                  ? "Rent properties"
+                                  : selectIndex == 2
                                   ? "Cleaning, Plumbing, Electrician & more"
                                   : "Home, Personal & Business Loan Available",
                               style: TextStyle(
@@ -978,22 +1005,168 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
             ],
           ),
 
-          // MARQUEE
+          // BUTTONS
           Container(
             width: double.infinity,
-            height: 40.h,
+            height: 50.h,
             color: const Color(0xFF24ADD7),
-            child: Marquee(
-              text: "CALL US TODAY AT +91-9171719060 FOR PROPERTY INQUERY",
-              style: GoogleFonts.inter(
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w400,
-                color: Colors.white,
-              ),
-              scrollAxis: Axis.horizontal,
-              velocity: 40,
-              blankSpace: 50,
-              startPadding: 10,
+            child: Builder(
+              builder: (context) {
+                if (selectIndex == 0 || selectIndex == 1) {
+                  return Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 10.w),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        InkWell(
+                          onTap: () {
+                            setState(() {
+                              bottomIndex = 2;
+                            });
+                            ref.invalidate(getMyPropertyController);
+                          },
+                          child: Container(
+                            height: 40.h,
+                            padding: EdgeInsets.symmetric(horizontal: 24.w),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8.r),
+                              border: Border.all(color: Colors.white),
+                            ),
+                            child: Center(
+                              child: Text(
+                                '+ Add Property',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                } else if (selectIndex == 2) {
+                  return Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 10.w),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                CupertinoPageRoute(
+                                  builder: (context) => PricePlanPage(),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              height: 40.h,
+                              // padding: EdgeInsets.symmetric(horizontal: 15.w),
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8.r),
+                                border: Border.all(color: Colors.white),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  'PRICING PLANS',
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                    height: 1.1,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 15.w),
+                        Expanded(
+                          child: InkWell(
+                            onTap: () {
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder: (_) =>
+                                    const VendorRegistrationBottomSheet(),
+                              );
+                            },
+                            child: Container(
+                              height: 40.h,
+                              // padding: EdgeInsets.symmetric(horizontal: 10.w),
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8.r),
+                                border: Border.all(color: Colors.white),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '+ Add Vendor Registration',
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                    height: 1.1,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                } else {
+                  return Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 10.w),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              CupertinoPageRoute(
+                                builder: (context) => LoanServiceDetailsPage(),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            height: 40.h,
+                            padding: EdgeInsets.symmetric(horizontal: 24.w),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8.r),
+                              border: Border.all(color: Colors.white),
+                            ),
+                            child: Center(
+                              child: Text(
+                                'Apply for Loan',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+              },
             ),
           ),
           SizedBox(height: 15.h),
@@ -1011,9 +1184,10 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
               padding: EdgeInsets.zero,
               indicator: const BoxDecoration(),
               tabs: [
-                _buildTab("Buy & Rent Property", 0),
-                _buildTab("Service Enquiry", 1),
-                _buildTab("Loan Enquiry", 2),
+                _buildTab("Buy Property", 0),
+                _buildTab("Rent Property", 1),
+                _buildTab("Service Enquiry", 2),
+                _buildTab("Loan Enquiry", 3),
               ],
             ),
           ),
@@ -1034,15 +1208,66 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                       crossAxisSpacing: 12,
                       mainAxisSpacing: 12,
                       children: [
-                        _gridItem("assets/png/home.png", "Buy House"),
-                        _gridItem("assets/png/apartment.png", "Rent Studio"),
-                        _gridItem("assets/png/buyFlat.png", "Buy Flats"),
-                        _gridItem("assets/png/buyPlot.png", "Buy Plots"),
-                        _gridItem("assets/png/commercial.png", "Commercial"),
-                        _gridItem("assets/png/buyHotel.png", "residential"),
-                        _gridItem("assets/png/rentCondos.png", "Rent Condos"),
-                        _gridItem("assets/png/buyDuplex.png", "Buy Duplex"),
-                        _gridItem("assets/png/rentHouse.png", "Rent House"),
+                        _gridItem("assets/png/home.png", "House", true),
+                        _gridItem(
+                          "assets/png/apartment.png",
+                          " Appartment",
+                          true,
+                        ),
+                        _gridItem("assets/png/buyFlat.png", "Flats", true),
+                        _gridItem("assets/png/buyPlot.png", "Plots", true),
+                        _gridItem(
+                          "assets/png/commercial.png",
+                          "Commercial",
+                          true,
+                        ),
+                        _gridItem("assets/png/buyHotel.png", "TownHouse", true),
+                        _gridItem("assets/png/apartment.png", " Studio", true),
+                        _gridItem("assets/png/rentCondos.png", " Condos", true),
+                        _gridItem("assets/png/home.png", "Villa", true),
+                      ],
+                    ),
+                    SizedBox(height: 10.h),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.all(16.w),
+                child: Column(
+                  children: [
+                    GridView.count(
+                      padding: EdgeInsets.zero,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: 3,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      children: [
+                        _gridItem("assets/png/home.png", "House", false),
+                        _gridItem(
+                          "assets/png/apartment.png",
+                          " Appartment",
+                          false,
+                        ),
+                        _gridItem("assets/png/buyFlat.png", "Flats", false),
+                        _gridItem("assets/png/buyPlot.png", "Plots", false),
+                        _gridItem(
+                          "assets/png/commercial.png",
+                          "Commercial",
+                          false,
+                        ),
+                        _gridItem(
+                          "assets/png/buyHotel.png",
+                          "TownHouse",
+                          false,
+                        ),
+                        _gridItem("assets/png/apartment.png", " Studio", false),
+                        _gridItem(
+                          "assets/png/rentCondos.png",
+                          " Condos",
+                          false,
+                        ),
+                        _gridItem("assets/png/home.png", "Villa", false),
                       ],
                     ),
                     SizedBox(height: 10.h),
@@ -1085,38 +1310,55 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
               ),
             ),
           ),
-          SizedBox(height: 20.h),
-          Padding(
-            padding: EdgeInsets.only(left: 16.w, right: 16.w),
-            child: TextField(
-              onChanged: (value) {
-                setState(() {
-                  searchListing = value.toLowerCase();
-                });
-              },
-              decoration: InputDecoration(
-                isDense: true,
-                contentPadding: EdgeInsets.symmetric(
-                  vertical: 8.h,
-                  horizontal: 12.w,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.r),
-                  borderSide: BorderSide(color: Colors.grey, width: 1.w),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.r),
-                  borderSide: BorderSide(color: Color(0xFF24ADD7), width: 1.w),
-                ),
-                prefixIcon: Icon(Icons.search, size: 18.sp, color: Colors.grey),
-                hint: Text(
-                  "Search...",
-                  style: TextStyle(fontSize: 13.sp, color: Colors.grey),
+          if (getMyPropertyProvider.valueOrNull?.data?.list?.isNotEmpty ==
+              true) ...[
+            SizedBox(height: 20.h),
+            Padding(
+              padding: EdgeInsets.only(left: 16.w, right: 16.w),
+              child: TextField(
+                onChanged: (value) {
+                  setState(() {
+                    searchListing = value.toLowerCase();
+                  });
+                },
+                style: TextStyle(fontSize: 14.sp),
+                decoration: InputDecoration(
+                  isDense: true,
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 12.h,
+                    horizontal: 16.w,
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  prefixIcon: Icon(
+                    Icons.search,
+                    size: 18.sp,
+                    color: Colors.grey,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                    borderSide: BorderSide(
+                      color: Colors.grey.shade300,
+                      width: 1.w,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                    borderSide: BorderSide(
+                      color: const Color(0xFF24ADD7),
+                      width: 1.5.w,
+                    ),
+                  ),
+                  hintText: "Search your listings...",
+                  hintStyle: TextStyle(
+                    fontSize: 13.sp,
+                    color: Colors.grey.shade400,
+                  ),
                 ),
               ),
             ),
-          ),
-          SizedBox(height: 16.h),
+            SizedBox(height: 16.h),
+          ],
           Expanded(
             child: RefreshIndicator(
               backgroundColor: Color(0xFF24ADD7),
@@ -1471,13 +1713,25 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                               SizedBox(width: 20.w),
                               GestureDetector(
                                 onTap: () async {
+                                  final String msg =
+                                      "Hi, I am interested in your property services.";
                                   final Uri url = Uri.parse(
-                                    "https://wa.me/9171719060",
+                                    "whatsapp://send?phone=919171719060&text=${Uri.encodeComponent(msg)}",
                                   );
-                                  await launchUrl(
-                                    url,
-                                    mode: LaunchMode.externalApplication,
-                                  );
+                                  try {
+                                    await launchUrl(
+                                      url,
+                                      mode: LaunchMode.externalApplication,
+                                    );
+                                  } catch (e) {
+                                    final Uri webUrl = Uri.parse(
+                                      "https://wa.me/919171719060?text=${Uri.encodeComponent(msg)}",
+                                    );
+                                    await launchUrl(
+                                      webUrl,
+                                      mode: LaunchMode.externalApplication,
+                                    );
+                                  }
                                 },
                                 child: Row(
                                   children: [
@@ -1545,21 +1799,21 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                           Text(
                             "Send Enquiry",
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 14.sp,
                               fontWeight: FontWeight.w600,
                               color: Color(0xff0E1A35),
                             ),
                           ),
                           SizedBox(height: 15.h),
-                          const Text(
+                          Text(
                             "Enter Your Email",
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 14.sp,
                               fontWeight: FontWeight.w600,
                               color: Color(0xff0E1A35),
                             ),
                           ),
-                          const SizedBox(height: 10),
+                          SizedBox(height: 10.h),
                           TextFormField(
                             controller: emailController,
                             keyboardType: TextInputType.emailAddress,
@@ -1604,17 +1858,17 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                               return null;
                             },
                           ),
-                          const SizedBox(height: 15),
-                          const Text(
+                          SizedBox(height: 15.h),
+                          Text(
                             "Enter Your Name",
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 14.sp,
                               fontWeight: FontWeight.w600,
                               color: Color(0xff0E1A35),
                             ),
                           ),
 
-                          const SizedBox(height: 10),
+                          SizedBox(height: 10.h),
 
                           TextFormField(
                             controller: nameController,
@@ -1661,16 +1915,16 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                               return null;
                             },
                           ),
-                          const SizedBox(height: 15),
-                          const Text(
+                          SizedBox(height: 15.h),
+                          Text(
                             "Mobile Number",
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 14.sp,
                               fontWeight: FontWeight.w600,
                               color: Color(0xff0E1A35),
                             ),
                           ),
-                          const SizedBox(height: 10),
+                          SizedBox(height: 10.h),
                           TextFormField(
                             maxLength: 10,
                             controller: phoneController,
@@ -1718,17 +1972,17 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                               return null;
                             },
                           ),
-                          const SizedBox(height: 15),
-                          const Text(
+                          SizedBox(height: 15.h),
+                          Text(
                             "Subject",
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 14.sp,
                               fontWeight: FontWeight.w600,
                               color: Color(0xff0E1A35),
                             ),
                           ),
 
-                          const SizedBox(height: 10),
+                          SizedBox(height: 10.h),
 
                           TextFormField(
                             controller: subjectController,
@@ -1775,21 +2029,23 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                               return null;
                             },
                           ),
-                          const SizedBox(height: 15),
-                          const Text(
+                          SizedBox(height: 15.h),
+                          Text(
                             "Message",
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 14.sp,
                               fontWeight: FontWeight.w600,
                               color: Color(0xff0E1A35),
                             ),
                           ),
 
-                          const SizedBox(height: 10),
+                          SizedBox(height: 10.h),
 
                           TextFormField(
                             controller: messageController,
-                            keyboardType: TextInputType.text,
+                            keyboardType: TextInputType.multiline,
+                            minLines: 1,
+                            maxLines: 5,
 
                             decoration: InputDecoration(
                               prefixIcon: Icon(
@@ -1832,19 +2088,17 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                               return null;
                             },
                           ),
-                          const SizedBox(height: 15),
-                          const Text(
+                          SizedBox(height: 15.h),
+                          Text(
                             "Location",
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 14.sp,
                               fontWeight: FontWeight.w600,
                               color: Color(0xff0E1A35),
                             ),
                           ),
 
-                          const SizedBox(height: 10),
-
-                          SizedBox(width: 10),
+                          SizedBox(height: 10.h),
                           TextFormField(
                             controller: locationController,
                             keyboardType: TextInputType.text,
@@ -1890,7 +2144,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                               return null;
                             },
                           ),
-                          const SizedBox(height: 20),
+                          SizedBox(height: 20.h),
 
                           /// ==== SIGN IN BUTTON ====
                           Center(
@@ -1943,20 +2197,21 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                                       }
                                     },
                               child: Container(
-                                height: 50,
+                                height: 50.h,
                                 width: double.infinity,
                                 decoration: BoxDecoration(
                                   color: Color(0xFF24ADD7),
-                                  borderRadius: BorderRadius.circular(40),
+                                  borderRadius: BorderRadius.circular(40.r),
                                 ),
                                 child: Center(
                                   child: isLoading
                                       ? Center(
                                           child: SizedBox(
-                                            height: 20,
-                                            width: 20,
+                                            height: 20.h,
+                                            width: 20.w,
                                             child: CircularProgressIndicator(
                                               color: Colors.white,
+                                              strokeWidth: 2,
                                             ),
                                           ),
                                         )
@@ -2145,13 +2400,14 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
   }
 
   // GRID ITEM
-  Widget _gridItem(String icon, String title) {
+  Widget _gridItem(String icon, String title, bool isBuy) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           CupertinoPageRoute(
-            builder: (context) => PropertyPageCat(property: title),
+            builder: (context) =>
+                PropertyPageCat(property: title, isBuy: isBuy),
           ),
         );
       },
@@ -2415,7 +2671,9 @@ class _PropertyCardState extends State<PropertyCard> {
                 // TITLE
                 Text(
                   // "${data.bedRoom} BHK ${data.propertyType}",
-                  "${widget.data.bedRoom}  ${widget.data.propertyType}",
+                  widget.data.propertyType?.toLowerCase() == 'land'
+                      ? "${widget.data.propertyType}"
+                      : "${widget.data.bedRoom} BHK ${widget.data.propertyType}",
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
@@ -2858,40 +3116,48 @@ class _HomeServiceState extends ConsumerState<HomeService> {
   Widget build(BuildContext context) {
     final homeServiceProvider = ref.watch(homeServiceCategoryController);
     return SingleChildScrollView(
+      padding: EdgeInsets.only(
+        bottom: 20.h + MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Column(
         children: [
           SizedBox(height: 15.h),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 22.w),
-            child: SizedBox(
-              height: 50.h,
-              child: TextField(
-                onChanged: (value) {
-                  setState(() {
-                    searchQuery = value.toLowerCase();
-                  });
-                },
-                style: TextStyle(fontSize: 15.sp),
-                decoration: InputDecoration(
-                  isDense: true,
-                  prefixIcon: Icon(
-                    Icons.search,
-                    size: 16.sp,
-                    color: Colors.grey,
+            child: TextField(
+              onChanged: (value) {
+                setState(() {
+                  searchQuery = value.toLowerCase();
+                });
+              },
+              style: TextStyle(fontSize: 14.sp),
+              decoration: InputDecoration(
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(
+                  vertical: 12.h,
+                  horizontal: 16.w,
+                ),
+                filled: true,
+                fillColor: Colors.white,
+                prefixIcon: Icon(Icons.search, size: 18.sp, color: Colors.grey),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                  borderSide: BorderSide(
+                    color: Colors.grey.shade300,
+                    width: 1.w,
                   ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16.r),
-                    borderSide: BorderSide(color: Colors.grey, width: 1.w),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                  borderSide: BorderSide(
+                    color: const Color(0xFF24ADD7),
+                    width: 1.5.w,
                   ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16.r),
-                    borderSide: BorderSide(
-                      color: Color(0xFF24ADD7),
-                      width: 1.w,
-                    ),
-                  ),
-                  hintText: "Search...",
-                  hintStyle: TextStyle(fontSize: 14.sp, color: Colors.grey),
+                ),
+                hintText: "Search Services...",
+                hintStyle: TextStyle(
+                  fontSize: 13.sp,
+                  color: Colors.grey.shade400,
                 ),
               ),
             ),
@@ -2900,10 +3166,8 @@ class _HomeServiceState extends ConsumerState<HomeService> {
             data: (service) {
               final filteredServices = service.data!.list!.where((item) {
                 final name = (item.name ?? '').toLowerCase();
-
                 return name.contains(searchQuery);
               }).toList();
-
               if (filteredServices.isEmpty) {
                 return Column(
                   children: [
@@ -2923,77 +3187,6 @@ class _HomeServiceState extends ConsumerState<HomeService> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(height: 15.h),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 22.w),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: InkWell(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                CupertinoPageRoute(
-                                  builder: (context) => PricePlanPage(),
-                                ),
-                              );
-                            },
-                            child: Container(
-                              height: 40.h,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Color(0xFF24ADD7)),
-                                borderRadius: BorderRadius.circular(10.r),
-                              ),
-                              child: Text(
-                                'PRICING PLANS',
-                                textAlign: TextAlign.center,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.inter(
-                                  fontSize: 9.sp,
-                                  fontWeight: FontWeight.w400,
-                                  color: Color(0xFF24ADD7),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 8.w),
-                        Expanded(
-                          child: InkWell(
-                            onTap: () {
-                              // openBottomSheet(context);
-                              showModalBottomSheet(
-                                context: context,
-                                isScrollControlled: true,
-                                backgroundColor: Colors.transparent,
-                                builder: (_) =>
-                                    const VendorRegistrationBottomSheet(),
-                              );
-                            },
-                            child: Container(
-                              height: 40.h,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: Color(0xFF24ADD7),
-                                borderRadius: BorderRadius.circular(10.r),
-                              ),
-                              child: Text(
-                                'VENDOR REGISTRATION FORM',
-                                textAlign: TextAlign.center,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.inter(
-                                  fontSize: 9.sp,
-                                  fontWeight: FontWeight.w400,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 12.h),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 22.w),
                     child: SizedBox(
@@ -3120,6 +3313,7 @@ class _HomeServiceState extends ConsumerState<HomeService> {
                           SizedBox(height: 8.h),
                           Text(
                             //  categories[index]['label']!,
+                            textAlign: TextAlign.center,
                             item.name ?? "N/A",
                             style: GoogleFonts.inter(
                               fontSize: 12.sp,
@@ -3161,261 +3355,6 @@ class _HomeServiceState extends ConsumerState<HomeService> {
                         ],
                       );
                     },
-                  ),
-
-                  // We Provide Quality Services
-                  Center(
-                    child: Text(
-                      'What We Offer',
-                      style: GoogleFonts.inter(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  Center(
-                    child: Text(
-                      'We Provide Quality Services',
-                      style: GoogleFonts.inter(
-                        fontSize: 20.sp,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 16.h),
-
-                  // Services Grid
-                  GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: MediaQuery.of(context).size.width > 600
-                        ? 3
-                        : 2,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 16,
-                    childAspectRatio: 0.85,
-                    children: const [
-                      ServiceCard(
-                        title: 'Toilet Repair',
-                        desc:
-                            'Fast, reliable toilet fixes that restore proper function.',
-                        imageUrl:
-                            'https://media.gettyimages.com/id/2192255408/vector/plumbing-line-icon-set-group-of-object-pipe-bathtub-boiler-faucet-repair.jpg?s=612x612&w=gi&k=20&c=IgKlfAmPPCWSHJy7L_KlG4bjVyB_If33cqFTI8X51Ng=',
-                      ),
-                      ServiceCard(
-                        title: 'Faucet Installation',
-                        desc:
-                            'Expert faucet fitting that ensures smooth water flow.',
-                        imageUrl:
-                            'https://media.istockphoto.com/id/1140334314/vector/plumber-master-with-wrench-fixing-kitchen-faucet.jpg?s=612x612&w=0&k=20&c=5XTiydIT32QfXU-x8WVM6rSeWpy6TopGU66RNfPunw4=',
-                      ),
-                      ServiceCard(
-                        title: 'Sewer Inspection',
-                        desc: 'Advanced sewer checks to detect issues early.',
-                        imageUrl:
-                            'https://media.istockphoto.com/id/2194903933/vector/plumbers-and-plumbing-thin-line-icons-editable-stroke-icons-include-plumbing-pipes-leaky.jpg?s=612x612&w=0&k=20&c=V2EAWro2g_Xk72Bl9c0LJ78ylpTxzZaZcyct56nqwCc=',
-                      ),
-                      ServiceCard(
-                        title: 'Drain Cleaning',
-                        desc:
-                            'Prevent damage with professional drain cleaning.',
-                        imageUrl:
-                            'https://media.istockphoto.com/id/1363041172/vector/water-tank-pipe-pipeline-and-sewerage-cleaning-service-by-cleaner.jpg?s=612x612&w=0&k=20&c=OPh5837hpAV13c5fsr3daJrrzFK1E4HjSEhiDdgZwN0=',
-                      ),
-                    ],
-                  ),
-
-                  // Why We Are / Easy Solutions
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: [
-                        Text(
-                          'Who We Are',
-                          style: GoogleFonts.inter(
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          'Easy Solutions For Plumbing and Home Repair Needs',
-                          style: GoogleFonts.inter(fontSize: 16.sp),
-                        ),
-                        SizedBox(height: 10.h),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            Chip(
-                              padding: EdgeInsets.zero,
-                              label: Text(
-                                'Tech Expertise',
-                                style: GoogleFonts.inter(
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF000000),
-                                ),
-                              ),
-                            ),
-                            Chip(
-                              padding: EdgeInsets.zero,
-                              label: Text(
-                                'Advanced Tools',
-                                style: GoogleFonts.inter(
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF000000),
-                                ),
-                              ),
-                            ),
-                            Chip(
-                              padding: EdgeInsets.zero,
-                              label: Text(
-                                'Smart Solutions',
-                                style: GoogleFonts.inter(
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF000000),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        ElevatedButton(
-                          onPressed: () {
-                            // openBottomSheet(context);
-                            showModalBottomSheet(
-                              context: context,
-                              isScrollControlled: true,
-                              backgroundColor: Colors.transparent,
-                              builder: (_) =>
-                                  const VendorRegistrationBottomSheet(),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xFF24ADD7),
-                          ),
-                          child: const Text(
-                            'Hire Experts',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Plumber Image
-                  Image.network(
-                    'https://as1.ftcdn.net/jpg/05/94/89/64/1000_F_594896473_PmXb07nS8Odld7O3op4E5Vi2USzODYYc.jpg',
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                  ),
-
-                  // Affordable Pricing
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: [
-                        pricingCard(),
-                        const SizedBox(height: 16),
-                        pricingCard(),
-                      ],
-                    ),
-                  ),
-
-                  // Featured Projects
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Featured Projects',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        // TextButton(
-                        //   onPressed: () {},
-                        //   child: const Text(
-                        //     'See Full Gallery >',
-                        //     style: TextStyle(color: Colors.orange),
-                        //   ),
-                        // ),
-                      ],
-                    ),
-                  ),
-
-                  Container(
-                    margin: EdgeInsets.only(top: 10.h),
-                    height: 200,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      children: [
-                        FeaturedProject(
-                          imageUrl:
-                              'https://images.finehomebuilding.com/app/uploads/2016/04/09114955/021181bs116-01_xlg.jpg',
-                          title: 'Drain Overhaul',
-                          subtitle: 'Complete drain system upgrade',
-                        ),
-                        FeaturedProject(
-                          imageUrl:
-                              'https://www.thespruce.com/thmb/e-MxaOBy4AKp4JW1XFZGbrkDaIw=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/how-to-install-a-sink-drain-2718789_hero_5078-64538f6f90d545c7af0728e4bf8f894e.jpg',
-                          title: 'Sink Installation',
-                          subtitle: 'New kitchen sink setup',
-                        ),
-                        FeaturedProject(
-                          imageUrl:
-                              'https://gharpedia.com/_next/image/?url=https%3A%2F%2Fcloudfrontgharpediabucket.gharpedia.com%2Fuploads%2F2021%2F12%2FBest-Way-to-Install-a-Bathroom-Sink-Drain-01-0504130013.jpg&w=3840&q=75',
-                          title: 'Drain Overhaul',
-                          subtitle: 'Complete drain system upgrade',
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Latest Insights
-                  const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text(
-                      'Our Latest Insights',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: [
-                        Image.network(
-                          'https://wg.scene7.com/is/image/wrenchgroup/insulate-pipes-info-ps22wi001wg?&wid=362',
-                          width: 100,
-                          height: 100,
-                          fit: BoxFit.cover,
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
-                              Text(
-                                'How to Protect Your Pipes During Cold Weather',
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                              Text(
-                                'Read More >',
-                                style: TextStyle(color: Colors.orange),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
                 ],
               );
@@ -3728,243 +3667,163 @@ class LoanService extends ConsumerStatefulWidget {
 
 class _LoanServiceState extends ConsumerState<LoanService> {
   String searchLoan = '';
+
+  final List<Map<String, String>> loanTypes = [
+    {"title": "HOME LOAN", "image": "assets/png/home.jpeg"},
+    {"title": "CAR LOAN", "image": "assets/png/car.jpeg"},
+    {"title": "PERSONAL LOAN", "image": "assets/png/personal.jpeg"},
+    {"title": "BUSINESS LOAN", "image": "assets/png/business.jpeg"},
+    {"title": "EDUCATION LOAN", "image": "assets/png/education.jpeg"},
+    {"title": "GOLD LOAN", "image": "assets/png/gold.jpeg"},
+  ];
+
   @override
   Widget build(BuildContext context) {
-    final loanServiceProvider = ref.watch(loanServiceController);
     return SingleChildScrollView(
       child: Padding(
-        padding: EdgeInsets.only(
-          left: 20.w,
-          right: 20.w,
-          top: 20.h,
-          bottom: 80.h,
-        ),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// 🔹 Title
-            Text(
-              "Top Loan Bank Partners",
-              style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 16.h),
-            TextField(
-              onChanged: (value) {
-                setState(() {
-                  searchLoan = value.toLowerCase();
-                });
+            InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  CupertinoPageRoute(
+                    builder: (context) => MyLoanRequestsPage(),
+                  ),
+                );
               },
-              style: TextStyle(fontSize: 15.sp),
-              decoration: InputDecoration(
-                isDense: true,
-                prefixIcon: Icon(Icons.search, size: 16.sp, color: Colors.grey),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.r),
-                  borderSide: BorderSide(color: Colors.grey, width: 1.w),
+              child: Container(
+                width: double.infinity,
+                height: 45.h,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF24ADD7),
+                  borderRadius: BorderRadius.circular(8.r),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.r),
-                  borderSide: BorderSide(color: Color(0xFF24ADD7), width: 1.w),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.assignment_outlined,
+                      color: Colors.white,
+                      size: 20.sp,
+                    ),
+                    SizedBox(width: 8.w),
+                    Text(
+                      "MY LOAN REQUESTS",
+                      style: GoogleFonts.inter(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
-                hintText: "Search...",
-                hintStyle: TextStyle(fontSize: 14.sp, color: Colors.grey),
               ),
             ),
-            SizedBox(height: 16.h),
-
-            SizedBox(height: 16.h),
-            loanServiceProvider.when(
-              data: (loan) {
-                final list = loan.data?.list ?? [];
-
-                final filteredBankLoan = loan.data!.list!.where((item) {
-                  final name = (item.name ?? '').toLowerCase();
-
-                  return name.contains(searchLoan);
-                }).toList();
-
-                if (filteredBankLoan.isEmpty) {
-                  return Column(
-                    children: [
-                      SizedBox(height: 20.h),
-                      Text(
-                        "No Bank Found $searchLoan",
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  );
-                }
-
-                if (list.isEmpty) {
-                  return const Center(child: Text("No loan services found"));
-                }
-                return GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  padding: EdgeInsets.zero,
-                  itemCount: filteredBankLoan.length,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 12.w,
-                    mainAxisSpacing: 12.h,
-                    childAspectRatio: 0.70,
-                  ),
-                  itemBuilder: (context, index) {
-                    final item = filteredBankLoan[index];
-                    return InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => LoanServiceDetailsPage(
-                              item: CommonLoanModel.fromLoanService(item),
-                            ),
-                          ),
-                        );
-                      },
-                      child: Container(
-                        padding: EdgeInsets.all(10.w),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12.r),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black12,
-                              blurRadius: 6,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(10.r),
-                              child: (item.bankLogo?.trim().isNotEmpty ?? false)
-                                  ? Image.network(
-                                      item.bankLogo!,
-                                      width: 100.w,
-                                      height: 55.h,
-                                      fit: BoxFit.contain,
-                                      errorBuilder:
-                                          (context, error, stackTrace) {
-                                            return Container(
-                                              width: 100.w,
-                                              height: 55.h,
-                                              alignment: Alignment.center,
-                                              child: Icon(
-                                                Icons.broken_image_outlined,
-                                                size: 40.sp,
-                                                color: Colors.grey,
-                                              ),
-                                            );
-                                          },
-                                    )
-                                  : Container(
-                                      width: 100.w,
-                                      height: 55.h,
-                                      alignment: Alignment.center,
-                                      child: Icon(
-                                        Icons.broken_image_outlined,
-                                        size: 40.sp,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                            ),
-                            SizedBox(height: 6.h),
-                            Text(
-                              // loanList[index].title,
-                              item.name ?? "N/A",
-                              maxLines: 2,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            Spacer(),
-                            Container(
-                              height: 28.h,
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: Color(0xFF24ADD7),
-                                borderRadius: BorderRadius.circular(6.r),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  // "Call Now",
-                                  "Contact Now",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11.sp,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+            SizedBox(height: 20.h),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              padding: EdgeInsets.zero,
+              itemCount: loanTypes.length,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12.w,
+                mainAxisSpacing: 12.h,
+                childAspectRatio: 1.25,
+              ),
+              itemBuilder: (context, index) {
+                final item = loanTypes[index];
+                return InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      CupertinoPageRoute(
+                        builder: (_) => LoanServiceDetailsPage(
+                          // item: CommonLoanModel(
+                          //   name: item["title"],
+                          //   bankLogo: item["image"],
+                          // ),
                         ),
                       ),
                     );
                   },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12.r),
+                      color: Colors.grey.shade200,
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Image.asset(
+                          item["image"]!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(color: Colors.grey.shade300);
+                          },
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          height: 70.h,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.transparent,
+                                  Colors.black.withOpacity(0.8),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 10.h,
+                          left: 0,
+                          right: 0,
+                          child: Column(
+                            children: [
+                              Text(
+                                item["title"]!,
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.inter(
+                                  fontSize: 11.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(height: 6.h),
+                              Container(
+                                margin: EdgeInsets.symmetric(horizontal: 24.w),
+                                padding: EdgeInsets.symmetric(vertical: 6.h),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF24ADD7),
+                                  borderRadius: BorderRadius.circular(4.r),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  "Contact",
+                                  style: GoogleFonts.inter(
+                                    fontSize: 10.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 );
               },
-              error: (error, stackTrace) {
-                log(stackTrace.toString());
-                return Center(child: Text(error.toString()));
-              },
-              loading: () => GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(16),
-                itemCount: 6, // shimmer items
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 12.w,
-                  mainAxisSpacing: 12.h,
-                  childAspectRatio: 0.70,
-                ),
-                itemBuilder: (context, index) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      /// Image placeholder
-                      Shimmer.fromColors(
-                        baseColor: Colors.grey.shade300,
-                        highlightColor: Colors.grey.shade100,
-                        child: Container(
-                          width: 200.w,
-                          height: 100.h,
-                          decoration: BoxDecoration(
-                            color: Colors.grey,
-                            borderRadius: BorderRadius.circular(8.r),
-                          ),
-                        ),
-                      ),
-
-                      SizedBox(height: 8.h),
-
-                      /// Text placeholder
-                      Shimmer.fromColors(
-                        baseColor: Colors.grey.shade300,
-                        highlightColor: Colors.grey.shade100,
-                        child: Container(
-                          width: 75.w,
-                          height: 12.h,
-                          decoration: BoxDecoration(
-                            color: Colors.grey,
-                            borderRadius: BorderRadius.circular(6.r),
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
             ),
           ],
         ),
@@ -4073,13 +3932,34 @@ class _VendorRegistrationBottomSheetState
   final emailController = TextEditingController();
   final phoneController = TextEditingController();
   final nameController = TextEditingController();
+  final expertiseController = TextEditingController();
+  final expertiseFocusNode = FocusNode();
 
   final _formKeyVendor = GlobalKey<FormState>();
 
   bool isLoading = false;
 
-  String? selectedExpertise;
-  String? selectedExpertiseId;
+  List<String> selectedExpertiseNames = [];
+  List<String> selectedExpertiseIds = [];
+
+  @override
+  void initState() {
+    super.initState();
+    expertiseFocusNode.addListener(() {
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    expertiseController.dispose();
+    expertiseFocusNode.dispose();
+    emailController.dispose();
+    phoneController.dispose();
+    nameController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final homeServiceProvider = ref.watch(homeServiceCategoryController);
@@ -4101,33 +3981,72 @@ class _VendorRegistrationBottomSheetState
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Align(
-                  alignment: Alignment.topRight,
-                  child: IconButton(
-                    style: IconButton.styleFrom(
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                // Drag Handle
+                Center(
+                  child: Container(
+                    width: 45.w,
+                    height: 5.h,
+                    margin: EdgeInsets.only(bottom: 20.h),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    onPressed: () => Navigator.pop(context),
-                    icon: Icon(Icons.close),
                   ),
                 ),
 
-                Text(
-                  "Registration",
-                  style: TextStyle(
-                    fontSize: 20.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
+                // Header Row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Registration",
+                          style: TextStyle(
+                            fontSize: 22.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        SizedBox(height: 4.h),
+                        Text(
+                          "Fill in your details below",
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 13.sp,
+                          ),
+                        ),
+                      ],
+                    ),
+                    InkWell(
+                      onTap: () => Navigator.pop(context),
+                      borderRadius: BorderRadius.circular(30),
+                      child: Container(
+                        padding: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.grey.shade200),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 4,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          Icons.close,
+                          size: 20,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
 
-                SizedBox(height: 5.h),
-
-                Text(
-                  "Fill in your details below",
-                  style: TextStyle(color: Colors.grey),
-                ),
-
-                SizedBox(height: 20.h),
+                SizedBox(height: 25.h),
 
                 /// NAME
                 fieldTitle("Full Name"),
@@ -4151,17 +4070,17 @@ class _VendorRegistrationBottomSheetState
                   controller: emailController,
                   hint: "Enter email",
                   keyboard: TextInputType.emailAddress,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return "Email is required";
-                    }
-                    if (!RegExp(
-                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                    ).hasMatch(value)) {
-                      return "Enter valid email";
-                    }
-                    return null;
-                  },
+                  // validator: (value) {
+                  //   if (value == null || value.isEmpty) {
+                  //     return "Email is required";
+                  //   }
+                  //   if (!RegExp(
+                  //     r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                  //   ).hasMatch(value)) {
+                  //     return "Enter valid email";
+                  //   }
+                  //   return null;
+                  // },
                 ),
 
                 SizedBox(height: 15.h),
@@ -4192,8 +4111,7 @@ class _VendorRegistrationBottomSheetState
 
                 FormField(
                   validator: (value) {
-                    if (selectedExpertise == null ||
-                        selectedExpertise == "Select Your Expertise") {
+                    if (selectedExpertiseNames.isEmpty) {
                       return "Expertise is required";
                     }
                     return null;
@@ -4211,180 +4129,191 @@ class _VendorRegistrationBottomSheetState
                                     .where((e) => e.isNotEmpty)
                                     .toList() ??
                                 [];
-                            return RawAutocomplete<String>(
-                              initialValue: TextEditingValue(
-                                text: selectedExpertise ?? '',
-                              ),
-                              optionsBuilder:
-                                  (TextEditingValue textEditingValue) {
-                                    if (textEditingValue.text.isEmpty) {
-                                      return expertiseList;
-                                    }
-                                    return expertiseList.where(
-                                      (option) => option.toLowerCase().contains(
-                                        textEditingValue.text.toLowerCase(),
-                                      ),
-                                    );
-                                  },
-                              onSelected: (String selection) {
-                                final selectedItem = data.data!.list!
-                                    .firstWhere(
-                                      (item) => item.name == selection,
-                                    );
+                            final text = expertiseController.text.toLowerCase();
+                            final filteredList = text.isEmpty
+                                ? expertiseList
+                                : expertiseList
+                                      .where(
+                                        (e) => e.toLowerCase().contains(text),
+                                      )
+                                      .toList();
 
-                                setState(() {
-                                  selectedExpertise = selection;
-                                  selectedExpertiseId =
-                                      selectedItem.id?.toString() ?? "";
-                                });
-
-                                state.didChange(selection);
-                              },
-                              fieldViewBuilder:
-                                  (
-                                    context,
-                                    controller,
-                                    focusNode,
-                                    onFieldSubmitted,
-                                  ) {
-                                    controller.text = selectedExpertise ?? '';
-                                    return TextFormField(
-                                      controller: controller,
-                                      focusNode: focusNode,
-                                      decoration: InputDecoration(
-                                        hintText: "Select Your Expertise",
-                                        filled: true,
-                                        hintStyle: TextStyle(
-                                          color: Colors.grey.shade400,
-                                          fontSize: 12.sp,
-                                        ),
-                                        fillColor: Colors.white,
-                                        contentPadding: EdgeInsets.symmetric(
-                                          horizontal: 15,
-                                          vertical: 16,
-                                        ),
-                                        border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          borderSide: BorderSide.none,
-                                        ),
-                                        enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          borderSide: BorderSide(
-                                            color: state.hasError
-                                                ? Colors.red
-                                                : Colors.transparent,
-                                          ),
-                                        ),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          borderSide: BorderSide(
-                                            color: state.hasError
-                                                ? Colors.red
-                                                : Colors.blue,
-                                          ),
-                                        ),
-                                        suffixIcon: const Icon(
-                                          Icons.keyboard_arrow_down,
-                                        ),
-                                      ),
-
-                                      // onChanged: (value) {
-                                      //   setState(() {
-                                      //     selectedExpertise = value;
-
-                                      //     final matchedItems = data.data?.list
-                                      //         ?.where(
-                                      //           (item) =>
-                                      //               (item.name ?? "")
-                                      //                   .toLowerCase() ==
-                                      //               value.toLowerCase(),
-                                      //         )
-                                      //         .toList();
-
-                                      //     if (matchedItems != null &&
-                                      //         matchedItems.isNotEmpty) {
-                                      //       selectedExpertiseId = matchedItems
-                                      //           .first
-                                      //           .id
-                                      //           ?.toString();
-                                      //     } else {
-                                      //       selectedExpertiseId = null;
-                                      //     }
-                                      //   });
-                                      //   state.didChange(value);
-                                      // },
-                                      onChanged: (value) {
-                                        setState(() {
-                                          selectedExpertise = value;
-
-                                          final matchedItems =
-                                              data.data?.list
-                                                  ?.where(
-                                                    (item) =>
-                                                        (item.name ?? "")
-                                                            .toLowerCase() ==
-                                                        value
-                                                            .trim()
-                                                            .toLowerCase(),
-                                                  )
-                                                  .toList() ??
-                                              [];
-
-                                          if (matchedItems.isNotEmpty) {
-                                            selectedExpertiseId = matchedItems
-                                                .first
-                                                .id
-                                                ?.toString();
-                                          } else {
-                                            selectedExpertiseId = null;
-                                          }
-                                        });
-
-                                        state.didChange(value);
-                                      },
-                                    );
-                                  },
-                              optionsViewBuilder:
-                                  (context, onSelected, options) {
-                                    return Align(
-                                      alignment: Alignment.topLeft,
-                                      child: Material(
-                                        elevation: 4,
-                                        borderRadius: BorderRadius.circular(12),
-                                        color: Colors.white,
-                                        child: Container(
-                                          width:
-                                              MediaQuery.of(
-                                                context,
-                                              ).size.width -
-                                              40,
-                                          constraints: const BoxConstraints(
-                                            maxHeight: 250,
-                                          ),
-                                          child: ListView.builder(
-                                            padding: EdgeInsets.zero,
-                                            shrinkWrap: true,
-                                            itemCount: options.length,
-                                            itemBuilder: (context, index) {
-                                              final option = options.elementAt(
-                                                index,
-                                              );
-                                              return ListTile(
-                                                title: Text(option),
-                                                onTap: () => onSelected(option),
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (selectedExpertiseNames.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 8.0),
+                                    child: Wrap(
+                                      spacing: 8.0,
+                                      runSpacing: 4.0,
+                                      children: List.generate(
+                                        selectedExpertiseNames.length,
+                                        (index) {
+                                          return Chip(
+                                            label: Text(
+                                              selectedExpertiseNames[index],
+                                            ),
+                                            deleteIcon: const Icon(
+                                              Icons.close,
+                                              size: 16,
+                                            ),
+                                            onDeleted: () {
+                                              setState(() {
+                                                selectedExpertiseNames.removeAt(
+                                                  index,
+                                                );
+                                                selectedExpertiseIds.removeAt(
+                                                  index,
+                                                );
+                                              });
+                                              state.didChange(
+                                                selectedExpertiseNames.join(
+                                                  ", ",
+                                                ),
                                               );
                                             },
-                                          ),
-                                        ),
+                                          );
+                                        },
                                       ),
-                                    );
+                                    ),
+                                  ),
+                                TextFormField(
+                                  controller: expertiseController,
+                                  focusNode: expertiseFocusNode,
+                                  decoration: InputDecoration(
+                                    hintText: selectedExpertiseNames.isEmpty
+                                        ? "Select Your Expertise"
+                                        : "Add more expertise...",
+                                    filled: true,
+                                    hintStyle: TextStyle(
+                                      color: Colors.grey.shade400,
+                                      fontSize: 12.sp,
+                                    ),
+                                    fillColor: Colors.white,
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 15,
+                                      vertical: 16,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                        color: state.hasError
+                                            ? Colors.red
+                                            : Colors.transparent,
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                        color: state.hasError
+                                            ? Colors.red
+                                            : Colors.blue,
+                                      ),
+                                    ),
+                                    suffixIcon: const Icon(
+                                      Icons.keyboard_arrow_down,
+                                    ),
+                                  ),
+                                  onChanged: (value) {
+                                    setState(() {});
                                   },
+                                ),
+                                if (expertiseFocusNode.hasFocus)
+                                  Container(
+                                    margin: const EdgeInsets.only(top: 5),
+                                    constraints: const BoxConstraints(
+                                      maxHeight: 200,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black12,
+                                          blurRadius: 4,
+                                          offset: Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: ListView.builder(
+                                        padding: EdgeInsets.zero,
+                                        shrinkWrap: true,
+                                        itemCount: filteredList.isNotEmpty
+                                            ? filteredList.length
+                                            : (text.isNotEmpty ? 1 : 0),
+                                        itemBuilder: (context, index) {
+                                          if (filteredList.isEmpty &&
+                                              text.isNotEmpty) {
+                                            return ListTile(
+                                              title: Text('Add "$text"'),
+                                              onTap: () {
+                                                if (!selectedExpertiseNames
+                                                    .contains(text)) {
+                                                  setState(() {
+                                                    selectedExpertiseNames.add(
+                                                      text,
+                                                    );
+                                                    selectedExpertiseIds.add(
+                                                      "",
+                                                    );
+                                                  });
+                                                  state.didChange(
+                                                    selectedExpertiseNames.join(
+                                                      ", ",
+                                                    ),
+                                                  );
+                                                }
+                                                expertiseController.clear();
+                                                expertiseFocusNode.unfocus();
+                                              },
+                                            );
+                                          }
+
+                                          final option = filteredList[index];
+                                          return ListTile(
+                                            title: Text(option),
+                                            onTap: () {
+                                              if (!selectedExpertiseNames
+                                                  .contains(option)) {
+                                                setState(() {
+                                                  selectedExpertiseNames.add(
+                                                    option,
+                                                  );
+                                                  final selectedItem = data
+                                                      .data!
+                                                      .list!
+                                                      .firstWhere(
+                                                        (item) =>
+                                                            item.name == option,
+                                                      );
+                                                  selectedExpertiseIds.add(
+                                                    selectedItem.id
+                                                            ?.toString() ??
+                                                        "",
+                                                  );
+                                                });
+                                                state.didChange(
+                                                  selectedExpertiseNames.join(
+                                                    ", ",
+                                                  ),
+                                                );
+                                              }
+                                              expertiseController.clear();
+                                              expertiseFocusNode.unfocus();
+                                            },
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             );
                           },
                           error: (error, stackTrace) => Text(error.toString()),
@@ -4441,25 +4370,41 @@ class _VendorRegistrationBottomSheetState
                             //     ? selectedExpertiseId
                             //     : selectedExpertise;
 
-                            final bool isCustomService =
-                                selectedExpertiseId == null ||
-                                selectedExpertiseId!.isEmpty;
+                            final List<String> customServices = [];
+                            final List<String> standardServiceIds = [];
 
+                            for (
+                              int i = 0;
+                              i < selectedExpertiseNames.length;
+                              i++
+                            ) {
+                              if (selectedExpertiseIds[i].isEmpty) {
+                                customServices.add(selectedExpertiseNames[i]);
+                              } else {
+                                standardServiceIds.add(selectedExpertiseIds[i]);
+                              }
+                            }
+
+                            if (expertiseController.text.trim().isNotEmpty) {
+                              customServices.add(
+                                expertiseController.text.trim(),
+                              );
+                            }
                             final body = SaveServiceBodyModel(
                               email: emailController.text.trim(),
                               phone: phoneController.text.trim(),
                               name: nameController.text.trim(),
-                              // serviceType: serviceTypeValue,
-                              // customServiceType:
-                              // List se select hua hai to ID bhejo
-                              serviceType: isCustomService
-                                  ? "other"
-                                  : selectedExpertiseId!,
-
-                              // Manual type hua hai to yahan bhejo
-                              customServiceType: isCustomService
-                                  ? selectedExpertise?.trim()
-                                  : null,
+                              serviceType: standardServiceIds.isNotEmpty
+                                  ? standardServiceIds.first
+                                  : "other",
+                              customServiceType: customServices.isNotEmpty
+                                  ? customServices.join(",")
+                                  : "",
+                              serviceTypeArray: standardServiceIds.isNotEmpty
+                                  ? standardServiceIds
+                                  : (customServices.isNotEmpty
+                                        ? customServices
+                                        : []),
                             );
                             try {
                               final service = APIStateNetwork(createDio());
@@ -4618,16 +4563,20 @@ class _ExpandablePageViewState extends State<ExpandablePageView>
 
     widget.controller.addListener(() {
       if (widget.controller.indexIsChanging) {
-        _pageController.animateToPage(
-          widget.controller.index,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
+        if (_pageController.hasClients) {
+          _pageController.animateToPage(
+            widget.controller.index,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        }
       }
       if (_currentPage != widget.controller.index) {
-        setState(() {
-          _currentPage = widget.controller.index;
-        });
+        if (mounted) {
+          setState(() {
+            _currentPage = widget.controller.index;
+          });
+        }
       }
     });
   }
@@ -4653,7 +4602,9 @@ class _ExpandablePageViewState extends State<ExpandablePageView>
       child: PageView(
         controller: _pageController,
         onPageChanged: (index) {
-          widget.controller.index = index;
+          if (!widget.controller.indexIsChanging) {
+            widget.controller.index = index;
+          }
         },
         children: _sizeReportingChildren(),
       ),

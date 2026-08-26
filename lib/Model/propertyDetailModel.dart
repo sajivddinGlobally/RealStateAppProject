@@ -14,6 +14,7 @@ class PropertyDetailsModel {
   String? area;
   String? bedRoom;
   List<String>? amenities;
+  List<String>? furnishingItems;
   String? bathrooms;
   String? furnishing;
   String? description;
@@ -25,6 +26,7 @@ class PropertyDetailsModel {
   bool? verifyed;
   List<AroundProject>? aroundProject;
   AveneuOverView? aveneuOverView;
+  String? rera;
 
   PropertyDetailsModel({
     this.id,
@@ -38,6 +40,7 @@ class PropertyDetailsModel {
     this.area,
     this.bedRoom,
     this.amenities,
+    this.furnishingItems,
     this.bathrooms,
     this.furnishing,
     this.description,
@@ -49,6 +52,7 @@ class PropertyDetailsModel {
     this.verifyed,
     this.aroundProject,
     this.aveneuOverView,
+    this.rera,
   });
 
   factory PropertyDetailsModel.fromProperty(Property p) {
@@ -64,6 +68,7 @@ class PropertyDetailsModel {
       area: p.area,
       bedRoom: p.bedRoom,
       amenities: p.amenities,
+      furnishingItems: p.furnishingItems,
       bathrooms: p.bathrooms,
       furnishing: p.furnishing,
       description: p.description,
@@ -72,6 +77,7 @@ class PropertyDetailsModel {
       fullName: p.fullName,
       email: p.email,
       phone: p.phone,
+      rera: p.rera,
       verifyed: p.verifyed,
       aroundProject: p.aroundProject
           ?.map(
@@ -104,6 +110,7 @@ class PropertyDetailsModel {
       area: p.area,
       bedRoom: p.bedRoom,
       amenities: p.amenities,
+      furnishingItems: p.furnishingItems,
       bathrooms: p.bathrooms,
       furnishing: p.furnishing,
       description: p.description,
@@ -115,6 +122,7 @@ class PropertyDetailsModel {
       verifyed: p.verifyed,
       aroundProject: p.aroundProject,
       aveneuOverView: p.aveneuOverView,
+      rera: p.rera,
     );
   }
 }

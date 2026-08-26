@@ -20,10 +20,17 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../Model/getPropertyResponsemodel.dart';
 import '../Model/propertyDetailModel.dart';
+import 'package:realstate/Model/getMyPropertyDetailsResModel.dart'
+    as detail_res;
 
 class PerticulerPropertyPage extends ConsumerStatefulWidget {
-  final PropertyDetailsModel data;
-  const PerticulerPropertyPage({super.key, required this.data});
+  final PropertyDetailsModel? data;
+  final String propertyId;
+  const PerticulerPropertyPage({
+    super.key,
+    this.data,
+    required this.propertyId,
+  });
 
   @override
   ConsumerState<PerticulerPropertyPage> createState() =>
@@ -312,8 +319,7 @@ class _PerticulerPropertyPageState
                                     // }
                                     // 2. Email Validation (No Validation)
 
-                                    
-                                    // No email validation 
+                                    // No email validation
                                     emailError = null;
                                     // 3. Phone Validation
                                     if (phoneController.text.trim().length <
@@ -339,6 +345,7 @@ class _PerticulerPropertyPageState
                                       name: nameController.text,
                                       phone: phoneController.text,
                                       propertyId: propertyData.id.toString(),
+                                      interested: interestedHomeLoan,
                                       // Aapka API agar homeLoan support karta hai toh yaha bhej sakte hain
                                     );
 
@@ -402,12 +409,60 @@ class _PerticulerPropertyPageState
   @override
   Widget build(BuildContext context) {
     final propertyAsync = ref.watch(getPropertyController(body));
+    final propertyDetailsAsync = ref.watch(
+      getMyPropertyDetailsController(widget.propertyId),
+    );
 
-    final property = widget.data;
-    final data = widget.data;
+    final apiData = propertyDetailsAsync.value?.data;
+
+    final property = PropertyDetailsModel(
+      id: apiData?.id ?? widget.data?.id,
+      property: apiData?.property ?? widget.data?.property,
+      propertyType: apiData?.propertyType ?? widget.data?.propertyType,
+      listingCategory: apiData?.listingCategory ?? widget.data?.listingCategory,
+      localityArea: apiData?.localityArea ?? widget.data?.localityArea,
+      city: apiData?.city ?? widget.data?.city,
+      price: apiData?.price ?? widget.data?.price,
+      area: apiData?.area ?? widget.data?.area,
+      bedRoom: apiData?.bedRoom ?? widget.data?.bedRoom,
+      amenities: apiData?.amenities ?? widget.data?.amenities,
+      furnishingItems: apiData?.furnishingItems ?? widget.data?.furnishingItems,
+      bathrooms: apiData?.bathrooms ?? widget.data?.bathrooms,
+      furnishing: apiData?.furnishing ?? widget.data?.furnishing,
+      description: apiData?.description ?? widget.data?.description,
+      propertyAddress: apiData?.propertyAddress ?? widget.data?.propertyAddress,
+      uploadedPhotos: apiData?.uploadedPhotos ?? widget.data?.uploadedPhotos,
+      fullName: apiData?.uploadBy?.name ?? widget.data?.fullName,
+      email: apiData?.uploadBy?.email ?? widget.data?.email,
+      phone: apiData?.uploadBy?.phone ?? widget.data?.phone,
+      verifyed: apiData?.verifyed ?? widget.data?.verifyed,
+      aroundProject:
+          (apiData?.aroundProject != null && apiData!.aroundProject!.isNotEmpty)
+          ? apiData!.aroundProject!
+                .map(
+                  (e) =>
+                      AroundProject(name: e.name, details: e.details, id: e.id),
+                )
+                .toList()
+          : widget.data?.aroundProject,
+      aveneuOverView: apiData?.aveneuOverView != null
+          ? AveneuOverView(
+              projectArea: apiData!.aveneuOverView!.projectArea,
+              size: apiData!.aveneuOverView!.size,
+              projectSize: apiData!.aveneuOverView!.projectSize,
+              launchDate: apiData!.aveneuOverView!.launchDate,
+              possessionStart: apiData!.aveneuOverView!.possessionStart,
+            )
+          : widget.data?.aveneuOverView,
+      rera: apiData?.rera ?? widget.data?.rera,
+      slug: apiData?.slug ?? widget.data?.slug,
+    );
+
+    final data = property;
 
     final List<String> photos = property.uploadedPhotos ?? [];
     final List amenities = property.amenities ?? [];
+    final List furnishingItems = property.furnishingItems ?? [];
     final List aroundProjects = property.aroundProject ?? [];
     final overview = property.aveneuOverView;
 
@@ -474,7 +529,7 @@ class _PerticulerPropertyPageState
                   alignment: AlignmentGeometry.topRight,
                   child: InkWell(
                     onTap: () {
-                      String slug = widget.data.slug ?? "";
+                      String slug = widget.data!.slug ?? "";
                       String baseUrl =
                           "https://propertyleinnovation.com/property";
 
@@ -524,7 +579,7 @@ class _PerticulerPropertyPageState
                                 });
 
                                 final body = LikePropertyBodyModel(
-                                  propertyId: widget.data.id.toString(),
+                                  propertyId: widget.data!.id.toString(),
                                 );
 
                                 try {
@@ -654,7 +709,9 @@ class _PerticulerPropertyPageState
                     children: [
                       Text(
                         // "NRI Avenue",
-                        "${widget.data.bedRoom} BHK ${widget.data.propertyType}",
+                        widget.data?.propertyType?.toLowerCase() == 'land'
+                            ? "${widget.data?.propertyType}"
+                            : "${widget.data?.bedRoom} BHK ${widget.data?.propertyType}",
                         style: GoogleFonts.inter(
                           fontSize: 18.sp,
                           fontWeight: FontWeight.bold,
@@ -735,30 +792,37 @@ class _PerticulerPropertyPageState
                           color: Colors.black,
                         ),
                       ),
-                      Container(
-                        margin: EdgeInsets.only(left: 10.w),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 6.w,
-                          vertical: 5.h,
-                        ),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(6.r),
-                          color: Color(0xFFECECEC),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.done, color: Colors.green, size: 15.sp),
-                            SizedBox(width: 3.w),
-                            Text(
-                              "RERA",
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 12.sp,
+                      if (property.rera != null &&
+                          property.rera!.trim().isNotEmpty &&
+                          property.rera!.trim().toLowerCase() != 'null')
+                        Container(
+                          margin: EdgeInsets.only(left: 10.w),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 6.w,
+                            vertical: 5.h,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(6.r),
+                            color: Color(0xFFECECEC),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.done,
+                                color: Colors.green,
+                                size: 15.sp,
                               ),
-                            ),
-                          ],
+                              SizedBox(width: 3.w),
+                              Text(
+                                "RERA",
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 12.sp,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
                     ],
                   ),
 
@@ -775,15 +839,15 @@ class _PerticulerPropertyPageState
                     ),
                   ),
 
-                  SizedBox(height: 6.h),
-                  Text(
-                    "EMI starts at ₹21.68 K",
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF24ADD7),
-                    ),
-                  ),
+                  // SizedBox(height: 6.h),
+                  // Text(
+                  //   "EMI starts at ₹21.68 K",
+                  //   style: TextStyle(
+                  //     fontSize: 16.sp,
+                  //     fontWeight: FontWeight.w500,
+                  //     color: Color(0xFF24ADD7),
+                  //   ),
+                  // ),
                   SizedBox(height: 12.h),
 
                   /// 🔹 EMI Button
@@ -809,125 +873,167 @@ class _PerticulerPropertyPageState
                       ),
                     ),
                   ),
-                  Container(
-                    margin: EdgeInsets.only(top: 20.h),
-                    width: double.infinity,
-                    padding: EdgeInsets.all(14.w),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(16.r),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        /// 🔹 Title
-                        Text(
-                          "Around This Project",
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.bold,
+                  if (aroundProjects.isNotEmpty)
+                    Container(
+                      margin: EdgeInsets.only(top: 20.h),
+                      width: double.infinity,
+                      padding: EdgeInsets.all(14.w),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(16.r),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          /// 🔹 Title
+                          Text(
+                            "Around This Project",
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
 
-                        SizedBox(height: 12.h),
-                        Column(
-                          children: List.generate(aroundProjects.length, (
-                            index,
-                          ) {
-                            final item = aroundProjects[index];
-                            return Container(
-                              width: 220.w,
-                              margin: EdgeInsets.only(right: 12.w),
-                              padding: EdgeInsets.all(12.w),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12.r),
-                                border: Border.all(color: Colors.grey.shade300),
-                              ),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Image.asset("assets/Group 25.png"),
-                                  SizedBox(width: 10.w),
-                                  Column(
+                          SizedBox(height: 12.h),
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: List.generate(aroundProjects.length, (
+                                index,
+                              ) {
+                                final item = aroundProjects[index];
+                                return Container(
+                                  width: 250.w,
+                                  margin: EdgeInsets.only(right: 12.w),
+                                  padding: EdgeInsets.all(12.w),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12.r),
+                                    border: Border.all(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                  ),
+                                  child: Row(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        item.name ?? "",
-                                        style: TextStyle(
-                                          fontSize: 15.sp,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
+                                      Image.asset("assets/Group 25.png"),
+                                      SizedBox(width: 10.w),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              item.name ?? "",
+                                              style: TextStyle(
+                                                fontSize: 15.sp,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
 
-                                      Text(
-                                        item.details ?? "",
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          fontSize: 14.sp,
-                                          color: Colors.black54,
+                                            Text(
+                                              item.details ?? "",
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                fontSize: 14.sp,
+                                                color: Colors.black54,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ],
                                   ),
-                                ],
-                              ),
-                            );
-                          }),
-                        ),
-                      ],
+                                );
+                              }),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
                   SizedBox(height: 20.h),
 
                   /// 🔹 Overview
-                  Text(
-                    "Avenue Overview",
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.bold,
+                  if (overview != null ||
+                      (property.bedRoom != null &&
+                          property.bedRoom!.isNotEmpty) ||
+                      (property.bathrooms != null &&
+                          property.bathrooms!.isNotEmpty))
+                    Text(
+                      "Avenue Overview",
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 12.h),
-                  Wrap(
-                    spacing: 16.w,
-                    runSpacing: 20.h,
-                    children: [
-                      _info("${property.bedRoom} Bed", "assets/bed.png", ""),
-                      _info(
-                        "${property.bathrooms} Baths",
-                        "assets/bath.png",
-                        "",
-                      ),
-                      _info(
-                        "Project Area",
-                        "assets/Group 30.png",
-                        overview?.projectArea ?? "-",
-                      ),
-                      _info(
-                        "Sizes",
-                        "assets/turf-size.png",
-                        overview?.size ?? "-",
-                      ),
-                      _info(
-                        "Launch Date",
-                        "assets/Group 33.png",
-                        overview?.launchDate ?? "-",
-                      ),
-                      _info(
-                        "Project Size",
-                        "assets/Vector.png",
-                        overview?.projectSize ?? "-",
-                      ),
-                      _info(
-                        "Possession",
-                        "assets/Vector (1).png",
-                        overview?.possessionStart ?? "-",
-                      ),
-                    ],
-                  ),
+                  if (overview != null ||
+                      (property.bedRoom != null &&
+                          property.bedRoom!.isNotEmpty) ||
+                      (property.bathrooms != null &&
+                          property.bathrooms!.isNotEmpty))
+                    SizedBox(height: 12.h),
+                  if (overview != null ||
+                      (property.bedRoom != null &&
+                          property.bedRoom!.isNotEmpty) ||
+                      (property.bathrooms != null &&
+                          property.bathrooms!.isNotEmpty))
+                    Wrap(
+                      spacing: 16.w,
+                      runSpacing: 20.h,
+                      children: [
+                        if (property.bedRoom != null &&
+                            property.bedRoom!.isNotEmpty)
+                          _info(
+                            "${property.bedRoom} Bed",
+                            "assets/bed.png",
+                            "",
+                          ),
+                        if (property.bathrooms != null &&
+                            property.bathrooms!.isNotEmpty)
+                          _info(
+                            "${property.bathrooms} Baths",
+                            "assets/bath.png",
+                            "",
+                          ),
+                        if (overview?.projectArea != null &&
+                            overview!.projectArea!.isNotEmpty)
+                          _info(
+                            "Project Area",
+                            "assets/Group 30.png",
+                            overview.projectArea!,
+                          ),
+                        if (overview?.size != null &&
+                            overview!.size!.isNotEmpty)
+                          _info(
+                            "Sizes",
+                            "assets/turf-size.png",
+                            overview.size!,
+                          ),
+                        if (overview?.launchDate != null &&
+                            overview!.launchDate!.isNotEmpty)
+                          _info(
+                            "Launch Date",
+                            "assets/Group 33.png",
+                            overview.launchDate!,
+                          ),
+                        if (overview?.projectSize != null &&
+                            overview!.projectSize!.isNotEmpty)
+                          _info(
+                            "Project Size",
+                            "assets/Vector.png",
+                            overview.projectSize!,
+                          ),
+                        if (overview?.possessionStart != null &&
+                            overview!.possessionStart!.isNotEmpty)
+                          _info(
+                            "Possession",
+                            "assets/Vector (1).png",
+                            overview.possessionStart!,
+                          ),
+                      ],
+                    ),
                   SizedBox(height: 20.h),
                   Text(
                     "Photos & Videos: Tour this project virtually",
@@ -988,47 +1094,98 @@ class _PerticulerPropertyPageState
                   SizedBox(height: 20.h),
 
                   /// 🔹 Amenities
-                  Text(
-                    "Project Amenities",
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.bold,
+                  if (amenities.isNotEmpty)
+                    Text(
+                      "Project Amenities",
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 16.h),
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: amenities.length,
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 12.h,
-                      crossAxisSpacing: 12.w,
-                      childAspectRatio: 1.14,
-                    ),
-                    itemBuilder: (context, index) {
-                      return Container(
-                        padding: EdgeInsets.all(12.w),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12.r),
-                          border: Border.all(color: Colors.grey.shade300),
-                        ),
-                        child: Center(
-                          child: Text(
-                            // item.title,
-                            amenities[index],
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w500,
+                  if (amenities.isNotEmpty) SizedBox(height: 16.h),
+                  if (amenities.isNotEmpty)
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: amenities.length,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 12.h,
+                        crossAxisSpacing: 12.w,
+                        childAspectRatio: 1.14,
+                      ),
+                      itemBuilder: (context, index) {
+                        return Container(
+                          padding: EdgeInsets.all(12.w),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: Center(
+                            child: Text(
+                              // item.title,
+                              amenities[index],
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
+                        );
+                      },
+                    ),
                   SizedBox(height: 24.h),
+
+                  /// 🔹 Furnishing Items
+                  if (furnishingItems.isNotEmpty)
+                    Text(
+                      "Furnishing Items",
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  if (furnishingItems.isNotEmpty) SizedBox(height: 16.h),
+                  if (furnishingItems.isNotEmpty)
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: furnishingItems.length,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 12.h,
+                        crossAxisSpacing: 12.w,
+                        childAspectRatio:
+                            2.5, // Modified to fit text better, amenities is 1.14
+                      ),
+                      itemBuilder: (context, index) {
+                        return Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 8.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: Center(
+                            child: Text(
+                              furnishingItems[index],
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  if (furnishingItems.isNotEmpty) SizedBox(height: 24.h),
+
                   // Row(
                   //   crossAxisAlignment: CrossAxisAlignment.start,
                   //   children: [
@@ -1073,61 +1230,64 @@ class _PerticulerPropertyPageState
                   //     ),
                   //   ],
                   // ),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      /// 🔹 Configuration
-                      Expanded(
-                        child: Text(
-                          "${data.propertyType ?? ""} Configuration",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.bold,
+                  if ((overview?.size != null && overview!.size!.isNotEmpty) ||
+                      (data.area != null && data.area!.isNotEmpty))
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        /// 🔹 Configuration
+                        Expanded(
+                          child: Text(
+                            "${data.propertyType ?? ""} Configuration",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                      ),
 
-                      /// 🔹 Size Info
-                      Expanded(
-                        child: Column(
-                          children: [
-                            Text(
-                              overview?.size != null
-                                  ? "${overview!.size} sq.ft"
-                                  : data.area != null
-                                  ? "${data.area} sq.ft"
-                                  : "-",
-                              style: TextStyle(
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.bold,
+                        /// 🔹 Size Info
+                        Expanded(
+                          child: Column(
+                            children: [
+                              Text(
+                                overview?.size != null &&
+                                        overview!.size!.isNotEmpty
+                                    ? "${overview!.size} sq.ft"
+                                    : data.area != null && data.area!.isNotEmpty
+                                    ? "${data.area} sq.ft"
+                                    : "-",
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
 
-                            /// Convert Unit
-                            Text(
-                              "convert unit",
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w500,
-                                color: const Color(0xFFFF6725),
+                              /// Convert Unit
+                              Text(
+                                "convert unit",
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w500,
+                                  color: const Color(0xFFFF6725),
+                                ),
                               ),
-                            ),
 
-                            /// Area Type (not in API → static)
-                            Text(
-                              "(Super Builtup Area)\nSize",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.bold,
+                              /// Area Type (not in API → static)
+                              Text(
+                                "(Super Builtup Area)\nSize",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
                   SizedBox(height: 20.h),
 
                   /// 🔹 Description
@@ -1331,465 +1491,6 @@ class _PerticulerPropertyPageState
   }
 }
 
-/*
-
-class PropertyCard extends StatefulWidget {
-  final ListElement property;
-  const PropertyCard({super.key, required this.property});
-
-  @override
-  State<PropertyCard> createState() => _PropertyCardState();
-
-  static Widget _tag(String text) {
-    return Container(
-      margin: const EdgeInsets.only(right: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: const Color.fromARGB(127, 138, 56, 245),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(text, style: const TextStyle(fontSize: 11)),
-    );
-  }
-}
-class _PropertyCardState extends State<PropertyCard> {
-  void showContactBottomSheet(BuildContext context, dynamic propertyData) {
-    final nameController = TextEditingController();
-    final emailController = TextEditingController();
-    final phoneController = TextEditingController();
-
-    String? nameError;
-    String? emailError;
-    String? phoneError;
-    bool agreeToContact = false;
-    bool interestedHomeLoan = false; // Ye optional rahega
-    bool isLoading = false;
-    const primaryColor = Color(0xFF24ADD7);
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return Container(
-              padding: EdgeInsets.only(
-                left: 20,
-                right: 20,
-                top: 15,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-              ),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 45,
-                        height: 5,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[300],
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      "Contact Details",
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 25),
-
-                    // --- NAME FIELD ---
-                    TextField(
-                      controller: nameController,
-                      onChanged: (v) => setDialogState(() => nameError = null),
-                      decoration: InputDecoration(
-                        labelText: "Full Name",
-                        errorText: nameError,
-                        prefixIcon: const Icon(
-                          Icons.person_outline,
-                          color: primaryColor,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-
-                    // --- EMAIL FIELD ---
-                    TextField(
-                      controller: emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      onChanged: (v) => setDialogState(() => emailError = null),
-                      decoration: InputDecoration(
-                        labelText: "Email Address",
-                        errorText: emailError,
-                        prefixIcon: const Icon(
-                          Icons.email_outlined,
-                          color: primaryColor,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-
-                    // --- PHONE FIELD ---
-                    TextField(
-                      controller: phoneController,
-                      keyboardType: TextInputType.phone,
-                      maxLength: 10,
-                      onChanged: (v) => setDialogState(() => phoneError = null),
-                      decoration: InputDecoration(
-                        labelText: "Phone Number",
-                        errorText: phoneError,
-                        counterText: "",
-                        prefixIcon: const Icon(
-                          Icons.phone_outlined,
-                          color: primaryColor,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-
-                    // --- REQUIRED CHECKBOX ---
-                    CheckboxListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        "I agree to be contacted (Required)",
-                        style: TextStyle(
-                          // Agar user bhool jaye toh text red ho jayega
-                          color: agreeToContact == "Please check the agreement"
-                              ? Colors.red
-                              : Colors.black87,
-                          fontSize: 14,
-                        ),
-                      ),
-                      value: agreeToContact,
-                      activeColor: primaryColor,
-                      controlAffinity: ListTileControlAffinity.leading,
-                      onChanged: (val) {
-                        setDialogState(() {
-                          agreeToContact = val ?? false;
-                          if (agreeToContact)
-                            nameError = null; // Clear error if checked
-                        });
-                      },
-                    ),
-
-                    // --- OPTIONAL CHECKBOX (Home Loan) ---
-                    CheckboxListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text(
-                        "Interested in Home Loan (Optional)",
-                        style: TextStyle(color: Colors.black87, fontSize: 14),
-                      ),
-                      value: interestedHomeLoan,
-                      activeColor: primaryColor,
-                      controlAffinity: ListTileControlAffinity.leading,
-                      onChanged: (val) => setDialogState(
-                        () => interestedHomeLoan = val ?? false,
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // --- SUBMIT BUTTON ---
-                    Consumer(
-                      builder: (context, ref, child) {
-                        return SizedBox(
-                          width: double.infinity,
-                          height: 55,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: primaryColor,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15),
-                              ),
-                            ),
-                            onPressed: isLoading
-                                ? null
-                                : () async {
-                                    bool isValid = true;
-
-                                    setDialogState(() {
-                                      // 1. Name Validation
-                                      if (nameController.text.trim().isEmpty) {
-                                        nameError = "Name is required";
-                                        isValid = false;
-                                      }
-                                      // 2. Email Validation
-                                      if (emailController.text.trim().isEmpty) {
-                                        emailError = "Email is required";
-                                        isValid = false;
-                                      } else if (!emailController.text.contains(
-                                        "@",
-                                      )) {
-                                        emailError = "Enter a valid email";
-                                        isValid = false;
-                                      }
-                                      // 3. Phone Validation
-                                      if (phoneController.text.trim().length <
-                                          10) {
-                                        phoneError =
-                                            "Enter 10 digit phone number";
-                                        isValid = false;
-                                      }
-                                      // 4. Checkbox Validation (Important!)
-                                      if (!agreeToContact) {
-                                        // Hum nameError variable ka use karke alert de sakte hain ya toast dikha sakte hain
-                                        nameError =
-                                            "Please check the agreement";
-                                        isValid = false;
-                                      }
-                                    });
-
-                                    if (!isValid) return;
-
-                                    setDialogState(() => isLoading = true);
-                                    try {
-                                      final body = SaveContactInPropertyBodyModel(
-                                        email: emailController.text,
-                                        name: nameController.text,
-                                        phone: phoneController.text,
-                                        propertyId: propertyData.id.toString(),
-                                        // Aapka API agar homeLoan support karta hai toh yaha bhej sakte hain
-                                      );
-
-                                      final service = APIStateNetwork(
-                                        createDio(),
-                                      );
-                                      final response = await service
-                                          .saveContactInProperty(body);
-
-                                      if (response.code == 0 ||
-                                          response.error == false) {
-                                        Fluttertoast.showToast(
-                                          msg: response.message ?? "Success",
-                                        );
-                                        ref.invalidate(
-                                          getMyPropertyContantListController,
-                                        );
-                                        Navigator.pop(context);
-                                      } else {
-                                        Fluttertoast.showToast(
-                                          msg: response.message ?? "Error",
-                                        );
-                                      }
-                                    } catch (e) {
-                                      debugPrint("Error: $e");
-                                    } finally {
-                                      setDialogState(() => isLoading = false);
-                                    }
-                                  },
-                            child: isLoading
-                                ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Text(
-                                    "SUBMIT",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final imageUrl =
-        (widget.property.uploadedPhotos != null &&
-            widget.property.uploadedPhotos!.isNotEmpty)
-        ? widget.property.uploadedPhotos!.first
-        : "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2";
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // IMAGE
-          InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                CupertinoPageRoute(
-                  builder: (context) =>
-                      PerticulerPropertyPage(data: widget.property),
-                ),
-              );
-            },
-            child: ClipRRect(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(14.r)),
-              child: Image.network(
-                imageUrl,
-                height: 100.h,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) {
-                  return Image.network(
-                    "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2",
-                    height: 100.h,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  );
-                },
-              ),
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.all(10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // TITLE
-                Text(
-                  "${widget.property.bedRoom ?? ""} BHK ${widget.property.propertyType ?? ""} in ${widget.property.localityArea ?? ""}",
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 12.sp,
-                  ),
-                ),
-
-                const SizedBox(height: 5),
-
-                // LOCATION + AREA
-                Text(
-                  "${widget.property.localityArea ?? ""}, ${widget.property.city ?? ""} • ${widget.property.area ?? ""} sqft",
-                  style: GoogleFonts.inter(
-                    fontSize: 10.sp,
-                    color: const Color.fromARGB(204, 0, 0, 0),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-
-                const SizedBox(height: 6),
-
-                // TAGS
-                Row(
-                  children: [
-                    if (widget.property.bedRoom != null)
-                      PropertyCard._tag("${widget.property.bedRoom} BHK"),
-                    if (widget.property.propertyType != null)
-                      PropertyCard._tag(widget.property.propertyType!),
-                  ],
-                ),
-
-                const SizedBox(height: 6),
-
-                // PRICE
-                Text(
-                  "₹${widget.property.price ?? "0"}",
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFFFF6725),
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15.sp,
-                  ),
-                ),
-
-                const SizedBox(height: 6),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        style: ElevatedButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15.r),
-                          ),
-                        ),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            CupertinoPageRoute(
-                              builder: (context) =>
-                                  PerticulerPropertyPage(data: widget.property),
-                            ),
-                          );
-                        },
-                        child: Text(
-                          "View",
-                          style: GoogleFonts.inter(color: Colors.black),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFFFF6725),
-                          padding: EdgeInsets.zero,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15.r),
-                          ),
-                        ),
-                        onPressed: () {
-                          showContactBottomSheet(context, widget.property);
-                        },
-                        child: Text(
-                          "Contact",
-                          style: GoogleFonts.inter(color: Colors.white),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-*/
-
 class PropertyCard extends StatelessWidget {
   final ListElement property;
   const PropertyCard({super.key, required this.property});
@@ -1814,6 +1515,7 @@ class PropertyCard extends StatelessWidget {
           context,
           MaterialPageRoute(
             builder: (context) => PerticulerPropertyPage(
+              propertyId: property.slug ?? property.id ?? "",
               data: PropertyDetailsModel.fromListElement(property),
             ),
           ),
@@ -1859,7 +1561,10 @@ class PropertyCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "${int.tryParse(property.bedRoom ?? '0') ?? '?'} BHK ${property.propertyType ?? ""}",
+                          // "${int.tryParse(property.bedRoom ?? '0') ?? '?'} BHK ${property.propertyType ?? ""}",
+                          property.propertyType?.toLowerCase() == 'land'
+                              ? "${property.propertyType ?? ""}"
+                              : "${property.bedRoom ?? ""} BHK ${property.propertyType ?? ""}",
                           style: GoogleFonts.inter(
                             fontWeight: FontWeight.w600,
                             fontSize: 10.sp,
@@ -1977,6 +1682,7 @@ class PropertyCard extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) => PerticulerPropertyPage(
+                              propertyId: property.slug ?? property.id ?? "",
                               data: PropertyDetailsModel.fromListElement(
                                 property,
                               ),
@@ -2012,6 +1718,7 @@ class PropertyCard extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) => PerticulerPropertyPage(
+                              propertyId: property.slug ?? property.id ?? "",
                               data: PropertyDetailsModel.fromListElement(
                                 property,
                               ),
