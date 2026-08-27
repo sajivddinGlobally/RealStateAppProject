@@ -1,5 +1,4 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:realstate/Controller/pricingPlanController.dart';
@@ -165,27 +164,29 @@ class _PricePlanPageState extends ConsumerState<PricePlanPage> {
                                           size: 18,
                                         ),
                                         const SizedBox(width: 10),
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              // '2 service',
-                                              point.name ?? "",
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color: Color(0xFF0B1623),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                // '2 service',
+                                                point.name ?? "",
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Color(0xFF0B1623),
+                                                ),
                                               ),
-                                            ),
-                                            Text(
-                                              'SAVE ${point.value ?? 0}% EXTRA',
-                                              style: TextStyle(
-                                                fontSize: 10,
-                                                color: Colors.orange,
-                                                fontWeight: FontWeight.bold,
+                                              Text(
+                                                'SAVE ${point.value ?? 0}% EXTRA',
+                                                style: TextStyle(
+                                                  fontSize: 10,
+                                                  color: Colors.orange,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
                                               ),
-                                            ),
-                                          ],
+                                            ],
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -194,7 +195,6 @@ class _PricePlanPageState extends ConsumerState<PricePlanPage> {
                               ),
                             ),
                             const SizedBox(height: 30),
-
                             // Select Button
                             SizedBox(
                               width: double.infinity,

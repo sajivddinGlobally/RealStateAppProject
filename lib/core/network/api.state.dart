@@ -35,6 +35,8 @@ import 'package:realstate/Model/loginWithPhoneBodyModel.dart';
 import 'package:realstate/Model/myBookingServiceRequestResModel.dart';
 import 'package:realstate/Model/myListingPropertyDeleteResModel.dart';
 import 'package:realstate/Model/planResModel.dart';
+import 'package:realstate/Model/propertyDetailsBodyModel.dart';
+import 'package:realstate/Model/propertyDetailsResModel.dart';
 import 'package:realstate/Model/readNotificationResModel.dart';
 import 'package:realstate/Model/registerResModel.dart';
 import 'package:realstate/Model/reseduleServiceBookingBodyModel.dart';
@@ -150,9 +152,14 @@ abstract class APIStateNetwork {
   @POST("/user/myLoanQuery")
   Future<GetLoanQueryModel> myLoanQuery();
 
+  // @POST("/user/get-property-by-id")
+  // Future<GetMyPropertyDetailsResModel> getMyPropertyDetails(
+  //   @Body() GetMyPropertyDetailsBodyModel body,
+  // );
+
   @POST("/user/get-property-by-id")
-  Future<GetMyPropertyDetailsResModel> getMyPropertyDetails(
-    @Body() GetMyPropertyDetailsBodyModel body,
+  Future<PropertyDetailsResModel> propertyDetails(
+    @Body() PropertyDetailsBodyModel body,
   );
 
   @POST("/user/saveContactInProperty")

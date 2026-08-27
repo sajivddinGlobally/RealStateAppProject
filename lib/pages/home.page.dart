@@ -41,7 +41,6 @@ import 'package:realstate/pages/perticulerProperty.page.dart';
 import 'package:realstate/pages/pricePlan.page.dart';
 import 'package:realstate/pages/propertyCat.page.dart';
 import 'package:realstate/pages/listingPage.dart';
-import 'package:realstate/pages/savedDetails.page.dart';
 import 'package:realstate/pages/search_screen.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -2544,8 +2543,8 @@ class _PropertyCardState extends State<PropertyCard> {
                   Navigator.push(
                     context,
                     CupertinoPageRoute(
-                      builder: (context) => MyPropertyDetalsPage(
-                        propetyId: widget.data.slug ?? "",
+                      builder: (context) => PerticulerPropertyPage(
+                        propertyId: widget.data.slug.toString(),
                       ),
                     ),
                   );
@@ -2884,7 +2883,9 @@ class PropertyCardSaved extends StatelessWidget {
                   Navigator.push(
                     context,
                     CupertinoPageRoute(
-                      builder: (context) => SavedDetailsPage(savedData: data),
+                      builder: (context) => PerticulerPropertyPage(
+                        propertyId: data.propertyId!.slug.toString(),
+                      ),
                     ),
                   );
                 },

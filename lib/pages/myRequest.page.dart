@@ -844,11 +844,16 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
     final extraItems = items.where((e) => e.isExtra == true).toList();
 
     int totalServiceCharges = 0;
+    int totalAmountPayable = 0;
     for (var i in items) {
       if (i.serviceFee != null) {
         totalServiceCharges += (i.serviceFee as int);
       }
+      if (i.price != null) {
+        totalAmountPayable += (i.price as int);
+      }
     }
+    totalAmountPayable += totalServiceCharges;
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
@@ -968,7 +973,7 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
                     ),
                   ),
                   Text(
-                    "₹${item.serviceFee ?? 0}",
+                    "₹$totalAmountPayable",
                     style: GoogleFonts.inter(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w900,

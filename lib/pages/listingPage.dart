@@ -348,7 +348,7 @@ class PropertyCard extends StatelessWidget {
           MaterialPageRoute(
             builder: (context) => PerticulerPropertyPage(
               propertyId: property.slug ?? property.id ?? "",
-              data: PropertyDetailsModel.fromListElement(property),
+              // data: PropertyDetailsModel.fromListElement(property),
             ),
           ),
         );
@@ -395,7 +395,7 @@ class PropertyCard extends StatelessWidget {
           MaterialPageRoute(
             builder: (context) => PerticulerPropertyPage(
               propertyId: property.slug ?? property.id ?? "",
-              data: PropertyDetailsModel.fromListElement(property),
+              // data: PropertyDetailsModel.fromListElement(property),
             ),
           ),
         );

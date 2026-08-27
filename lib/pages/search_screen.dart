@@ -206,14 +206,13 @@ class _SearchResultScreenState extends ConsumerState<SearchResultScreen> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) =>
-                                        PerticulerPropertyPage(
-                                          propertyId: property.slug ?? property.id ?? "",
-                                          data:
-                                              PropertyDetailsModel.fromProperty(
-                                                property,
-                                              ),
-                                        ),
+                                    builder: (context) => PerticulerPropertyPage(
+                                      propertyId: property.slug.toString(),
+                                      // data:
+                                      //     PropertyDetailsModel.fromProperty(
+                                      //       property,
+                                      //     ),
+                                    ),
                                   ),
                                 );
                               },
@@ -406,11 +405,14 @@ class _SearchResultScreenState extends ConsumerState<SearchResultScreen> {
                                                   MaterialPageRoute(
                                                     builder: (context) =>
                                                         PerticulerPropertyPage(
-                                                          propertyId: property.slug ?? property.id ?? "",
-                                                          data:
-                                                              PropertyDetailsModel.fromProperty(
-                                                                property,
-                                                              ),
+                                                          propertyId: property
+                                                              .slug
+                                                              .toString(),
+
+                                                          // data:
+                                                          //     PropertyDetailsModel.fromProperty(
+                                                          //       property,
+                                                          //     ),
                                                         ),
                                                   ),
                                                 );
@@ -447,18 +449,15 @@ class _SearchResultScreenState extends ConsumerState<SearchResultScreen> {
                                                   MaterialPageRoute(
                                                     builder: (context) =>
                                                         PerticulerPropertyPage(
-                                                          propertyId: property.slug ?? property.id ?? "",
-                                                          data:
-                                                              PropertyDetailsModel.fromProperty(
-                                                                property,
-                                                              ),
+                                                          propertyId: property
+                                                              .slug
+                                                              .toString(),
                                                         ),
                                                   ),
                                                 );
                                               },
                                               child: Container(
                                                 decoration: BoxDecoration(
-                                                  // border: Border.all(color:Colors.grey[400]! ),
                                                   borderRadius:
                                                       BorderRadius.circular(10),
                                                   color: const Color(

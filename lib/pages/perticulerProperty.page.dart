@@ -24,13 +24,8 @@ import 'package:realstate/Model/getMyPropertyDetailsResModel.dart'
     as detail_res;
 
 class PerticulerPropertyPage extends ConsumerStatefulWidget {
-  final PropertyDetailsModel? data;
   final String propertyId;
-  const PerticulerPropertyPage({
-    super.key,
-    this.data,
-    required this.propertyId,
-  });
+  const PerticulerPropertyPage({super.key, required this.propertyId});
 
   @override
   ConsumerState<PerticulerPropertyPage> createState() =>
@@ -410,32 +405,32 @@ class _PerticulerPropertyPageState
   Widget build(BuildContext context) {
     final propertyAsync = ref.watch(getPropertyController(body));
     final propertyDetailsAsync = ref.watch(
-      getMyPropertyDetailsController(widget.propertyId),
+      propertyDetailsController(widget.propertyId),
     );
 
     final apiData = propertyDetailsAsync.value?.data;
 
     final property = PropertyDetailsModel(
-      id: apiData?.id ?? widget.data?.id,
-      property: apiData?.property ?? widget.data?.property,
-      propertyType: apiData?.propertyType ?? widget.data?.propertyType,
-      listingCategory: apiData?.listingCategory ?? widget.data?.listingCategory,
-      localityArea: apiData?.localityArea ?? widget.data?.localityArea,
-      city: apiData?.city ?? widget.data?.city,
-      price: apiData?.price ?? widget.data?.price,
-      area: apiData?.area ?? widget.data?.area,
-      bedRoom: apiData?.bedRoom ?? widget.data?.bedRoom,
-      amenities: apiData?.amenities ?? widget.data?.amenities,
-      furnishingItems: apiData?.furnishingItems ?? widget.data?.furnishingItems,
-      bathrooms: apiData?.bathrooms ?? widget.data?.bathrooms,
-      furnishing: apiData?.furnishing ?? widget.data?.furnishing,
-      description: apiData?.description ?? widget.data?.description,
-      propertyAddress: apiData?.propertyAddress ?? widget.data?.propertyAddress,
-      uploadedPhotos: apiData?.uploadedPhotos ?? widget.data?.uploadedPhotos,
-      fullName: apiData?.uploadBy?.name ?? widget.data?.fullName,
-      email: apiData?.uploadBy?.email ?? widget.data?.email,
-      phone: apiData?.uploadBy?.phone ?? widget.data?.phone,
-      verifyed: apiData?.verifyed ?? widget.data?.verifyed,
+      id: apiData?.id ?? "",
+      property: apiData?.property ?? "",
+      propertyType: apiData?.propertyType ?? "",
+      listingCategory: apiData?.listingCategory ?? "",
+      localityArea: apiData?.localityArea ?? "",
+      city: apiData?.city ?? "",
+      price: apiData?.price ?? "",
+      area: apiData?.area ?? "",
+      bedRoom: apiData?.bedRoom ?? "",
+      amenities: apiData?.amenities ?? [],
+      furnishingItems: apiData?.furnishingItems ?? [],
+      bathrooms: apiData?.bathrooms ?? "",
+      furnishing: apiData?.furnishing ?? "",
+      description: apiData?.description ?? "",
+      propertyAddress: apiData?.propertyAddress ?? "",
+      uploadedPhotos: apiData?.uploadedPhotos ?? [],
+      fullName: apiData?.uploadBy?.name ?? "",
+      email: apiData?.uploadBy?.email ?? "",
+      phone: apiData?.uploadBy?.phone ?? "",
+      verifyed: apiData?.verifyed ?? false,
       aroundProject:
           (apiData?.aroundProject != null && apiData!.aroundProject!.isNotEmpty)
           ? apiData!.aroundProject!
@@ -444,7 +439,7 @@ class _PerticulerPropertyPageState
                       AroundProject(name: e.name, details: e.details, id: e.id),
                 )
                 .toList()
-          : widget.data?.aroundProject,
+          : [],
       aveneuOverView: apiData?.aveneuOverView != null
           ? AveneuOverView(
               projectArea: apiData!.aveneuOverView!.projectArea,
@@ -453,9 +448,15 @@ class _PerticulerPropertyPageState
               launchDate: apiData!.aveneuOverView!.launchDate,
               possessionStart: apiData!.aveneuOverView!.possessionStart,
             )
-          : widget.data?.aveneuOverView,
-      rera: apiData?.rera ?? widget.data?.rera,
-      slug: apiData?.slug ?? widget.data?.slug,
+          : AveneuOverView(
+              projectArea: "",
+              size: "",
+              projectSize: "",
+              launchDate: "",
+              possessionStart: "",
+            ),
+      rera: apiData?.rera ?? "",
+      slug: apiData?.slug ?? "",
     );
 
     final data = property;
@@ -486,927 +487,896 @@ class _PerticulerPropertyPageState
         backgroundColor: Colors.white,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
+      body: propertyDetailsAsync.when(
+        data: (data) {
+          return SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(
-                  height: 220.h,
-                  width: double.infinity,
-                  child: PageView.builder(
-                    controller: _pageController,
-                    itemCount: photos.isEmpty ? 1 : photos.length,
-                    itemBuilder: (context, index) {
-                      return Image.network(
-                        photos.isEmpty
-                            ? 'https://via.placeholder.com/600x400'
-                            : photos[index],
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        loadingBuilder: (context, child, progress) {
-                          if (progress == null) return child;
-                          return Container(
-                            color: Colors.grey.shade200,
-                            child: const Center(
-                              child: CircularProgressIndicator(),
+                Stack(
+                  children: [
+                    SizedBox(
+                      height: 220.h,
+                      width: double.infinity,
+                      child: PageView.builder(
+                        controller: _pageController,
+                        itemCount: photos.isEmpty ? 1 : photos.length,
+                        itemBuilder: (context, index) {
+                          return Image.network(
+                            photos.isEmpty
+                                ? 'https://via.placeholder.com/600x400'
+                                : photos[index],
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, progress) {
+                              if (progress == null) return child;
+                              return Container(
+                                color: Colors.grey.shade200,
+                                child: const Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+                            },
+                            errorBuilder: (_, __, ___) => Container(
+                              color: Colors.grey.shade300,
+                              child: const Center(
+                                child: Icon(Icons.image, size: 60),
+                              ),
                             ),
                           );
                         },
-                        errorBuilder: (_, __, ___) => Container(
-                          color: Colors.grey.shade300,
-                          child: const Center(
-                            child: Icon(Icons.image, size: 60),
-                          ),
+                      ),
+                    ),
+                    Align(
+                      alignment: AlignmentGeometry.topRight,
+                      child: InkWell(
+                        onTap: () {
+                          String slug = data.data?.slug ?? "";
+                          String baseUrl =
+                              "https://propertyleinnovation.com/property";
+
+                          String finalUrl = slug.startsWith('/')
+                              ? "$baseUrl$slug"
+                              : "$baseUrl/$slug";
+                          // Share karein
+                          Share.share("Check out this property: $finalUrl");
+                        },
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Container(
+                              margin: EdgeInsets.only(top: 10.h, right: 10.w),
+                              padding: EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(2.r),
+                                color: Colors.white,
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.share,
+                                    color: Colors.black,
+                                    size: 16.sp,
+                                  ),
+                                  SizedBox(width: 6.w),
+                                  Text(
+                                    "Share",
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            StatefulBuilder(
+                              builder: (context, setLikeState) {
+                                return InkWell(
+                                  onTap: () async {
+                                    // Pehle UI update karein (Instant feedback ke liye)
+                                    setLikeState(() {
+                                      isLiked = !isLiked;
+                                    });
+
+                                    final body = LikePropertyBodyModel(
+                                      propertyId: data.data!.id.toString(),
+                                    );
+
+                                    try {
+                                      final service = APIStateNetwork(
+                                        createDio(),
+                                      );
+                                      final response = await service
+                                          .likeProperties(body);
+
+                                      if (response.code == 0 ||
+                                          response.error == false) {
+                                        ref.invalidate(likePropertyController);
+                                        // Fluttertoast.showToast(
+                                        //   msg: response.message ?? "Success",
+                                        // );
+                                      } else {
+                                        // Agar API fail ho jaye toh wapas purana state kar dein
+                                        setLikeState(() {
+                                          isLiked = !isLiked;
+                                        });
+                                        Fluttertoast.showToast(
+                                          msg: response.message ?? "Error",
+                                        );
+                                      }
+                                    } catch (e) {
+                                      setLikeState(() {
+                                        isLiked = !isLiked;
+                                      });
+                                      log(e.toString());
+                                    }
+                                  },
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 300),
+                                    margin: EdgeInsets.only(
+                                      top: 10.h,
+                                      right: 10.w,
+                                    ),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 12.w,
+                                      vertical: 8.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(20.r),
+                                      color: Colors.white,
+                                      border: Border.all(
+                                        color: isLiked
+                                            ? Colors.red
+                                            : Colors.grey.shade300,
+                                        width: 1.5,
+                                      ),
+                                      boxShadow: isLiked
+                                          ? [
+                                              BoxShadow(
+                                                color: Colors.red.withOpacity(
+                                                  0.2,
+                                                ),
+                                                blurRadius: 8,
+                                                spreadRadius: 1,
+                                              ),
+                                            ]
+                                          : [],
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        // Icon Animation
+                                        TweenAnimationBuilder<double>(
+                                          tween: Tween(
+                                            begin: 1.0,
+                                            end: isLiked ? 1.2 : 1.0,
+                                          ),
+                                          duration: Duration(milliseconds: 200),
+                                          builder: (context, value, child) {
+                                            return Transform.scale(
+                                              scale: value,
+                                              child: Icon(
+                                                isLiked
+                                                    ? Icons.favorite
+                                                    : Icons.favorite_border,
+                                                color: isLiked
+                                                    ? Colors.red
+                                                    : Colors.black,
+                                                size: 18.sp,
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                        SizedBox(width: 8.w),
+                                        Text(
+                                          isLiked ? "Saved" : "Save",
+                                          style: GoogleFonts.inter(
+                                            fontSize: 12.sp,
+                                            fontWeight: FontWeight.w600,
+                                            color: isLiked
+                                                ? Colors.red
+                                                : Colors.black,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
                         ),
-                      );
-                    },
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 10.h),
+                Center(
+                  child: SmoothPageIndicator(
+                    controller: _pageController,
+                    count: photos.isEmpty ? 1 : photos.length,
+                    effect: ExpandingDotsEffect(
+                      activeDotColor: Color(0xFF24ADD7),
+                      dotColor: Colors.grey,
+                      dotHeight: 8,
+                      dotWidth: 8,
+                      expansionFactor: 3,
+                      spacing: 6,
+                    ),
                   ),
                 ),
+                Padding(
+                  padding: EdgeInsets.only(left: 20.w, top: 16.h, right: 20.w),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      /// 🔹 Title
+                      Row(
+                        children: [
+                          Text(
+                            // "NRI Avenue",
+                            data.data?.propertyType?.toLowerCase() == 'land'
+                                ? "${data.data?.propertyType}"
+                                : "${data.data?.bedRoom} BHK ${data.data?.propertyType}",
+                            style: GoogleFonts.inter(
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Spacer(),
+                          Row(
+                            children: [
+                              InkWell(
+                                borderRadius: BorderRadius.circular(100.r),
+                                onTap: () async {
+                                  final Uri url = Uri.parse(
+                                    "tel:+91 9171719060",
+                                  );
 
-                Align(
-                  alignment: AlignmentGeometry.topRight,
-                  child: InkWell(
-                    onTap: () {
-                      String slug = widget.data!.slug ?? "";
-                      String baseUrl =
-                          "https://propertyleinnovation.com/property";
+                                  await launchUrl(
+                                    url,
+                                    mode: LaunchMode.externalApplication,
+                                  );
+                                },
+                                child: Container(
+                                  width: 40.w,
+                                  height: 40.h,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.blue,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.call,
+                                    size: 20.sp,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
 
-                      String finalUrl = slug.startsWith('/')
-                          ? "$baseUrl$slug"
-                          : "$baseUrl/$slug";
-                      // Share karein
-                      Share.share("Check out this property: $finalUrl");
-                    },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Container(
-                          margin: EdgeInsets.only(top: 10.h, right: 10.w),
-                          padding: EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(2.r),
+                              SizedBox(width: 10.w),
+
+                              InkWell(
+                                borderRadius: BorderRadius.circular(100.r),
+                                onTap: () async {
+                                  final Uri url = Uri.parse(
+                                    "https://wa.me/9171719060",
+                                  );
+
+                                  await launchUrl(
+                                    url,
+                                    mode: LaunchMode.externalApplication,
+                                  );
+                                },
+                                child: Container(
+                                  width: 40.w,
+                                  height: 40.h,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.green,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(
+                                    child: SvgPicture.asset(
+                                      "assets/Svg/whatsapp.svg",
+                                      width: 20.w,
+                                      height: 20.h,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+
+                      SizedBox(height: 6.h),
+                      Row(
+                        children: [
+                          Text(
+                            // "Jagatpura, NH - 8 Jaipur",
+                            "${property.localityArea}, ${property.city}",
+                            style: GoogleFonts.inter(
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black,
+                            ),
+                          ),
+                          if (property.rera != null &&
+                              property.rera!.trim().isNotEmpty &&
+                              property.rera!.trim().toLowerCase() != 'null')
+                            Container(
+                              margin: EdgeInsets.only(left: 10.w),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 6.w,
+                                vertical: 5.h,
+                              ),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(6.r),
+                                color: Color(0xFFECECEC),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.done,
+                                    color: Colors.green,
+                                    size: 15.sp,
+                                  ),
+                                  SizedBox(width: 3.w),
+                                  Text(
+                                    "RERA",
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 12.sp,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+
+                      SizedBox(height: 6.h),
+
+                      /// 🔹 Price
+                      Text(
+                        // "₹40.95 L - 43.7 L",
+                        "₹ ${property.price}",
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.black,
+                        ),
+                      ),
+
+                      SizedBox(height: 12.h),
+
+                      /// 🔹 EMI Button
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0xFF24ADD7),
+                          minimumSize: Size(150.w, 45.h),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30.r),
+                          ),
+                        ),
+                        onPressed: () {
+                          //showContactDialog(context);
+                          showContactBottomSheet(context, ref, data.data);
+                        },
+                        icon: const Icon(
+                          Icons.call_outlined,
+                          color: Colors.white,
+                        ),
+                        label: Text(
+                          "Contact",
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w500,
                             color: Colors.white,
                           ),
-                          child: Row(
+                        ),
+                      ),
+                      if (aroundProjects.isNotEmpty)
+                        Container(
+                          margin: EdgeInsets.only(top: 20.h),
+                          width: double.infinity,
+                          padding: EdgeInsets.all(14.w),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(16.r),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(
-                                Icons.share,
-                                color: Colors.black,
-                                size: 16.sp,
-                              ),
-                              SizedBox(width: 6.w),
+                              /// 🔹 Title
                               Text(
-                                "Share",
-                                style: GoogleFonts.inter(
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.black,
+                                "Around This Project",
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+
+                              SizedBox(height: 12.h),
+                              SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  children: List.generate(
+                                    aroundProjects.length,
+                                    (index) {
+                                      final item = aroundProjects[index];
+                                      return Container(
+                                        width: 250.w,
+                                        margin: EdgeInsets.only(right: 12.w),
+                                        padding: EdgeInsets.all(12.w),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(
+                                            12.r,
+                                          ),
+                                          border: Border.all(
+                                            color: Colors.grey.shade300,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Image.asset("assets/Group 25.png"),
+                                            SizedBox(width: 10.w),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    item.name ?? "",
+                                                    style: TextStyle(
+                                                      fontSize: 15.sp,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                                  ),
+
+                                                  Text(
+                                                    item.details ?? "",
+                                                    maxLines: 2,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: TextStyle(
+                                                      fontSize: 14.sp,
+                                                      color: Colors.black54,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ),
+                      SizedBox(height: 20.h),
 
-                        StatefulBuilder(
-                          builder: (context, setLikeState) {
-                            return InkWell(
-                              onTap: () async {
-                                // Pehle UI update karein (Instant feedback ke liye)
-                                setLikeState(() {
-                                  isLiked = !isLiked;
-                                });
+                      /// 🔹 Overview
+                      if (overview != null ||
+                          (property.bedRoom != null &&
+                              property.bedRoom!.isNotEmpty) ||
+                          (property.bathrooms != null &&
+                              property.bathrooms!.isNotEmpty))
+                        Text(
+                          "Avenue Overview",
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      if (overview != null ||
+                          (property.bedRoom != null &&
+                              property.bedRoom!.isNotEmpty) ||
+                          (property.bathrooms != null &&
+                              property.bathrooms!.isNotEmpty))
+                        SizedBox(height: 12.h),
+                      if (overview != null ||
+                          (property.bedRoom != null &&
+                              property.bedRoom!.isNotEmpty) ||
+                          (property.bathrooms != null &&
+                              property.bathrooms!.isNotEmpty))
+                        Wrap(
+                          spacing: 16.w,
+                          runSpacing: 20.h,
+                          children: [
+                            if (property.bedRoom != null &&
+                                property.bedRoom!.isNotEmpty)
+                              _info(
+                                "${property.bedRoom} Bed",
+                                "assets/bed.png",
+                                "",
+                              ),
+                            if (property.bathrooms != null &&
+                                property.bathrooms!.isNotEmpty)
+                              _info(
+                                "${property.bathrooms} Baths",
+                                "assets/bath.png",
+                                "",
+                              ),
+                            if (overview?.projectArea != null &&
+                                overview!.projectArea!.isNotEmpty)
+                              _info(
+                                "Project Area",
+                                "assets/Group 30.png",
+                                overview.projectArea!,
+                              ),
+                            if (overview?.size != null &&
+                                overview!.size!.isNotEmpty)
+                              _info(
+                                "Sizes",
+                                "assets/turf-size.png",
+                                overview.size!,
+                              ),
+                            if (overview?.launchDate != null &&
+                                overview!.launchDate!.isNotEmpty)
+                              _info(
+                                "Launch Date",
+                                "assets/Group 33.png",
+                                overview.launchDate!,
+                              ),
+                            if (overview?.projectSize != null &&
+                                overview!.projectSize!.isNotEmpty)
+                              _info(
+                                "Project Size",
+                                "assets/Vector.png",
+                                overview.projectSize!,
+                              ),
+                            if (overview?.possessionStart != null &&
+                                overview!.possessionStart!.isNotEmpty)
+                              _info(
+                                "Possession",
+                                "assets/Vector (1).png",
+                                overview.possessionStart!,
+                              ),
+                          ],
+                        ),
+                      SizedBox(height: 20.h),
+                      Text(
+                        "Photos & Videos: Tour this project virtually",
+                        style: GoogleFonts.inter(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black,
+                        ),
+                      ),
+                      SizedBox(height: 15.h),
+                      Text(
+                        "Project Tour & Photos",
+                        style: GoogleFonts.inter(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black,
+                        ),
+                      ),
+                      SizedBox(height: 10.h),
+                      Stack(
+                        alignment: AlignmentGeometry.center,
+                        children: [
+                          Image.asset("assets/Rectangle 92.png"),
+                          Align(
+                            alignment: AlignmentGeometry.center,
+                            child: Icon(
+                              Icons.play_circle_fill_outlined,
+                              color: Colors.white,
+                              size: 30.sp,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 15.h),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Image.asset(
+                            "assets/Rectangle 91.png",
+                            width: 103.w,
+                            height: 95.h,
+                            fit: BoxFit.cover,
+                          ),
+                          Image.asset(
+                            "assets/Rectangle 91.png",
+                            width: 103.w,
+                            height: 95.h,
+                            fit: BoxFit.cover,
+                          ),
+                          Image.asset(
+                            "assets/Rectangle 91.png",
+                            width: 103.w,
+                            height: 95.h,
+                            fit: BoxFit.cover,
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 20.h),
 
-                                final body = LikePropertyBodyModel(
-                                  propertyId: widget.data!.id.toString(),
-                                );
-
-                                try {
-                                  final service = APIStateNetwork(createDio());
-                                  final response = await service.likeProperties(
-                                    body,
-                                  );
-
-                                  if (response.code == 0 ||
-                                      response.error == false) {
-                                    ref.invalidate(likePropertyController);
-                                    // Fluttertoast.showToast(
-                                    //   msg: response.message ?? "Success",
-                                    // );
-                                  } else {
-                                    // Agar API fail ho jaye toh wapas purana state kar dein
-                                    setLikeState(() {
-                                      isLiked = !isLiked;
-                                    });
-                                    Fluttertoast.showToast(
-                                      msg: response.message ?? "Error",
-                                    );
-                                  }
-                                } catch (e) {
-                                  setLikeState(() {
-                                    isLiked = !isLiked;
-                                  });
-                                  log(e.toString());
-                                }
-                              },
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 300),
-                                margin: EdgeInsets.only(top: 10.h, right: 10.w),
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 12.w,
-                                  vertical: 8.h,
-                                ),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(20.r),
-                                  color: Colors.white,
-                                  border: Border.all(
-                                    color: isLiked
-                                        ? Colors.red
-                                        : Colors.grey.shade300,
-                                    width: 1.5,
+                      /// 🔹 Amenities
+                      if (amenities.isNotEmpty)
+                        Text(
+                          "Project Amenities",
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      if (amenities.isNotEmpty) SizedBox(height: 16.h),
+                      if (amenities.isNotEmpty)
+                        GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: amenities.length,
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                mainAxisSpacing: 12.h,
+                                crossAxisSpacing: 12.w,
+                                childAspectRatio: 1.14,
+                              ),
+                          itemBuilder: (context, index) {
+                            return Container(
+                              padding: EdgeInsets.all(12.w),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12.r),
+                                border: Border.all(color: Colors.grey.shade300),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  // item.title,
+                                  amenities[index],
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.w500,
                                   ),
-                                  boxShadow: isLiked
-                                      ? [
-                                          BoxShadow(
-                                            color: Colors.red.withOpacity(0.2),
-                                            blurRadius: 8,
-                                            spreadRadius: 1,
-                                          ),
-                                        ]
-                                      : [],
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    // Icon Animation
-                                    TweenAnimationBuilder<double>(
-                                      tween: Tween(
-                                        begin: 1.0,
-                                        end: isLiked ? 1.2 : 1.0,
-                                      ),
-                                      duration: Duration(milliseconds: 200),
-                                      builder: (context, value, child) {
-                                        return Transform.scale(
-                                          scale: value,
-                                          child: Icon(
-                                            isLiked
-                                                ? Icons.favorite
-                                                : Icons.favorite_border,
-                                            color: isLiked
-                                                ? Colors.red
-                                                : Colors.black,
-                                            size: 18.sp,
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                    SizedBox(width: 8.w),
-                                    Text(
-                                      isLiked ? "Saved" : "Save",
-                                      style: GoogleFonts.inter(
-                                        fontSize: 12.sp,
-                                        fontWeight: FontWeight.w600,
-                                        color: isLiked
-                                            ? Colors.red
-                                            : Colors.black,
-                                      ),
-                                    ),
-                                  ],
                                 ),
                               ),
                             );
                           },
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 10.h),
-            Center(
-              child: SmoothPageIndicator(
-                controller: _pageController,
-                count: photos.isEmpty ? 1 : photos.length,
-                effect: ExpandingDotsEffect(
-                  activeDotColor: Color(0xFF24ADD7),
-                  dotColor: Colors.grey,
-                  dotHeight: 8,
-                  dotWidth: 8,
-                  expansionFactor: 3,
-                  spacing: 6,
-                ),
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.only(left: 20.w, top: 16.h, right: 20.w),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  /// 🔹 Title
-                  Row(
-                    children: [
-                      Text(
-                        // "NRI Avenue",
-                        widget.data?.propertyType?.toLowerCase() == 'land'
-                            ? "${widget.data?.propertyType}"
-                            : "${widget.data?.bedRoom} BHK ${widget.data?.propertyType}",
-                        style: GoogleFonts.inter(
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Spacer(),
-                      Row(
-                        children: [
-                          InkWell(
-                            borderRadius: BorderRadius.circular(100.r),
-                            onTap: () async {
-                              final Uri url = Uri.parse("tel:+91 9171719060");
+                      SizedBox(height: 24.h),
 
-                              await launchUrl(
-                                url,
-                                mode: LaunchMode.externalApplication,
-                              );
-                            },
-                            child: Container(
-                              width: 40.w,
-                              height: 40.h,
-                              decoration: const BoxDecoration(
-                                color: Colors.blue,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.call,
-                                size: 20.sp,
-                                color: Colors.white,
-                              ),
-                            ),
+                      /// 🔹 Furnishing Items
+                      if (furnishingItems.isNotEmpty)
+                        Text(
+                          "Furnishing Items",
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.bold,
                           ),
-
-                          SizedBox(width: 10.w),
-
-                          InkWell(
-                            borderRadius: BorderRadius.circular(100.r),
-                            onTap: () async {
-                              final Uri url = Uri.parse(
-                                "https://wa.me/9171719060",
-                              );
-
-                              await launchUrl(
-                                url,
-                                mode: LaunchMode.externalApplication,
-                              );
-                            },
-                            child: Container(
-                              width: 40.w,
-                              height: 40.h,
-                              decoration: const BoxDecoration(
-                                color: Colors.green,
-                                shape: BoxShape.circle,
+                        ),
+                      if (furnishingItems.isNotEmpty) SizedBox(height: 16.h),
+                      if (furnishingItems.isNotEmpty)
+                        GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: furnishingItems.length,
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 12.h,
+                            crossAxisSpacing: 12.w,
+                            childAspectRatio:
+                                2.5, // Modified to fit text better, amenities is 1.14
+                          ),
+                          itemBuilder: (context, index) {
+                            return Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12.w,
+                                vertical: 8.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12.r),
+                                border: Border.all(color: Colors.grey.shade300),
                               ),
                               child: Center(
-                                child: SvgPicture.asset(
-                                  "assets/Svg/whatsapp.svg",
-                                  width: 20.w,
-                                  height: 20.h,
+                                child: Text(
+                                  furnishingItems[index],
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: 6.h),
-                  Row(
-                    children: [
-                      Text(
-                        // "Jagatpura, NH - 8 Jaipur",
-                        "${property.localityArea}, ${property.city}",
-                        style: GoogleFonts.inter(
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black,
+                            );
+                          },
                         ),
-                      ),
-                      if (property.rera != null &&
-                          property.rera!.trim().isNotEmpty &&
-                          property.rera!.trim().toLowerCase() != 'null')
-                        Container(
-                          margin: EdgeInsets.only(left: 10.w),
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 6.w,
-                            vertical: 5.h,
-                          ),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(6.r),
-                            color: Color(0xFFECECEC),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.done,
-                                color: Colors.green,
-                                size: 15.sp,
-                              ),
-                              SizedBox(width: 3.w),
-                              Text(
-                                "RERA",
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 12.sp,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
+                      if (furnishingItems.isNotEmpty) SizedBox(height: 24.h),
 
-                  SizedBox(height: 6.h),
-
-                  /// 🔹 Price
-                  Text(
-                    // "₹40.95 L - 43.7 L",
-                    "₹ ${property.price}",
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.black,
-                    ),
-                  ),
-
-                  // SizedBox(height: 6.h),
-                  // Text(
-                  //   "EMI starts at ₹21.68 K",
-                  //   style: TextStyle(
-                  //     fontSize: 16.sp,
-                  //     fontWeight: FontWeight.w500,
-                  //     color: Color(0xFF24ADD7),
-                  //   ),
-                  // ),
-                  SizedBox(height: 12.h),
-
-                  /// 🔹 EMI Button
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF24ADD7),
-                      minimumSize: Size(150.w, 45.h),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30.r),
-                      ),
-                    ),
-                    onPressed: () {
-                      //showContactDialog(context);
-                      showContactBottomSheet(context, ref, widget.data);
-                    },
-                    icon: const Icon(Icons.call_outlined, color: Colors.white),
-                    label: Text(
-                      "Contact",
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  if (aroundProjects.isNotEmpty)
-                    Container(
-                      margin: EdgeInsets.only(top: 20.h),
-                      width: double.infinity,
-                      padding: EdgeInsets.all(14.w),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(16.r),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          /// 🔹 Title
-                          Text(
-                            "Around This Project",
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-
-                          SizedBox(height: 12.h),
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              children: List.generate(aroundProjects.length, (
-                                index,
-                              ) {
-                                final item = aroundProjects[index];
-                                return Container(
-                                  width: 250.w,
-                                  margin: EdgeInsets.only(right: 12.w),
-                                  padding: EdgeInsets.all(12.w),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(12.r),
-                                    border: Border.all(
-                                      color: Colors.grey.shade300,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Image.asset("assets/Group 25.png"),
-                                      SizedBox(width: 10.w),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              item.name ?? "",
-                                              style: TextStyle(
-                                                fontSize: 15.sp,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-
-                                            Text(
-                                              item.details ?? "",
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: TextStyle(
-                                                fontSize: 14.sp,
-                                                color: Colors.black54,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  SizedBox(height: 20.h),
-
-                  /// 🔹 Overview
-                  if (overview != null ||
-                      (property.bedRoom != null &&
-                          property.bedRoom!.isNotEmpty) ||
-                      (property.bathrooms != null &&
-                          property.bathrooms!.isNotEmpty))
-                    Text(
-                      "Avenue Overview",
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  if (overview != null ||
-                      (property.bedRoom != null &&
-                          property.bedRoom!.isNotEmpty) ||
-                      (property.bathrooms != null &&
-                          property.bathrooms!.isNotEmpty))
-                    SizedBox(height: 12.h),
-                  if (overview != null ||
-                      (property.bedRoom != null &&
-                          property.bedRoom!.isNotEmpty) ||
-                      (property.bathrooms != null &&
-                          property.bathrooms!.isNotEmpty))
-                    Wrap(
-                      spacing: 16.w,
-                      runSpacing: 20.h,
-                      children: [
-                        if (property.bedRoom != null &&
-                            property.bedRoom!.isNotEmpty)
-                          _info(
-                            "${property.bedRoom} Bed",
-                            "assets/bed.png",
-                            "",
-                          ),
-                        if (property.bathrooms != null &&
-                            property.bathrooms!.isNotEmpty)
-                          _info(
-                            "${property.bathrooms} Baths",
-                            "assets/bath.png",
-                            "",
-                          ),
-                        if (overview?.projectArea != null &&
-                            overview!.projectArea!.isNotEmpty)
-                          _info(
-                            "Project Area",
-                            "assets/Group 30.png",
-                            overview.projectArea!,
-                          ),
-                        if (overview?.size != null &&
-                            overview!.size!.isNotEmpty)
-                          _info(
-                            "Sizes",
-                            "assets/turf-size.png",
-                            overview.size!,
-                          ),
-                        if (overview?.launchDate != null &&
-                            overview!.launchDate!.isNotEmpty)
-                          _info(
-                            "Launch Date",
-                            "assets/Group 33.png",
-                            overview.launchDate!,
-                          ),
-                        if (overview?.projectSize != null &&
-                            overview!.projectSize!.isNotEmpty)
-                          _info(
-                            "Project Size",
-                            "assets/Vector.png",
-                            overview.projectSize!,
-                          ),
-                        if (overview?.possessionStart != null &&
-                            overview!.possessionStart!.isNotEmpty)
-                          _info(
-                            "Possession",
-                            "assets/Vector (1).png",
-                            overview.possessionStart!,
-                          ),
-                      ],
-                    ),
-                  SizedBox(height: 20.h),
-                  Text(
-                    "Photos & Videos: Tour this project virtually",
-                    style: GoogleFonts.inter(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black,
-                    ),
-                  ),
-                  SizedBox(height: 15.h),
-                  Text(
-                    "Project Tour & Photos",
-                    style: GoogleFonts.inter(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black,
-                    ),
-                  ),
-                  SizedBox(height: 10.h),
-                  Stack(
-                    alignment: AlignmentGeometry.center,
-                    children: [
-                      Image.asset("assets/Rectangle 92.png"),
-                      Align(
-                        alignment: AlignmentGeometry.center,
-                        child: Icon(
-                          Icons.play_circle_fill_outlined,
-                          color: Colors.white,
-                          size: 30.sp,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 15.h),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Image.asset(
-                        "assets/Rectangle 91.png",
-                        width: 103.w,
-                        height: 95.h,
-                        fit: BoxFit.cover,
-                      ),
-                      Image.asset(
-                        "assets/Rectangle 91.png",
-                        width: 103.w,
-                        height: 95.h,
-                        fit: BoxFit.cover,
-                      ),
-                      Image.asset(
-                        "assets/Rectangle 91.png",
-                        width: 103.w,
-                        height: 95.h,
-                        fit: BoxFit.cover,
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 20.h),
-
-                  /// 🔹 Amenities
-                  if (amenities.isNotEmpty)
-                    Text(
-                      "Project Amenities",
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  if (amenities.isNotEmpty) SizedBox(height: 16.h),
-                  if (amenities.isNotEmpty)
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: amenities.length,
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 12.h,
-                        crossAxisSpacing: 12.w,
-                        childAspectRatio: 1.14,
-                      ),
-                      itemBuilder: (context, index) {
-                        return Container(
-                          padding: EdgeInsets.all(12.w),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12.r),
-                            border: Border.all(color: Colors.grey.shade300),
-                          ),
-                          child: Center(
-                            child: Text(
-                              // item.title,
-                              amenities[index],
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  SizedBox(height: 24.h),
-
-                  /// 🔹 Furnishing Items
-                  if (furnishingItems.isNotEmpty)
-                    Text(
-                      "Furnishing Items",
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  if (furnishingItems.isNotEmpty) SizedBox(height: 16.h),
-                  if (furnishingItems.isNotEmpty)
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: furnishingItems.length,
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 12.h,
-                        crossAxisSpacing: 12.w,
-                        childAspectRatio:
-                            2.5, // Modified to fit text better, amenities is 1.14
-                      ),
-                      itemBuilder: (context, index) {
-                        return Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 12.w,
-                            vertical: 8.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12.r),
-                            border: Border.all(color: Colors.grey.shade300),
-                          ),
-                          child: Center(
-                            child: Text(
-                              furnishingItems[index],
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  if (furnishingItems.isNotEmpty) SizedBox(height: 24.h),
-
-                  // Row(
-                  //   crossAxisAlignment: CrossAxisAlignment.start,
-                  //   children: [
-                  //     Expanded(
-                  //       child: Text(
-                  //         textAlign: TextAlign.center,
-                  //         "Studio Apartment Configuration",
-                  //         style: TextStyle(
-                  //           fontSize: 16.sp,
-                  //           fontWeight: FontWeight.bold,
-                  //         ),
-                  //       ),
-                  //     ),
-                  //     Expanded(
-                  //       child: Column(
-                  //         children: [
-                  //           Text(
-                  //             "431 - 460 sq.ft",
-                  //             style: TextStyle(
-                  //               fontSize: 16.sp,
-                  //               fontWeight: FontWeight.bold,
-                  //             ),
-                  //           ),
-                  //           Text(
-                  //             "convert unit",
-                  //             style: TextStyle(
-                  //               fontSize: 14.sp,
-                  //               fontWeight: FontWeight.w500,
-                  //               color: Color(0xFFFF6725),
-                  //             ),
-                  //           ),
-                  //           Text(
-                  //             textAlign: TextAlign.center,
-                  //             "(Super Builtup Area) \n Size",
-                  //             style: TextStyle(
-                  //               fontSize: 13.sp,
-                  //               fontWeight: FontWeight.bold,
-                  //             ),
-                  //           ),
-                  //         ],
-                  //       ),
-                  //     ),
-                  //   ],
-                  // ),
-                  if ((overview?.size != null && overview!.size!.isNotEmpty) ||
-                      (data.area != null && data.area!.isNotEmpty))
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        /// 🔹 Configuration
-                        Expanded(
-                          child: Text(
-                            "${data.propertyType ?? ""} Configuration",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-
-                        /// 🔹 Size Info
-                        Expanded(
-                          child: Column(
-                            children: [
-                              Text(
-                                overview?.size != null &&
-                                        overview!.size!.isNotEmpty
-                                    ? "${overview!.size} sq.ft"
-                                    : data.area != null && data.area!.isNotEmpty
-                                    ? "${data.area} sq.ft"
-                                    : "-",
+                      // Row(
+                      //   crossAxisAlignment: CrossAxisAlignment.start,
+                      //   children: [
+                      //     Expanded(
+                      //       child: Text(
+                      //         textAlign: TextAlign.center,
+                      //         "Studio Apartment Configuration",
+                      //         style: TextStyle(
+                      //           fontSize: 16.sp,
+                      //           fontWeight: FontWeight.bold,
+                      //         ),
+                      //       ),
+                      //     ),
+                      //     Expanded(
+                      //       child: Column(
+                      //         children: [
+                      //           Text(
+                      //             "431 - 460 sq.ft",
+                      //             style: TextStyle(
+                      //               fontSize: 16.sp,
+                      //               fontWeight: FontWeight.bold,
+                      //             ),
+                      //           ),
+                      //           Text(
+                      //             "convert unit",
+                      //             style: TextStyle(
+                      //               fontSize: 14.sp,
+                      //               fontWeight: FontWeight.w500,
+                      //               color: Color(0xFFFF6725),
+                      //             ),
+                      //           ),
+                      //           Text(
+                      //             textAlign: TextAlign.center,
+                      //             "(Super Builtup Area) \n Size",
+                      //             style: TextStyle(
+                      //               fontSize: 13.sp,
+                      //               fontWeight: FontWeight.bold,
+                      //             ),
+                      //           ),
+                      //         ],
+                      //       ),
+                      //     ),
+                      //   ],
+                      // ),
+                      if ((overview?.size != null &&
+                              overview!.size!.isNotEmpty) ||
+                          (data.data?.aveneuOverView?.projectArea != null &&
+                              data
+                                  .data!
+                                  .aveneuOverView!
+                                  .projectArea!
+                                  .isNotEmpty))
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            /// 🔹 Configuration
+                            Expanded(
+                              child: Text(
+                                "${data.data?.propertyType ?? ""} Configuration",
+                                textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 16.sp,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
+                            ),
 
-                              /// Convert Unit
-                              Text(
-                                "convert unit",
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w500,
-                                  color: const Color(0xFFFF6725),
-                                ),
-                              ),
+                            /// 🔹 Size Info
+                            Expanded(
+                              child: Column(
+                                children: [
+                                  Text(
+                                    overview?.size != null &&
+                                            overview!.size!.isNotEmpty
+                                        ? "${overview!.size} sq.ft"
+                                        : data
+                                                      .data
+                                                      ?.aveneuOverView
+                                                      ?.projectArea !=
+                                                  null &&
+                                              data
+                                                  .data!
+                                                  .aveneuOverView!
+                                                  .projectArea!
+                                                  .isNotEmpty
+                                        ? "${data.data!.aveneuOverView!.projectArea} sq.ft"
+                                        : "-",
+                                    style: TextStyle(
+                                      fontSize: 16.sp,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
 
-                              /// Area Type (not in API → static)
-                              Text(
-                                "(Super Builtup Area)\nSize",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 13.sp,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                  /// Convert Unit
+                                  Text(
+                                    "convert unit",
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.w500,
+                                      color: const Color(0xFFFF6725),
+                                    ),
+                                  ),
+
+                                  /// Area Type (not in API → static)
+                                  Text(
+                                    "(Super Builtup Area)\nSize",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 13.sp,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  SizedBox(height: 20.h),
+                      SizedBox(height: 20.h),
 
-                  /// 🔹 Description
-                  Text(
-                    "Property Description",
-                    style: GoogleFonts.inter(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
+                      /// 🔹 Description
+                      Text(
+                        "Property Description",
+                        style: GoogleFonts.inter(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(
+                        // "Luxury 2-Bedroom Apartment | Off-Plan Resale | Damac Casa – Al Sufouh Second. "
+                        // "Property introduces a remarkable 2-bedroom apartment...",
+                        property.description ?? "No des",
+                        style: GoogleFonts.inter(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      SizedBox(height: 20.h),
+                    ],
                   ),
-                  SizedBox(height: 8.h),
-                  Text(
-                    // "Luxury 2-Bedroom Apartment | Off-Plan Resale | Damac Casa – Al Sufouh Second. "
-                    // "Property introduces a remarkable 2-bedroom apartment...",
-                    property.description ?? "No des",
-                    style: GoogleFonts.inter(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  SizedBox(height: 20.h),
-                ],
-              ),
-            ),
-
-            // Categories Grid (3x3 + 1 extra)
-            SizedBox(height: 15.h),
-
-            propertyAsync.when(
-              loading: () => Center(child: const CircularProgressIndicator()),
-              error: (e, _) => Text(e.toString()),
-              data: (res) {
-                final list = res.data?.list ?? [];
-                if (res.data?.list == null || res.data!.list!.isEmpty) {
-                  return const Center(child: Text("No properties found"));
-                }
-                return GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(12),
-                  itemCount: list.length,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 12.h,
-                    crossAxisSpacing: 12.w,
-                    childAspectRatio: 0.60,
-                  ),
-                  itemBuilder: (context, index) {
-                    return PropertyCard(property: list[index]);
-                  },
-                );
-              },
-            ),
-
-            SizedBox(height: 10.h),
-            paginationBar(),
-
-            /*  SafeArea(
-              top: false,           // ← Top safe area ignore karo (header already handle karta hai)
-              minimum: EdgeInsets.zero,
-              child: Padding(
-                padding: EdgeInsets.only(left: 15.w, right: 15.w, top: 15.h,bottom: 15.h),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text.rich(
-                      TextSpan(
-                        children: [
-                          TextSpan(
-                            text: "Buy ",
-                            style: GoogleFonts.inter(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xFFFF6725),
-                            ),
-                          ),
-                          TextSpan(
-                            text: "Property Online in India",
-                            style: GoogleFonts.inter(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      'Majestic Living brings you a seamless experience to buy properties online across India. Whether you are a first-time homebuyer, ',
-                      style: GoogleFonts.inter(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w500,
-                        color: Color.fromARGB(204, 0, 0, 0),
-                      ),
-                    ),
-                    SizedBox(height: 15.h),
-                    Text(
-                      "Find the Right Residential Property for Sale in India",
-                      style: GoogleFonts.inter(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
-                      ),
-                    ),
-                    Text(
-                      'A home is more than a living space—it’s where life grows. That’s why we bring you a curated selection of top-quality residential properties across India, including affordable flats in Mumbai,',
-                      style: GoogleFonts.inter(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w500,
-                        color: Color.fromARGB(204, 0, 0, 0),
-                      ),
-                    ),
-                  ],
                 ),
-              ),
-            ),*/
-            SizedBox(height: 60.h),
-          ],
-        ),
+
+                // Categories Grid (3x3 + 1 extra)
+                SizedBox(height: 15.h),
+
+                propertyAsync.when(
+                  loading: () =>
+                      Center(child: const CircularProgressIndicator()),
+                  error: (e, _) => Text(e.toString()),
+                  data: (res) {
+                    final list = res.data?.list ?? [];
+                    if (res.data?.list == null || res.data!.list!.isEmpty) {
+                      return const Center(child: Text("No properties found"));
+                    }
+                    return GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: const EdgeInsets.all(12),
+                      itemCount: list.length,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 12.h,
+                        crossAxisSpacing: 12.w,
+                        childAspectRatio: 0.60,
+                      ),
+                      itemBuilder: (context, index) {
+                        return PropertyCard(property: list[index]);
+                      },
+                    );
+                  },
+                ),
+
+                SizedBox(height: 10.h),
+                paginationBar(),
+
+                SizedBox(height: 60.h),
+              ],
+            ),
+          );
+        },
+        loading: () => Center(child: const CircularProgressIndicator()),
+        error: (e, _) => Text(e.toString()),
       ),
     );
   }
@@ -1515,8 +1485,8 @@ class PropertyCard extends StatelessWidget {
           context,
           MaterialPageRoute(
             builder: (context) => PerticulerPropertyPage(
-              propertyId: property.slug ?? property.id ?? "",
-              data: PropertyDetailsModel.fromListElement(property),
+              propertyId: property.slug.toString(),
+              // data: PropertyDetailsModel.fromListElement(property),
             ),
           ),
         );
@@ -1683,9 +1653,9 @@ class PropertyCard extends StatelessWidget {
                           MaterialPageRoute(
                             builder: (context) => PerticulerPropertyPage(
                               propertyId: property.slug ?? property.id ?? "",
-                              data: PropertyDetailsModel.fromListElement(
-                                property,
-                              ),
+                              // data: PropertyDetailsModel.fromListElement(
+                              //   property,
+                              // ),
                             ),
                           ),
                         );
@@ -1719,9 +1689,9 @@ class PropertyCard extends StatelessWidget {
                           MaterialPageRoute(
                             builder: (context) => PerticulerPropertyPage(
                               propertyId: property.slug ?? property.id ?? "",
-                              data: PropertyDetailsModel.fromListElement(
-                                property,
-                              ),
+                              // data: PropertyDetailsModel.fromListElement(
+                              //   property,
+                              // ),
                             ),
                           ),
                         );

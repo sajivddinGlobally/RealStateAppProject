@@ -54,6 +54,8 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
   String? selectedCityId;
   bool _isLocationLoading = false;
   bool get isCitySelected => selectedCity != null && selectedCity!.isNotEmpty;
+  bool showAllPropertySubTypes = false;
+  bool showAllAmenities = false;
   final List<String> allAmenities = [
     "Swimming Pool",
     "Gym",
@@ -1083,129 +1085,134 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                           ),
                         ),
                         SizedBox(height: 12.h),
-                        Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(14.r),
-                          ),
-                          child: GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount:
-                                (selectedPropertyType == "Residential"
-                                        ? [
-                                            "apartment",
-                                            "townhouse",
-                                            "villa-compound",
-                                            "land",
-                                            "building",
-                                            "villa",
-                                            "home",
-                                            "penthouse",
-                                            "hotel-apartment",
-                                            "floor",
-                                            "studio",
-                                          ]
-                                        : [
-                                            "office",
-                                            "warehouse",
-                                            "industrial-land",
-                                            "showroom",
-                                            "shop",
-                                            "labour-camp",
-                                            "bulk-unit",
-                                            "factory",
-                                            "mixed-use-land",
-                                            "other-commercial",
-                                            "floor",
-                                            "building",
-                                            "villa",
-                                          ])
-                                    .length,
-                            gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  mainAxisSpacing: 10.h,
-                                  crossAxisSpacing: 10.w,
-                                  mainAxisExtent: 45.h,
-                                ),
-                            itemBuilder: (context, index) {
-                              final options =
-                                  selectedPropertyType == "Residential"
-                                  ? [
-                                      "apartment",
-                                      "townhouse",
-                                      "villa-compound",
-                                      "land",
-                                      "building",
-                                      "villa",
-                                      "home",
-                                      "penthouse",
-                                      "hotel-apartment",
-                                      "floor",
-                                      "studio",
-                                      "condos",
-                                    ]
-                                  : [
-                                      "office",
-                                      "warehouse",
-                                      "industrial-land",
-                                      "showroom",
-                                      "shop",
-                                      "labour-camp",
-                                      "bulk-unit",
-                                      "factory",
-                                      "mixed-use-land",
-                                      "other-commercial",
-                                      "floor",
-                                      "building",
-                                      "villa",
-                                    ];
-
-                              final item = options[index];
-                              final isSelected =
-                                  selectedPropertySubType == item;
-
-                              return GestureDetector(
-                                onTap: () {
-                                  setState(
-                                    () => selectedPropertySubType = item,
-                                  );
-                                  state.didChange(item);
-                                },
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  alignment: Alignment.center,
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 8.w,
-                                  ),
+                        Builder(
+                          builder: (context) {
+                            final options =
+                                selectedPropertyType == "Residential"
+                                ? [
+                                    "apartment",
+                                    "townhouse",
+                                    "villa-compound",
+                                    "land",
+                                    "building",
+                                    "villa",
+                                    "home",
+                                    "penthouse",
+                                    "hotel-apartment",
+                                    "floor",
+                                    "studio",
+                                    "condos",
+                                  ]
+                                : [
+                                    "office",
+                                    "warehouse",
+                                    "industrial-land",
+                                    "showroom",
+                                    "shop",
+                                    "labour-camp",
+                                    "bulk-unit",
+                                    "factory",
+                                    "mixed-use-land",
+                                    "other-commercial",
+                                    "floor",
+                                    "building",
+                                    "villa",
+                                  ];
+                            final displayCount = showAllPropertySubTypes
+                                ? options.length
+                                : (options.length > 4 ? 4 : options.length);
+                            return Column(
+                              children: [
+                                Container(
                                   decoration: BoxDecoration(
-                                    color: isSelected
-                                        ? const Color(0xFF24ADD7)
-                                        : const Color(0xFFF1F3F5),
                                     borderRadius: BorderRadius.circular(14.r),
-                                    border: Border.all(
-                                      color: isSelected
-                                          ? const Color(0xFF24ADD7)
-                                          : Colors.grey.shade300,
-                                    ),
                                   ),
-                                  child: Text(
-                                    item.replaceAll("-", " ").toUpperCase(),
-                                    textAlign: TextAlign.center,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 12.sp,
-                                      color: isSelected
-                                          ? Colors.white
-                                          : const Color(0xFF344054),
-                                    ),
+                                  child: GridView.builder(
+                                    shrinkWrap: true,
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    itemCount: displayCount,
+                                    gridDelegate:
+                                        SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: 2,
+                                          mainAxisSpacing: 10.h,
+                                          crossAxisSpacing: 10.w,
+                                          mainAxisExtent: 45.h,
+                                        ),
+                                    itemBuilder: (context, index) {
+                                      final item = options[index];
+                                      final isSelected =
+                                          selectedPropertySubType == item;
+
+                                      return GestureDetector(
+                                        onTap: () {
+                                          setState(
+                                            () =>
+                                                selectedPropertySubType = item,
+                                          );
+                                          state.didChange(item);
+                                        },
+                                        child: AnimatedContainer(
+                                          duration: const Duration(
+                                            milliseconds: 200,
+                                          ),
+                                          alignment: Alignment.center,
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 8.w,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: isSelected
+                                                ? const Color(0xFF24ADD7)
+                                                : const Color(0xFFF1F3F5),
+                                            borderRadius: BorderRadius.circular(
+                                              14.r,
+                                            ),
+                                            border: Border.all(
+                                              color: isSelected
+                                                  ? const Color(0xFF24ADD7)
+                                                  : Colors.grey.shade300,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            item
+                                                .replaceAll("-", " ")
+                                                .toUpperCase(),
+                                            textAlign: TextAlign.center,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 12.sp,
+                                              color: isSelected
+                                                  ? Colors.white
+                                                  : const Color(0xFF344054),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
                                   ),
                                 ),
-                              );
-                            },
-                          ),
+                                if (options.length > 4)
+                                  TextButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        showAllPropertySubTypes =
+                                            !showAllPropertySubTypes;
+                                      });
+                                    },
+                                    child: Text(
+                                      showAllPropertySubTypes
+                                          ? "View Less"
+                                          : "View All",
+                                      style: TextStyle(
+                                        color: const Color(0xFF24ADD7),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            );
+                          },
                         ),
                         if (state.hasError)
                           Padding(
@@ -2462,28 +2469,48 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
   }
 
   Widget _buildMultiSelectAmenities() {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: allAmenities.map((amenity) {
-        final selected = selectedAmenities.contains(amenity);
-        return FilterChip(
-          label: Text(amenity, style: const TextStyle(fontSize: 13)),
-          selected: selected,
-          selectedColor: const Color(0xFF24ADD7).withOpacity(0.15),
-          checkmarkColor: const Color(0xFF24ADD7),
-          backgroundColor: Colors.grey.shade100,
-          onSelected: (sel) {
-            setState(() {
-              if (sel) {
-                selectedAmenities.add(amenity);
-              } else {
-                selectedAmenities.remove(amenity);
-              }
-            });
-          },
-        );
-      }).toList(),
+    final displayAmenities = showAllAmenities
+        ? allAmenities
+        : allAmenities.take(6).toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: displayAmenities.map((amenity) {
+            final selected = selectedAmenities.contains(amenity);
+            return FilterChip(
+              label: Text(amenity, style: const TextStyle(fontSize: 13)),
+              selected: selected,
+              selectedColor: const Color(0xFF24ADD7).withOpacity(0.15),
+              checkmarkColor: const Color(0xFF24ADD7),
+              backgroundColor: Colors.grey.shade100,
+              onSelected: (sel) {
+                setState(() {
+                  if (sel) {
+                    selectedAmenities.add(amenity);
+                  } else {
+                    selectedAmenities.remove(amenity);
+                  }
+                });
+              },
+            );
+          }).toList(),
+        ),
+        if (allAmenities.length > 6)
+          TextButton(
+            onPressed: () {
+              setState(() {
+                showAllAmenities = !showAllAmenities;
+              });
+            },
+            child: Text(
+              showAllAmenities ? "View Less" : "View All",
+              style: TextStyle(color: const Color(0xFF24ADD7)),
+            ),
+          ),
+      ],
     );
   }
 }

@@ -25,9 +25,7 @@ class _MyPropertyDetalsPageState extends ConsumerState<MyPropertyDetalsPage> {
   Widget build(BuildContext context) {
     final primary = const Color(0xFF24ADD7);
 
-    final provider = ref.watch(
-      getMyPropertyDetailsController(widget.propetyId),
-    );
+    final provider = ref.watch(propertyDetailsController(widget.propetyId));
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA), // Slightly cleaner background
