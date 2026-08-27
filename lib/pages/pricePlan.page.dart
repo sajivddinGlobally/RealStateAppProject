@@ -146,7 +146,6 @@ class _PricePlanPageState extends ConsumerState<PricePlanPage> {
                               ),
                             ),
                             const SizedBox(height: 20),
-
                             // Features
                             Column(
                               children: List.generate(

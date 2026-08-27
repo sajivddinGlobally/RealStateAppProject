@@ -1193,20 +1193,32 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                                     },
                                   ),
                                 ),
+                                SizedBox(height: 8.h),
                                 if (options.length > 4)
-                                  TextButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        showAllPropertySubTypes =
-                                            !showAllPropertySubTypes;
-                                      });
-                                    },
-                                    child: Text(
-                                      showAllPropertySubTypes
-                                          ? "View Less"
-                                          : "View All",
-                                      style: TextStyle(
-                                        color: const Color(0xFF24ADD7),
+                                  Align(
+                                    alignment: Alignment.centerRight,
+                                    child: TextButton(
+                                      style: TextButton.styleFrom(
+                                        padding: EdgeInsets.zero,
+                                        minimumSize: const Size(0, 0),
+                                        tapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          showAllPropertySubTypes =
+                                              !showAllPropertySubTypes;
+                                        });
+                                      },
+                                      child: Text(
+                                        showAllPropertySubTypes
+                                            ? "View Less"
+                                            : "View All",
+                                        style: TextStyle(
+                                          color: const Color(0xFF24ADD7),
+                                          fontSize: 12.sp,
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -1484,14 +1496,16 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
             ],
           ),
         );
-
       case 2: // Specification
         return _buildCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildTextField(
-                'Price (₹) *',
+                selectedListingCategory != null &&
+                        selectedListingCategory!.isNotEmpty
+                    ? '$selectedListingCategory Price (₹)*'
+                    : 'Price (₹) *',
                 _priceController,
                 type: TextInputType.number,
                 isRequired: true,
@@ -1860,123 +1874,8 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
           ),
         );
 
-      case 5: // Photos & Media
-        // return _buildCard(
-        //   child: Column(
-        //     crossAxisAlignment: CrossAxisAlignment.start,
-        //     children: [
-        //       SizedBox(width: double.infinity, height: 12.h),
-        //       if (propertyImages.isEmpty)
-        //         Column(
-        //           crossAxisAlignment: CrossAxisAlignment.start,
-        //           children: [
-        //             GestureDetector(
-        //               onTap: pickImages,
-        //               child: Container(
-        //                 width: 113.w,
-        //                 height: 113.h,
-        //                 decoration: BoxDecoration(
-        //                   border: Border.all(color: const Color(0xFF24ADD7)),
-        //                   borderRadius: BorderRadius.circular(12),
-        //                 ),
-        //                 child: const Column(
-        //                   mainAxisAlignment: MainAxisAlignment.center,
-        //                   children: [
-        //                     Icon(Icons.add_a_photo, color: Color(0xFF24ADD7)),
-        //                     SizedBox(height: 4),
-        //                     Text(
-        //                       "Add",
-        //                       style: TextStyle(color: Color(0xFF24ADD7)),
-        //                     ),
-        //                   ],
-        //                 ),
-        //               ),
-        //             ),
-        //             const Padding(
-        //               padding: EdgeInsets.symmetric(vertical: 10),
-        //               child: Text(
-        //                 'No photos selected',
-        //                 style: TextStyle(color: Colors.grey),
-        //               ),
-        //             ),
-        //           ],
-        //         )
-        //       else
-        //         GridView.builder(
-        //           shrinkWrap: true,
-        //           physics: const NeverScrollableScrollPhysics(),
-        //           itemCount: propertyImages.length + 1,
-        //           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        //             crossAxisCount: 3,
-        //             crossAxisSpacing: 10,
-        //             mainAxisSpacing: 10,
-        //           ),
-        //           itemBuilder: (context, index) {
-        //             if (index == propertyImages.length) {
-        //               return GestureDetector(
-        //                 onTap: pickImages,
-        //                 child: Container(
-        //                   decoration: BoxDecoration(
-        //                     border: Border.all(color: const Color(0xFF24ADD7)),
-        //                     borderRadius: BorderRadius.circular(12),
-        //                   ),
-        //                   child: const Column(
-        //                     mainAxisAlignment: MainAxisAlignment.center,
-        //                     children: [
-        //                       Icon(Icons.add_a_photo, color: Color(0xFF24ADD7)),
-        //                       SizedBox(height: 4),
-        //                       Text(
-        //                         "Add",
-        //                         style: TextStyle(color: Color(0xFF24ADD7)),
-        //                       ),
-        //                     ],
-        //                   ),
-        //                 ),
-        //               );
-        //             }
-        //             final img = propertyImages[index];
-        //             return Stack(
-        //               fit: StackFit.expand,
-        //               clipBehavior: Clip.none,
-        //               children: [
-        //                 img is File
-        //                     ? ClipRRect(
-        //                         borderRadius: BorderRadius.circular(12),
-        //                         child: Image.file(img, fit: BoxFit.cover),
-        //                       )
-        //                     : ClipRRect(
-        //                         borderRadius: BorderRadius.circular(12),
-        //                         child: Image.network(
-        //                           img.toString(),
-        //                           fit: BoxFit.cover,
-        //                         ),
-        //                       ),
-
-        //                 Positioned(
-        //                   top: -6,
-        //                   right: -4,
-        //                   child: GestureDetector(
-        //                     onTap: () => removeImage(index),
-        //                     child: const CircleAvatar(
-        //                       radius: 12,
-        //                       backgroundColor: Colors.red,
-        //                       child: Icon(
-        //                         Icons.close,
-        //                         size: 14,
-        //                         color: Colors.white,
-        //                       ),
-        //                     ),
-        //                   ),
-        //                 ),
-        //               ],
-        //             );
-        //           },
-        //         ),
-        //     ],
-        //   ),
-        // );
+      case 5:
         return _buildCard(
-          ////////  import 'dart:math' as math;   ye wala import karna prega  isme
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -2498,16 +2397,29 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
             );
           }).toList(),
         ),
+        SizedBox(height: 8.h),
         if (allAmenities.length > 6)
-          TextButton(
-            onPressed: () {
-              setState(() {
-                showAllAmenities = !showAllAmenities;
-              });
-            },
-            child: Text(
-              showAllAmenities ? "View Less" : "View All",
-              style: TextStyle(color: const Color(0xFF24ADD7)),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(0, 0),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              onPressed: () {
+                setState(() {
+                  showAllAmenities = !showAllAmenities;
+                });
+              },
+              child: Text(
+                showAllAmenities ? "View Less" : "View All",
+                style: TextStyle(
+                  color: const Color(0xFF24ADD7),
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ),
       ],
