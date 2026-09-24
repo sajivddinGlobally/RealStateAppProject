@@ -154,6 +154,8 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
     super.initState();
     addAroundProjectRow();
     if (isEditMode && widget.data != null) {
+      showAllPropertySubTypes = true;
+      showAllAmenities = true;
       _preFillData(widget.data!);
     }
   }
@@ -242,19 +244,9 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
             /// Property Address
             _propertyAddressController.text = address;
 
-            /// Match Locality
-            final matchedLocality = localityList.cast<String?>().firstWhere(
-              (e) => (e ?? "").toLowerCase() == locality.toLowerCase(),
-              orElse: () => null,
-            );
-
-            if (matchedLocality != null) {
-              selectedLocality = matchedLocality;
-              isLocalityFromDropdown = true;
-            } else {
-              selectedLocality = locality;
-              isLocalityFromDropdown = false;
-            }
+            /// Locality shouldn't be auto-filled, user must select manually
+            selectedLocality = null;
+            isLocalityFromDropdown = false;
           });
         } catch (e) {
           // City not found in API list
@@ -265,7 +257,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
 
             localityList = [];
 
-            selectedLocality = locality;
+            selectedLocality = null;
             isLocalityFromDropdown = false;
 
             _propertyAddressController.text = address;
@@ -280,7 +272,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
 
           localityList = [];
 
-          selectedLocality = locality;
+          selectedLocality = null;
           isLocalityFromDropdown = false;
 
           _propertyAddressController.text = address;
@@ -817,7 +809,6 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
   @override
   Widget build(BuildContext context) {
     final cityAsync = ref.watch(getCityController);
-
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
@@ -836,7 +827,6 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
               )
             : null,
       ),
-
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -850,7 +840,10 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
               const SizedBox(height: 16),
 
               // Show only current step content
-              _buildCurrentStep(cityAsync),
+              Container(
+                key: ValueKey(_currentStep),
+                child: _buildCurrentStep(cityAsync),
+              ),
 
               const SizedBox(height: 30),
 
@@ -1421,8 +1414,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                                 },
                                 controller: controller,
                                 focusNode: focusNode,
-                                autovalidateMode:
-                                    AutovalidateMode.onUserInteraction,
+                                autovalidateMode: AutovalidateMode.disabled,
                                 decoration: InputDecoration(
                                   hintText: isCitySelected
                                       ? 'Select Locality / Area'
@@ -1490,7 +1482,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
               _buildTextField(
                 'Property Address',
                 _propertyAddressController,
-                maxLines: 2,
+                maxLines: 3,
                 isRequired: true,
               ),
             ],
@@ -1804,7 +1796,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                   keyboardType: TextInputType.text,
                   textInputAction: TextInputAction.done,
                   onSaved: (_) => addAppliance(),
-                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  autovalidateMode: AutovalidateMode.disabled,
                   decoration: InputDecoration(
                     suffixIcon: IconButton(
                       icon: Icon(Icons.add, color: Colors.black),
@@ -2096,7 +2088,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
           validator: isRequired
               ? (value) => _validateRequired(value, label)
               : null,
-          autovalidateMode: AutovalidateMode.onUserInteraction,
+          autovalidateMode: AutovalidateMode.disabled,
           decoration: InputDecoration(
             suffixIcon: suffixIcon,
             hintText: hint,
@@ -2192,7 +2184,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
               ? (value) =>
                     value == null || value.isEmpty ? '$label is required' : null
               : null,
-          autovalidateMode: AutovalidateMode.onUserInteraction,
+          autovalidateMode: AutovalidateMode.disabled,
           decoration: InputDecoration(
             filled: true,
             fillColor: const Color(0xFFF8F9FA),
