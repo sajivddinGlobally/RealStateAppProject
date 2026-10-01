@@ -74,6 +74,9 @@ class Data {
     int? updatedAt;
     String? slug;
     String? balcony;
+    String? securityDeposit;
+    String? guestRoom;
+    String? room;
 
     Data({
         this.aveneuOverView,
@@ -113,6 +116,9 @@ class Data {
         this.updatedAt,
         this.slug,
         this.balcony,
+        this.securityDeposit,
+        this.guestRoom,
+        this.room,
     });
 
     factory Data.fromJson(Map<String, dynamic> json) => Data(
@@ -153,6 +159,9 @@ class Data {
         updatedAt: json["updatedAt"],
         slug: json["slug"],
         balcony: json["balcony"],
+        securityDeposit: json["securityDeposit"],
+        guestRoom: json["guestRoom"],
+        room: json["room"],
     );
 
     Map<String, dynamic> toJson() => {
@@ -193,6 +202,9 @@ class Data {
         "updatedAt": updatedAt,
         "slug": slug,
         "balcony": balcony,
+        "securityDeposit": securityDeposit,
+        "guestRoom": guestRoom,
+        "room": room,
     };
 }
 

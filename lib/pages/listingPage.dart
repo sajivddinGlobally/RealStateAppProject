@@ -9,6 +9,8 @@ import 'package:realstate/Controller/getCityListController.dart';
 import 'package:realstate/Model/Body/PropertyListBodyModel.dart';
 import 'package:realstate/Model/getPropertyResponsemodel.dart';
 import 'package:realstate/pages/perticulerProperty.page.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:realstate/pages/filter_drawer.dart';
 
 import '../Model/propertyDetailModel.dart';
@@ -34,7 +36,7 @@ class _ListingPageState extends ConsumerState<ListingPage> {
   @override
   void initState() {
     super.initState();
-    final initialCity = ref.read(currentCityProvider) ?? "";
+    final initialCity = widget.initialData?.city ?? "";
 
     body = PropertyListBodyModel(
       size: 20,
@@ -64,15 +66,84 @@ class _ListingPageState extends ConsumerState<ListingPage> {
     ref.invalidate(getPropertyController);
   }
 
+  int get _activeFilterCount {
+    int count = 0;
+    if (body.city != null && body.city!.isNotEmpty) count++;
+    if (body.locality != null && body.locality!.isNotEmpty) {
+      count += body.locality!.length;
+    }
+    if (body.bedroom != null && body.bedroom!.isNotEmpty) {
+      count += body.bedroom!.length;
+    }
+    if (body.bathrooms != null && body.bathrooms!.isNotEmpty) {
+      count += body.bathrooms!.length;
+    }
+    if (body.kitchen != null && body.kitchen!.isNotEmpty) {
+      count += body.kitchen!.length;
+    }
+    if (body.balcony != null && body.balcony!.isNotEmpty) {
+      count += body.balcony!.length;
+    }
+    if (body.parking != null && body.parking!.isNotEmpty) {
+      count += body.parking!.length;
+    }
+    if (body.minPrice != null && body.minPrice!.isNotEmpty) count++;
+    if (body.maxPrice != null && body.maxPrice!.isNotEmpty) count++;
+    if (body.furnishing != null && body.furnishing!.isNotEmpty) count++;
+    return count;
+  }
+
+  Widget _buildFilterChip(String label, VoidCallback onDeleted) {
+    return Container(
+      margin: EdgeInsets.only(right: 8.w),
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+      decoration: BoxDecoration(
+        color: const Color(0xFF24ADD7).withOpacity(0.12),
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(color: const Color(0xFF24ADD7).withOpacity(0.4)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 11.sp,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF24ADD7),
+            ),
+          ),
+          SizedBox(width: 4.w),
+          InkWell(
+            onTap: onDeleted,
+            child: Icon(
+              Icons.close,
+              size: 14.sp,
+              color: const Color(0xFF24ADD7),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final propertyAsync = ref.watch(getPropertyController(body));
     final cityAsync = ref.watch(getCityController);
     final selectedCityFromHome = ref.watch(currentCityProvider);
 
+    final isRent =
+        (body.listingCategory ?? widget.initialData?.listingCategory)
+            ?.toLowerCase() ==
+        'rent';
+    final action = isRent ? 'RENT' : 'BUY';
+    String type = (body.propertyType?.isNotEmpty == true)
+        ? body.propertyType!.toUpperCase()
+        : (widget.initialData?.property?.toUpperCase() ?? '');
+    if (type == "HOME") type = "HOUSE";
     final String pageTitle = widget.initialData != null
-        ? '${widget.initialData!.listingCategory?.toUpperCase() ?? ''} '
-              '${widget.initialData!.property?.toUpperCase() ?? ''} PROPERTIES'
+        ? '$action $type PROPERTIES'.trim()
         : 'Property Listing';
 
     final userDataBox = Hive.box('userdata');
@@ -88,10 +159,10 @@ class _ListingPageState extends ConsumerState<ListingPage> {
         ),
         title: Text(
           pageTitle,
-          style: TextStyle(
-            color: Colors.orange,
+          style: GoogleFonts.inter(
+            color: const Color(0xFF24ADD7),
             fontWeight: FontWeight.bold,
-            fontSize: 14.sp,
+            fontSize: 15.sp,
           ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
@@ -101,7 +172,7 @@ class _ListingPageState extends ConsumerState<ListingPage> {
         actions: [
           Builder(
             builder: (context) => IconButton(
-              icon: const Icon(Icons.filter_alt, color: Color(0xFF24ADD7)),
+              icon: const Icon(Icons.tune, color: Color(0xFF24ADD7)),
               onPressed: () {
                 Scaffold.of(context).openEndDrawer();
               },
@@ -115,7 +186,7 @@ class _ListingPageState extends ConsumerState<ListingPage> {
           children: [
             // Header
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 25.w, vertical: 20.h),
+              padding: EdgeInsets.symmetric(horizontal: 25.w, vertical: 10.h),
               child: Row(
                 children: [
                   Column(
@@ -140,8 +211,8 @@ class _ListingPageState extends ConsumerState<ListingPage> {
                   ),
                   const Spacer(),
                   Container(
-                    width: 50.w,
-                    height: 50.h,
+                    width: 40.w,
+                    height: 40.h,
                     decoration: const BoxDecoration(
                       shape: BoxShape.circle,
                       color: Color(0xFFC4C4C4),
@@ -150,13 +221,13 @@ class _ListingPageState extends ConsumerState<ListingPage> {
                       child: profileImage.isNotEmpty
                           ? Image.network(
                               profileImage,
-                              width: 50.w,
-                              height: 50.h,
+                              width: 40.w,
+                              height: 40.h,
                               fit: BoxFit.cover,
                               errorBuilder: (_, __, ___) => Center(
                                 child: Icon(
                                   Icons.person,
-                                  size: 35.sp,
+                                  size: 25.sp,
                                   color: Colors.black,
                                 ),
                               ),
@@ -164,7 +235,7 @@ class _ListingPageState extends ConsumerState<ListingPage> {
                           : Center(
                               child: Icon(
                                 Icons.person,
-                                size: 35.sp,
+                                size: 25.sp,
                                 color: Colors.black,
                               ),
                             ),
@@ -176,7 +247,7 @@ class _ListingPageState extends ConsumerState<ListingPage> {
 
             // Search bar
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 25.w),
+              padding: EdgeInsets.symmetric(horizontal: 20.w),
               child: Container(
                 height: 50.h,
                 decoration: BoxDecoration(
@@ -184,9 +255,9 @@ class _ListingPageState extends ConsumerState<ListingPage> {
                   borderRadius: BorderRadius.circular(30.r),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.10),
-                      blurRadius: 16,
-                      offset: const Offset(0, 8),
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 14,
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
@@ -218,7 +289,7 @@ class _ListingPageState extends ConsumerState<ListingPage> {
 
             // Banner
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 25.w, vertical: 20.h),
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
               child: Stack(
                 alignment: Alignment.center,
                 children: [
@@ -227,16 +298,20 @@ class _ListingPageState extends ConsumerState<ListingPage> {
                     child: Image.asset(
                       "assets/particular (2).png",
                       width: double.infinity,
-                      height: 140.h,
+                      height: 130.h,
                       fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        height: 130.h,
+                        color: const Color(0xFF24ADD7),
+                      ),
                     ),
                   ),
                   Container(
                     width: double.infinity,
-                    height: 140.h,
+                    height: 130.h,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16.r),
-                      color: Colors.black.withOpacity(0.35),
+                      color: Colors.black.withOpacity(0.38),
                     ),
                   ),
                   Padding(
@@ -252,12 +327,13 @@ class _ListingPageState extends ConsumerState<ListingPage> {
                             color: Colors.white,
                           ),
                         ),
+                        SizedBox(height: 4.h),
                         Text(
                           'Home Buying, Selling, Renting & Loan Support',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w500,
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w600,
                             color: Colors.white,
                           ),
                         ),
@@ -268,9 +344,217 @@ class _ListingPageState extends ConsumerState<ListingPage> {
               ),
             ),
 
-            // Properties
+            // ==================== WEBSITE-STYLE ACTIONS ====================
             Padding(
-              padding: EdgeInsets.all(16.w),
+              padding: EdgeInsets.symmetric(horizontal: 20.w),
+              child: Column(
+                children: [
+                  // My Properties button (website style)
+                  InkWell(
+                    borderRadius: BorderRadius.circular(12.r),
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF24ADD7),
+                        borderRadius: BorderRadius.circular(12.r),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF24ADD7).withOpacity(0.32),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.home_work_outlined,
+                            color: Colors.white,
+                            size: 20.sp,
+                          ),
+                          SizedBox(width: 8.w),
+                          Text(
+                            "My Properties",
+                            style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15.sp,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 10.h),
+
+                  // Filters & Sorting button (website mobile style)
+                  Builder(
+                    builder: (scaffoldContext) => InkWell(
+                      borderRadius: BorderRadius.circular(12.r),
+                      onTap: () {
+                        Scaffold.of(scaffoldContext).openEndDrawer();
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        decoration: BoxDecoration(
+                          color: const Color(
+                            0xFFF97316,
+                          ), // Orange matching website
+                          borderRadius: BorderRadius.circular(12.r),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFF97316).withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.tune, color: Colors.white, size: 20.sp),
+                            SizedBox(width: 8.w),
+                            Text(
+                              "Filters & Sorting",
+                              style: GoogleFonts.inter(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15.sp,
+                              ),
+                            ),
+                            if (_activeFilterCount > 0) ...[
+                              SizedBox(width: 8.w),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 7.w,
+                                  vertical: 2.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(10.r),
+                                ),
+                                child: Text(
+                                  "$_activeFilterCount",
+                                  style: GoogleFonts.inter(
+                                    color: const Color(0xFFF97316),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11.sp,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Active Filter Chips (if any filters applied)
+                  if (_activeFilterCount > 0) ...[
+                    SizedBox(height: 12.h),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          if (body.city != null && body.city!.isNotEmpty)
+                            _buildFilterChip("City: ${body.city}", () {
+                              setState(() => body.city = "");
+                              ref.invalidate(getPropertyController);
+                            }),
+                          if (body.bedroom != null && body.bedroom!.isNotEmpty)
+                            ...body.bedroom!.map(
+                              (b) => _buildFilterChip("$b BHK", () {
+                                setState(() => body.bedroom!.remove(b));
+                                ref.invalidate(getPropertyController);
+                              }),
+                            ),
+                          if (body.bathrooms != null &&
+                              body.bathrooms!.isNotEmpty)
+                            ...body.bathrooms!.map(
+                              (b) => _buildFilterChip("$b Bath", () {
+                                setState(() => body.bathrooms!.remove(b));
+                                ref.invalidate(getPropertyController);
+                              }),
+                            ),
+                          if (body.minPrice != null &&
+                              body.minPrice!.isNotEmpty)
+                            _buildFilterChip("Min: ₹${body.minPrice}", () {
+                              setState(() => body.minPrice = "");
+                              ref.invalidate(getPropertyController);
+                            }),
+                          if (body.maxPrice != null &&
+                              body.maxPrice!.isNotEmpty)
+                            _buildFilterChip("Max: ₹${body.maxPrice}", () {
+                              setState(() => body.maxPrice = "");
+                              ref.invalidate(getPropertyController);
+                            }),
+                          if (body.furnishing != null &&
+                              body.furnishing!.isNotEmpty)
+                            _buildFilterChip(
+                              "Furnishing: ${body.furnishing}",
+                              () {
+                                setState(() => body.furnishing = null);
+                                ref.invalidate(getPropertyController);
+                              },
+                            ),
+                          InkWell(
+                            onTap: () {
+                              setState(() {
+                                body = PropertyListBodyModel(
+                                  size: 20,
+                                  pageNo: 1,
+                                  sortBy: 'createdAt',
+                                  sortOrder: 'desc',
+                                  city: widget.initialData?.city ?? "",
+                                  propertyType:
+                                      widget.initialData?.propertyType ?? "",
+                                  listingCategory:
+                                      widget.initialData?.listingCategory ?? "",
+                                  keyWord: "",
+                                  balcony: [],
+                                  bathrooms: [],
+                                  bedroom: [],
+                                  kitchen: [],
+                                  locality: [],
+                                  parking: [],
+                                );
+                              });
+                              ref.invalidate(getPropertyController);
+                            },
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 8.w,
+                                vertical: 4.h,
+                              ),
+                              child: Text(
+                                "Clear All",
+                                style: GoogleFonts.inter(
+                                  color: Colors.red,
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w600,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
+            // Properties Grid
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
               child: propertyAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (err, stk) => Center(child: Text("Error: $err")),
@@ -294,19 +578,35 @@ class _ListingPageState extends ConsumerState<ListingPage> {
                     );
                   }
 
-                  return GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.62,
-                      mainAxisSpacing: 12.h,
-                      crossAxisSpacing: 12.w,
-                    ),
-                    itemCount: filteredList.length,
-                    itemBuilder: (context, index) {
-                      return PropertyCard(property: filteredList[index]);
-                    },
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.only(bottom: 8.h, left: 4.w),
+                        child: Text(
+                          "Showing ${filteredList.length} properties",
+                          style: GoogleFonts.inter(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ),
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 0.62,
+                          mainAxisSpacing: 12.h,
+                          crossAxisSpacing: 12.w,
+                        ),
+                        itemCount: filteredList.length,
+                        itemBuilder: (context, index) {
+                          return PropertyCard(property: filteredList[index]);
+                        },
+                      ),
+                    ],
                   );
                 },
               ),
@@ -314,6 +614,36 @@ class _ListingPageState extends ConsumerState<ListingPage> {
 
             SizedBox(height: 100.h),
           ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        elevation: 8,
+        backgroundColor: const Color(0xff27D045),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(40.r),
+        ),
+        onPressed: () async {
+          final String msg = "Hi, I am interested in your property services.";
+          final Uri url = Uri.parse(
+            "whatsapp://send?phone=919171719060&text=${Uri.encodeComponent(msg)}",
+          );
+          try {
+            await launchUrl(url, mode: LaunchMode.externalApplication);
+          } catch (e) {
+            final Uri webUrl = Uri.parse(
+              "https://wa.me/919171719060?text=${Uri.encodeComponent(msg)}",
+            );
+            await launchUrl(webUrl, mode: LaunchMode.externalApplication);
+          }
+        },
+        icon: SvgPicture.asset("assets/Svg/whatsapp.svg"),
+        label: Text(
+          "Let’s Connect",
+          style: GoogleFonts.inter(
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
         ),
       ),
     );

@@ -1,43 +1,3 @@
-/*
-// To parse this JSON data, do
-//
-//     final propertyListBodyModel = propertyListBodyModelFromJson(jsonString);
-
-import 'dart:convert';
-
-PropertyListBodyModel propertyListBodyModelFromJson(String str) => PropertyListBodyModel.fromJson(json.decode(str));
-
-String propertyListBodyModelToJson(PropertyListBodyModel data) => json.encode(data.toJson());
-
-class PropertyListBodyModel {
-  String? sortOrder;
-  String? sortBy;
-  int? pageNo;
-  int? size;
-
-  PropertyListBodyModel({
-    this.sortOrder,
-    this.sortBy,
-    this.pageNo,
-    this.size,
-  });
-
-  factory PropertyListBodyModel.fromJson(Map<String, dynamic> json) => PropertyListBodyModel(
-    sortOrder: json["sortOrder"],
-    sortBy: json["sortBy"],
-    pageNo: json["pageNo"],
-    size: json["size"],
-  );
-
-  Map<String, dynamic> toJson() => {
-    "sortOrder": sortOrder,
-    "sortBy": sortBy,
-    "pageNo": pageNo,
-    "size": size,
-  };
-}
-*/
-
 // To parse this JSON data, do
 //
 //     final propertyListBodyModel = propertyListBodyModelFromJson(jsonString);
@@ -58,8 +18,8 @@ class PropertyListBodyModel {
   // ── Filter fields (matching exactly what backend expects) ────────
   String? minPrice;
   String? maxPrice;
-  List<String>? bedroom; 
-  String? city; 
+  List<String>? bedroom;
+  String? city;
   String? listingCategory;
   String? propertyType;
   String? keyWord;
@@ -68,6 +28,7 @@ class PropertyListBodyModel {
   List<String>? kitchen;
   List<String>? locality;
   List<String>? parking;
+  String? furnishing;
 
   PropertyListBodyModel({
     this.size,
@@ -86,6 +47,7 @@ class PropertyListBodyModel {
     this.kitchen,
     this.locality,
     this.parking,
+    this.furnishing,
   });
 
   factory PropertyListBodyModel.fromJson(Map<String, dynamic> json) =>
@@ -96,16 +58,29 @@ class PropertyListBodyModel {
         sortOrder: json["sortOrder"],
         minPrice: json["minPrice"],
         maxPrice: json["maxPrice"],
-        bedroom: json["bedroom"] == null ? [] : List<String>.from(json["bedroom"]!.map((x) => x)),
+        bedroom: json["bedroom"] == null
+            ? []
+            : List<String>.from(json["bedroom"]!.map((x) => x)),
         city: json["city"],
         listingCategory: json["listingCategory"],
         propertyType: json["propertyType"],
         keyWord: json["keyWord"],
-        balcony: json["balcony"] == null ? [] : List<String>.from(json["balcony"]!.map((x) => x)),
-        bathrooms: json["bathrooms"] == null ? [] : List<String>.from(json["bathrooms"]!.map((x) => x)),
-        kitchen: json["kitchen"] == null ? [] : List<String>.from(json["kitchen"]!.map((x) => x)),
-        locality: json["locality"] == null ? [] : List<String>.from(json["locality"]!.map((x) => x)),
-        parking: json["parking"] == null ? [] : List<String>.from(json["parking"]!.map((x) => x)),
+        balcony: json["balcony"] == null
+            ? []
+            : List<String>.from(json["balcony"]!.map((x) => x)),
+        bathrooms: json["bathrooms"] == null
+            ? []
+            : List<String>.from(json["bathrooms"]!.map((x) => x)),
+        kitchen: json["kitchen"] == null
+            ? []
+            : List<String>.from(json["kitchen"]!.map((x) => x)),
+        locality: json["locality"] == null
+            ? []
+            : List<String>.from(json["locality"]!.map((x) => x)),
+        parking: json["parking"] == null
+            ? []
+            : List<String>.from(json["parking"]!.map((x) => x)),
+        furnishing: json["furnishing"],
       );
 
   Map<String, dynamic> toJson() {
@@ -126,6 +101,7 @@ class PropertyListBodyModel {
     if (kitchen != null) data["kitchen"] = kitchen;
     if (locality != null) data["locality"] = locality;
     if (parking != null) data["parking"] = parking;
+    if (furnishing != null) data["furnishing"] = furnishing;
     return data;
   }
 }

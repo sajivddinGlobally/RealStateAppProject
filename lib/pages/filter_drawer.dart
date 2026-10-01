@@ -76,10 +76,19 @@ class _FilterDrawerState extends ConsumerState<FilterDrawer> {
         ? model.parking!.first
         : null;
 
-    _propertyAction =
-        (model.listingCategory != null && model.listingCategory!.isNotEmpty)
-        ? model.listingCategory
+    _selectedFurnishing =
+        (model.furnishing != null && model.furnishing!.isNotEmpty)
+        ? (model.furnishing![0].toUpperCase() +
+              model.furnishing!.substring(1).toLowerCase())
         : null;
+
+    if (model.listingCategory != null && model.listingCategory!.isNotEmpty) {
+      _propertyAction = model.listingCategory!.toLowerCase() == "sell"
+          ? "buy"
+          : model.listingCategory!.toLowerCase();
+    } else {
+      _propertyAction = null;
+    }
 
     _minPriceCtrl.text = model.minPrice ?? "";
     _maxPriceCtrl.text = model.maxPrice ?? "";
@@ -156,6 +165,10 @@ class _FilterDrawerState extends ConsumerState<FilterDrawer> {
       parking: _selectedParking != null && _selectedParking != "Any Parking"
           ? [_selectedParking!]
           : [],
+      furnishing:
+          _selectedFurnishing != null && _selectedFurnishing != "Any Furnishing"
+          ? _selectedFurnishing!.toLowerCase()
+          : null,
     );
 
     widget.onApply(newBody);
@@ -453,7 +466,8 @@ class _FilterDrawerState extends ConsumerState<FilterDrawer> {
                               "Buy",
                               style: GoogleFonts.inter(fontSize: 12.sp),
                             ),
-                            value: "sell",
+                            value: "buy",
+                            // value: "sell",
                             groupValue: _propertyAction,
                             activeColor: const Color(0xFF24ADD7),
                             contentPadding: EdgeInsets.zero,

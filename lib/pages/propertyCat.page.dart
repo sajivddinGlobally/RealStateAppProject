@@ -16,6 +16,7 @@ import 'package:realstate/CityProvider.dart';
 import '../Controller/getPropertyController.dart';
 import '../Model/Body/PropertyListBodyModel.dart';
 import 'listingPage.dart';
+import 'package:realstate/pages/filter_drawer.dart';
 
 class PropertyPageCat extends ConsumerStatefulWidget {
   final String property;
@@ -70,8 +71,7 @@ class _PropertyPageCatState extends ConsumerState<PropertyPageCat> {
       kitchen: [],
       locality: [],
       parking: [],
-      // listingCategory: isBuy ? 'buy' : 'rent',
-      listingCategory: isBuy ? 'sell' : 'rent',
+      listingCategory: isBuy ? 'buy' : 'rent',
       propertyType: apiPropType,
     );
   }
@@ -81,6 +81,16 @@ class _PropertyPageCatState extends ConsumerState<PropertyPageCat> {
     final propertyAsync = ref.watch(getPropertyController(bodyProvider));
     return Scaffold(
       backgroundColor: Colors.white,
+      endDrawer: FilterDrawer(
+        currentFilters: bodyProvider,
+        onApply: (newBody) {
+          setState(() {
+            bodyProvider = newBody;
+            isBuy = newBody.listingCategory != "rent";
+          });
+          ref.invalidate(getPropertyController);
+        },
+      ),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -164,47 +174,27 @@ class _PropertyPageCatState extends ConsumerState<PropertyPageCat> {
                   ),
                 ),
                 SizedBox(width: 12.w),
-                InkWell(
-                  onTap: () {
-                    String prop = "residential";
-                    final pTypeLower = widget.property.toLowerCase().trim();
-                    if ([
-                      "office",
-                      "retail",
-                      "industry",
-                      "hospitality",
-                    ].contains(pTypeLower)) {
-                      prop = "commercial";
-                    }
-
-                    Navigator.push(
-                      context,
-                      CupertinoPageRoute(
-                        builder: (context) => ListingPage(
-                          initialData: ListElement(
-                            property: prop,
-                            propertyType: bodyProvider.propertyType,
-                            listingCategory: bodyProvider.listingCategory,
+                Builder(
+                  builder: (scaffoldContext) => InkWell(
+                    onTap: () {
+                      Scaffold.of(scaffoldContext).openEndDrawer();
+                    },
+                    child: Container(
+                      height: 50.h,
+                      width: 50.w,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF24ADD7),
+                        borderRadius: BorderRadius.circular(16.r),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.10),
+                            blurRadius: 16,
+                            offset: const Offset(0, 8),
                           ),
-                        ),
+                        ],
                       ),
-                    );
-                  },
-                  child: Container(
-                    height: 50.h,
-                    width: 50.w,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF24ADD7),
-                      borderRadius: BorderRadius.circular(16.r),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.10),
-                          blurRadius: 16,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
+                      child: const Icon(Icons.tune, color: Colors.white),
                     ),
-                    child: const Icon(Icons.tune, color: Colors.white),
                   ),
                 ),
               ],
@@ -218,8 +208,7 @@ class _PropertyPageCatState extends ConsumerState<PropertyPageCat> {
                   onTap: () {
                     setState(() {
                       isBuy = true;
-                      // bodyProvider.listingCategory = "buy";
-                      bodyProvider.listingCategory = "sell";
+                      bodyProvider.listingCategory = "buy";
                     });
                     ref.invalidate(getPropertyController); // Fresh API call
                   },

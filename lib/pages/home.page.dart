@@ -2728,17 +2728,43 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
     return InkWell(
       borderRadius: BorderRadius.circular(16.r),
       onTap: () {
+        final propName = name.isNotEmpty
+            ? name
+            : (item.propertyTypeKey ?? "Property");
+        String propKey =
+            (item.propertyTypeKey != null && item.propertyTypeKey!.isNotEmpty)
+            ? item.propertyTypeKey!
+            : propName.toLowerCase();
+        if (propKey == "house") propKey = "Home";
+        if (propKey == "flats" ||
+            propKey == "appartment" ||
+            propKey == "apartment") {
+          propKey = "apartment";
+        }
+        if (propKey == "plots") propKey = "land";
+
         Navigator.push(
           context,
           CupertinoPageRoute(
-            builder: (context) => PropertyPageCat(
-              property: name.isNotEmpty
-                  ? name
-                  : (item.propertyTypeKey ?? "Property"),
-              isBuy: isBuy,
+            builder: (context) => ListingPage(
+              initialData: ListElement(
+                property: propName.toLowerCase() == "commercial"
+                    ? "commercial"
+                    : "residential",
+                propertyType: propKey,
+                listingCategory: isBuy ? "buy" : "rent",
+                // listingCategory: isBuy ? "sell" : "rent",
+              ),
             ),
           ),
         );
+
+        // Navigator.push(
+        //   context,
+        //   CupertinoPageRoute(
+        //     builder: (context) => PropertyPageCat(property: property),
+        //   ),
+        // );
       },
       child: Container(
         decoration: BoxDecoration(
