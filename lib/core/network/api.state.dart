@@ -23,6 +23,7 @@ import 'package:realstate/Model/getLikeProperyResModel.dart';
 import 'package:realstate/Model/getMyPropertyBodyModel.dart';
 import 'package:realstate/Model/getMyPropertyDetailsResModel.dart';
 import 'package:realstate/Model/getNotificationModel.dart';
+import 'package:realstate/Model/getPropertyCategoryModel.dart';
 import 'package:realstate/Model/homeBookingServiceBodyModel.dart';
 import 'package:realstate/Model/homeBookingServiceResModel.dart';
 import 'package:realstate/Model/homeGetServiceCateogryModel.dart';
@@ -61,6 +62,7 @@ import '../../Model/CreatePropertyResponseModel.dart';
 import '../../Model/GetLoanQueryModel.dart';
 import '../../Model/MultipleImgaeResponseModel.dart';
 import '../../Model/SavedModel.dart';
+import '../../Model/getHeroBannerModel.dart';
 import '../../Model/getPropertyResponsemodel.dart';
 import '../../Model/searchPropertyListResponse.dart';
 
@@ -240,4 +242,10 @@ abstract class APIStateNetwork {
 
   @POST("/user/createCity")
   Future<CreateCityResponseModel> createCity(@Body() CreateCityBodyModel body);
+
+  @POST("/admin/getHeroBanners")
+  Future<GetHeroBannerModel> getHeroBanner();
+
+  @POST("/user/getPropertyCategories")
+  Future<GetPropertyCategoriyModel> getPropertyCategorie();
 }

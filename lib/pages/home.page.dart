@@ -15,7 +15,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:marquee/marquee.dart';
 import 'package:realstate/Controller/contactUsController.dart';
 import 'package:realstate/Controller/getCityListController.dart';
+import 'package:realstate/Controller/getHeroBannerProvider.dart';
 import 'package:realstate/Controller/getMyPropertyController.dart';
+import 'package:realstate/Controller/getPropertyCategoryProvider.dart';
+import 'package:realstate/Model/getPropertyCategoryModel.dart' as cat_model;
 import 'package:realstate/Controller/homeServiceCategoryController.dart';
 import 'package:realstate/Controller/likePropertyController.dart';
 import 'package:realstate/Controller/loanServiceController.dart';
@@ -86,6 +89,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
           if (mounted) {
             setState(() {
               selectIndex = _tabController.index;
+              currentBannerIndex = 0;
             });
           }
         });
@@ -569,6 +573,9 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
           data.data?.where((item) => item.isRead == false).length ?? 0,
       orElse: () => 0,
     );
+    final getBannerState = ref.watch(getHeroBannerProvider);
+    final getProeprtyCategoryState = ref.watch(getPropertyCategoryProvider);
+
     return SingleChildScrollView(
       child: Column(
         children: [
@@ -878,130 +885,402 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
             ),
           ),
 
-          Stack(
-            children: [
-              /// 🔥 IMAGE SLIDER
-              CarouselSlider(
-                options: CarouselOptions(
-                  height: 260.h,
-                  viewportFraction: 1,
-                  autoPlay: true,
-                  autoPlayInterval: const Duration(seconds: 3),
-                  autoPlayAnimationDuration: const Duration(milliseconds: 800),
-                  onPageChanged: (index, reason) {
-                    setState(() {
-                      currentBannerIndex = index;
-                    });
-                  },
-                ),
-                items: currentImages.map((image) {
+          Builder(
+            builder: (context) {
+              // 1. Determine target tab category according to selectIndex
+              String targetCategory = "Buy Property";
+              if (selectIndex == 0) {
+                targetCategory = "Buy Property";
+              } else if (selectIndex == 1) {
+                targetCategory = "Rent Property";
+              } else if (selectIndex == 2) {
+                targetCategory = "Home Services";
+              } else {
+                targetCategory = "Loan Services";
+              }
+
+              return getBannerState.when(
+                data: (bannerData) {
+                  final allBanners = bannerData.data?.list ?? [];
+
+                  // Filter banners by tab category
+                  final filteredBanners = allBanners.where((banner) {
+                    final cat = (banner.tabCategory ?? "").trim().toLowerCase();
+                    final target = targetCategory.toLowerCase();
+                    final isActive = banner.isActive ?? true;
+                    final notDeleted = banner.isDeleted != true;
+                    return isActive &&
+                        notDeleted &&
+                        (cat == target ||
+                            cat.contains(target.split(" ").first));
+                  }).toList();
+
+                  final hasDynamicBanners = filteredBanners.isNotEmpty;
+                  final bannerCount = hasDynamicBanners
+                      ? filteredBanners.length
+                      : currentImages.length;
+                  final activeDotIndex = bannerCount > 0
+                      ? (currentBannerIndex % bannerCount)
+                      : 0;
+
                   return Stack(
                     children: [
-                      Image.asset(
-                        image,
-                        height: 260.h,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
+                      CarouselSlider(
+                        options: CarouselOptions(
+                          height: 260.h,
+                          viewportFraction: 1,
+                          autoPlay: bannerCount > 1,
+                          autoPlayInterval: const Duration(seconds: 3),
+                          autoPlayAnimationDuration: const Duration(
+                            milliseconds: 800,
+                          ),
+                          onPageChanged: (index, reason) {
+                            setState(() {
+                              currentBannerIndex = index;
+                            });
+                          },
+                        ),
+                        items: hasDynamicBanners
+                            ? filteredBanners.map((banner) {
+                                return GestureDetector(
+                                  onTap: () async {
+                                    if (banner.link != null &&
+                                        banner.link!.trim().isNotEmpty) {
+                                      final uri = Uri.tryParse(
+                                        banner.link!.trim(),
+                                      );
+                                      if (uri != null &&
+                                          await canLaunchUrl(uri)) {
+                                        await launchUrl(
+                                          uri,
+                                          mode: LaunchMode.externalApplication,
+                                        );
+                                      }
+                                    }
+                                  },
+                                  child: Stack(
+                                    children: [
+                                      Image.network(
+                                        banner.img ?? "",
+                                        height: 260.h,
+                                        width: double.infinity,
+                                        fit: BoxFit.cover,
+                                        loadingBuilder:
+                                            (context, child, loadingProgress) {
+                                              if (loadingProgress == null) {
+                                                return child;
+                                              }
+                                              return Container(
+                                                height: 260.h,
+                                                width: double.infinity,
+                                                color: Colors.grey.shade200,
+                                                child: const Center(
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        color: Color(
+                                                          0xFF24ADD7,
+                                                        ),
+                                                        strokeWidth: 2,
+                                                      ),
+                                                ),
+                                              );
+                                            },
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                              return Image.asset(
+                                                currentImages.first,
+                                                height: 260.h,
+                                                width: double.infinity,
+                                                fit: BoxFit.cover,
+                                              );
+                                            },
+                                      ),
+
+                                      /// Gradient
+                                      Container(
+                                        height: 260.h,
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              Colors.black.withOpacity(0.6),
+                                              Colors.transparent,
+                                            ],
+                                            begin: Alignment.bottomCenter,
+                                            end: Alignment.topCenter,
+                                          ),
+                                        ),
+                                      ),
+
+                                      /// TEXT CONTENT
+                                      Positioned(
+                                        left: 16.w,
+                                        bottom: 30.h,
+                                        right: 16.w,
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Chip(
+                                              labelPadding: EdgeInsets.zero,
+                                              label: Text(
+                                                selectIndex == 0
+                                                    ? "Buy Property"
+                                                    : selectIndex == 1
+                                                    ? "Rent Property"
+                                                    : selectIndex == 2
+                                                    ? "Best Service"
+                                                    : "Easy Loan",
+                                              ),
+                                              backgroundColor: Colors.white
+                                                  .withOpacity(0.8),
+                                            ),
+                                            SizedBox(height: 6.h),
+                                            Text(
+                                              (banner.title != null &&
+                                                      banner.title!
+                                                          .trim()
+                                                          .isNotEmpty)
+                                                  ? banner.title!
+                                                  : (selectIndex == 0
+                                                        ? "Find Your Dream Property"
+                                                        : selectIndex == 1
+                                                        ? "Find Rental Homes"
+                                                        : selectIndex == 2
+                                                        ? "Best Home Services"
+                                                        : "Get Instant Loan"),
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 18.sp,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            SizedBox(height: 4.h),
+                                            Text(
+                                              (banner.highlight != null &&
+                                                      banner.highlight!
+                                                          .trim()
+                                                          .isNotEmpty)
+                                                  ? banner.highlight!
+                                                  : (selectIndex == 0
+                                                        ? "Buy properties"
+                                                        : selectIndex == 1
+                                                        ? "Rent properties"
+                                                        : selectIndex == 2
+                                                        ? "Cleaning, Plumbing, Electrician & more"
+                                                        : "Home, Personal & Business Loan Available"),
+                                              style: TextStyle(
+                                                color: Colors.white70,
+                                                fontSize: 13.sp,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }).toList()
+                            : currentImages.map((image) {
+                                return Stack(
+                                  children: [
+                                    Image.asset(
+                                      image,
+                                      height: 260.h,
+                                      width: double.infinity,
+                                      fit: BoxFit.cover,
+                                    ),
+                                    Container(
+                                      height: 260.h,
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            Colors.black.withOpacity(0.6),
+                                            Colors.transparent,
+                                          ],
+                                          begin: Alignment.bottomCenter,
+                                          end: Alignment.topCenter,
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      left: 16.w,
+                                      bottom: 30.h,
+                                      right: 16.w,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Chip(
+                                            labelPadding: EdgeInsets.zero,
+                                            label: Text(
+                                              selectIndex == 0
+                                                  ? "Top Property"
+                                                  : selectIndex == 1
+                                                  ? "Best Service"
+                                                  : "Easy Loan",
+                                            ),
+                                            backgroundColor: Colors.white
+                                                .withOpacity(0.8),
+                                          ),
+                                          SizedBox(height: 6.h),
+                                          Text(
+                                            selectIndex == 0
+                                                ? "Find Your Dream Property"
+                                                : selectIndex == 1
+                                                ? "Best Home Services"
+                                                : "Get Instant Loan",
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 18.sp,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          SizedBox(height: 4.h),
+                                          Text(
+                                            selectIndex == 0
+                                                ? "Buy properties"
+                                                : selectIndex == 1
+                                                ? "Rent properties"
+                                                : selectIndex == 2
+                                                ? "Cleaning, Plumbing, Electrician & more"
+                                                : "Home, Personal & Business Loan Available",
+                                            style: TextStyle(
+                                              color: Colors.white70,
+                                              fontSize: 13.sp,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              }).toList(),
                       ),
 
-                      /// Gradient
-                      Container(
-                        height: 260.h,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.black.withOpacity(0.6),
-                              Colors.transparent,
-                            ],
-                            begin: Alignment.bottomCenter,
-                            end: Alignment.topCenter,
+                      /// 🔥 FIXED DOT INDICATOR
+                      if (bannerCount > 1)
+                        Positioned(
+                          bottom: 10.h,
+                          left: 0,
+                          right: 0,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(
+                              bannerCount,
+                              (index) => AnimatedContainer(
+                                duration: const Duration(milliseconds: 300),
+                                margin: EdgeInsets.symmetric(horizontal: 4.w),
+                                width: activeDotIndex == index ? 12.w : 8.w,
+                                height: activeDotIndex == index ? 12.h : 8.h,
+                                decoration: BoxDecoration(
+                                  color: activeDotIndex == index
+                                      ? const Color(0xFF24ADD7)
+                                      : Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
+                    ],
+                  );
+                },
+                error: (error, stackTrace) {
+                  return Stack(
+                    children: [
+                      CarouselSlider(
+                        options: CarouselOptions(
+                          height: 260.h,
+                          viewportFraction: 1,
+                          autoPlay: true,
+                          autoPlayInterval: const Duration(seconds: 3),
+                          autoPlayAnimationDuration: const Duration(
+                            milliseconds: 800,
+                          ),
+                          onPageChanged: (index, reason) {
+                            setState(() {
+                              currentBannerIndex = index;
+                            });
+                          },
+                        ),
+                        items: currentImages.map((image) {
+                          return Stack(
+                            children: [
+                              Image.asset(
+                                image,
+                                height: 260.h,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                              ),
+                              Container(
+                                height: 260.h,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Colors.black.withOpacity(0.6),
+                                      Colors.transparent,
+                                    ],
+                                    begin: Alignment.bottomCenter,
+                                    end: Alignment.topCenter,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        }).toList(),
                       ),
-
-                      /// TEXT CONTENT
                       Positioned(
-                        left: 16.w,
-                        bottom: 30.h,
-                        right: 16.w,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Chip(
-                              labelPadding: EdgeInsets.zero,
-                              label: Text(
-                                selectIndex == 0
-                                    ? "Top Property"
-                                    : selectIndex == 1
-                                    ? "Best Service"
-                                    : "Easy Loan",
-                              ),
-                              backgroundColor: Colors.white.withOpacity(0.8),
-                            ),
-
-                            SizedBox(height: 6.h),
-
-                            Text(
-                              selectIndex == 0
-                                  ? "Find Your Dream Property"
-                                  : selectIndex == 1
-                                  ? "Best Home Services"
-                                  : "Get Instant Loan",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 18.sp,
-                                fontWeight: FontWeight.bold,
+                        bottom: 10.h,
+                        left: 0,
+                        right: 0,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(
+                            currentImages.length,
+                            (index) => AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              margin: EdgeInsets.symmetric(horizontal: 4.w),
+                              width:
+                                  (currentBannerIndex % currentImages.length) ==
+                                      index
+                                  ? 12.w
+                                  : 8.w,
+                              height:
+                                  (currentBannerIndex % currentImages.length) ==
+                                      index
+                                  ? 12.h
+                                  : 8.h,
+                              decoration: BoxDecoration(
+                                color:
+                                    (currentBannerIndex %
+                                            currentImages.length) ==
+                                        index
+                                    ? const Color(0xFF24ADD7)
+                                    : Colors.white,
+                                shape: BoxShape.circle,
                               ),
                             ),
-
-                            SizedBox(height: 4.h),
-
-                            Text(
-                              selectIndex == 0
-                                  ? "Buy properties"
-                                  : selectIndex == 1
-                                  ? "Rent properties"
-                                  : selectIndex == 2
-                                  ? "Cleaning, Plumbing, Electrician & more"
-                                  : "Home, Personal & Business Loan Available",
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 13.sp,
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
                     ],
                   );
-                }).toList(),
-              ),
-
-              /// 🔥 FIXED DOT INDICATOR (ALWAYS SAME POSITION)
-              Positioned(
-                bottom: 10.h,
-                left: 0,
-                right: 0,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(
-                    currentImages.length,
-                    (index) => AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      margin: EdgeInsets.symmetric(horizontal: 4.w),
-                      width: currentBannerIndex == index ? 12.w : 8.w,
-                      height: currentBannerIndex == index ? 12.h : 8.h,
-                      decoration: BoxDecoration(
-                        color: currentBannerIndex == index
-                            ? const Color(0xFF24ADD7)
-                            : Colors.white,
-                        shape: BoxShape.circle,
+                },
+                loading: () {
+                  return Container(
+                    height: 260.h,
+                    width: double.infinity,
+                    color: Colors.grey.shade200,
+                    child: const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF24ADD7),
+                        strokeWidth: 2,
                       ),
                     ),
-                  ),
-                ),
-              ),
-            ],
+                  );
+                },
+              );
+            },
           ),
 
           // BUTTONS
@@ -1185,93 +1464,21 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
               tabs: [
                 _buildTab("Buy Property", 0),
                 _buildTab("Rent Property", 1),
-                _buildTab("Service Enquiry", 2),
-                _buildTab("Loan Enquiry", 3),
+                _buildTab("Home Service", 2),
+                _buildTab("Loan Service", 3),
               ],
             ),
           ),
-
           ExpandablePageView(
             controller: _tabController,
             children: [
-              Padding(
-                padding: EdgeInsets.all(16.w),
-                child: Column(
-                  children: [
-                    // SizedBox(height: 10.h),
-                    GridView.count(
-                      padding: EdgeInsets.zero,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisCount: 3,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      children: [
-                        _gridItem("assets/png/home.png", "House", true),
-                        _gridItem(
-                          "assets/png/apartment.png",
-                          " Appartment",
-                          true,
-                        ),
-                        _gridItem("assets/png/buyFlat.png", "Flats", true),
-                        _gridItem("assets/png/buyPlot.png", "Plots", true),
-                        _gridItem(
-                          "assets/png/commercial.png",
-                          "Commercial",
-                          true,
-                        ),
-                        _gridItem("assets/png/buyHotel.png", "TownHouse", true),
-                        _gridItem("assets/png/apartment.png", " Studio", true),
-                        _gridItem("assets/png/rentCondos.png", " Condos", true),
-                        _gridItem("assets/png/home.png", "Villa", true),
-                      ],
-                    ),
-                    SizedBox(height: 10.h),
-                  ],
-                ),
+              _buildPropertyCategoryTab(
+                isBuy: true,
+                categoryState: getProeprtyCategoryState,
               ),
-              Padding(
-                padding: EdgeInsets.all(16.w),
-                child: Column(
-                  children: [
-                    GridView.count(
-                      padding: EdgeInsets.zero,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisCount: 3,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      children: [
-                        _gridItem("assets/png/home.png", "House", false),
-                        _gridItem(
-                          "assets/png/apartment.png",
-                          " Appartment",
-                          false,
-                        ),
-                        _gridItem("assets/png/buyFlat.png", "Flats", false),
-                        _gridItem("assets/png/buyPlot.png", "Plots", false),
-                        _gridItem(
-                          "assets/png/commercial.png",
-                          "Commercial",
-                          false,
-                        ),
-                        _gridItem(
-                          "assets/png/buyHotel.png",
-                          "TownHouse",
-                          false,
-                        ),
-                        _gridItem("assets/png/apartment.png", " Studio", false),
-                        _gridItem(
-                          "assets/png/rentCondos.png",
-                          " Condos",
-                          false,
-                        ),
-                        _gridItem("assets/png/home.png", "Villa", false),
-                      ],
-                    ),
-                    SizedBox(height: 10.h),
-                  ],
-                ),
+              _buildPropertyCategoryTab(
+                isBuy: false,
+                categoryState: getProeprtyCategoryState,
               ),
               HomeService(),
               LoanService(),
@@ -2398,37 +2605,375 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
     );
   }
 
-  // GRID ITEM
-  Widget _gridItem(String icon, String title, bool isBuy) {
-    return GestureDetector(
+  // ==================== PROPERTY CATEGORIES (WEBSITE STYLE) ====================
+  Widget _buildPropertyCategoryTab({
+    required bool isBuy,
+    required AsyncValue<cat_model.GetPropertyCategoriyModel> categoryState,
+  }) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      child: Column(
+        children: [
+          // MY PROPERTIES BUTTON (matching website header)
+          InkWell(
+            borderRadius: BorderRadius.circular(16.r),
+            onTap: () {
+              setState(() {
+                bottomIndex = 1;
+              });
+            },
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(vertical: 13.h),
+              decoration: BoxDecoration(
+                color: const Color(0xFF24ADD7),
+                borderRadius: BorderRadius.circular(16.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF24ADD7).withOpacity(0.32),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.home_work_outlined,
+                    size: 20.sp,
+                    color: Colors.white,
+                  ),
+                  SizedBox(width: 8.w),
+                  Text(
+                    "MY PROPERTIES",
+                    style: GoogleFonts.inter(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          SizedBox(height: 14.h),
+
+          // Categories Grid
+          categoryState.when(
+            data: (data) {
+              final allItems = data.data?.list ?? [];
+              final filtered = allItems.where((item) {
+                if (item.status == false ||
+                    item.isDisable == true ||
+                    item.isDeleted == true) {
+                  return false;
+                }
+                final type =
+                    (item.rawCategoryType ?? item.categoryType?.name ?? '')
+                        .toLowerCase();
+                if (isBuy) {
+                  return type == 'buy' ||
+                      type == 'sell' ||
+                      type == 'both' ||
+                      type.isEmpty;
+                } else {
+                  return type == 'rent' || type == 'both' || type.isEmpty;
+                }
+              }).toList();
+
+              final displayList = filtered.isNotEmpty
+                  ? filtered
+                  : _getDefaultCategoryItems(isBuy);
+
+              return _buildCategoryGrid(displayList, isBuy);
+            },
+            loading: () => _buildCategoryLoadingGrid(),
+            error: (_, __) =>
+                _buildCategoryGrid(_getDefaultCategoryItems(isBuy), isBuy),
+          ),
+
+          SizedBox(height: 14.h),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryGrid(List<cat_model.ListElement> items, bool isBuy) {
+    return GridView.builder(
+      padding: EdgeInsets.zero,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.98,
+        crossAxisSpacing: 12.w,
+        mainAxisSpacing: 12.h,
+      ),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        return _buildPropertyCategoryCard(items[index], isBuy);
+      },
+    );
+  }
+
+  Widget _buildPropertyCategoryCard(cat_model.ListElement item, bool isBuy) {
+    final name = (item.name ?? "").trim();
+    final imageUrl = item.image ?? "";
+    final isNetwork =
+        imageUrl.startsWith("http://") || imageUrl.startsWith("https://");
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(16.r),
       onTap: () {
         Navigator.push(
           context,
           CupertinoPageRoute(
-            builder: (context) =>
-                PropertyPageCat(property: title, isBuy: isBuy),
+            builder: (context) => PropertyPageCat(
+              property: name.isNotEmpty
+                  ? name
+                  : (item.propertyTypeKey ?? "Property"),
+              isBuy: isBuy,
+            ),
           ),
         );
       },
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade300),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(icon, height: 50.h),
-            SizedBox(height: 8.h),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 12),
+          borderRadius: BorderRadius.circular(16.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16.r),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Card Image
+              if (isNetwork)
+                Image.network(
+                  imageUrl,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      color: Colors.grey.shade200,
+                      child: Center(
+                        child: SizedBox(
+                          height: 20.h,
+                          width: 20.w,
+                          child: CircularProgressIndicator(
+                            color: const Color(0xFF24ADD7),
+                            strokeWidth: 1.5.w,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: const Color(0xFFE8F6FA),
+                      child: Center(
+                        child: Icon(
+                          Icons.apartment_rounded,
+                          color: const Color(0xFF24ADD7),
+                          size: 32.sp,
+                        ),
+                      ),
+                    );
+                  },
+                )
+              else if (imageUrl.isNotEmpty)
+                Image.asset(
+                  imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: const Color(0xFFE8F6FA),
+                      child: Center(
+                        child: Icon(
+                          Icons.apartment_rounded,
+                          color: const Color(0xFF24ADD7),
+                          size: 32.sp,
+                        ),
+                      ),
+                    );
+                  },
+                )
+              else
+                Container(
+                  color: const Color(0xFFE8F6FA),
+                  child: Center(
+                    child: Icon(
+                      Icons.apartment_rounded,
+                      color: const Color(0xFF24ADD7),
+                      size: 32.sp,
+                    ),
+                  ),
+                ),
+
+              // Dark Gradient Overlay (website style)
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.25),
+                      Colors.black.withOpacity(0.85),
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    stops: const [0.35, 0.65, 1.0],
+                  ),
+                ),
+              ),
+
+              // Bottom Title and Contact button
+              Positioned(
+                left: 10.w,
+                right: 10.w,
+                bottom: 10.h,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        name.toUpperCase(),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                          fontSize: 11.5.sp,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black.withOpacity(0.8),
+                              blurRadius: 4,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 6.w),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 8.w,
+                        vertical: 4.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF24ADD7),
+                        borderRadius: BorderRadius.circular(6.r),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF24ADD7).withOpacity(0.4),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        "Contact",
+                        style: GoogleFonts.inter(
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
+  }
+
+  Widget _buildCategoryLoadingGrid() {
+    return GridView.builder(
+      padding: EdgeInsets.zero,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.98,
+        crossAxisSpacing: 12.w,
+        mainAxisSpacing: 12.h,
+      ),
+      itemCount: 6,
+      itemBuilder: (context, index) {
+        return Shimmer.fromColors(
+          baseColor: Colors.grey.shade200,
+          highlightColor: Colors.grey.shade50,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16.r),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  List<cat_model.ListElement> _getDefaultCategoryItems(bool isBuy) {
+    return [
+      cat_model.ListElement(
+        name: "House",
+        image:
+            "https://propertyleinnovation.com/_next/image?url=%2Fassets%2Fhome%2Fbrings1.png&w=1080&q=75",
+      ),
+      cat_model.ListElement(
+        name: "Apartment",
+        image:
+            "https://propertyleinnovation.com/_next/image?url=%2Fassets%2Fhome%2Fbrings2.png&w=1080&q=75",
+      ),
+      cat_model.ListElement(
+        name: "TownHouse",
+        image:
+            "https://propertyleinnovation.com/_next/image?url=%2Fassets%2Fhome%2Fbrings3.png&w=1080&q=75",
+      ),
+      cat_model.ListElement(
+        name: "Plots",
+        image:
+            "https://propertyleinnovation.com/_next/image?url=%2Fassets%2Fhome%2Fbrings4.png&w=1080&q=75",
+      ),
+      cat_model.ListElement(
+        name: "Commercial",
+        image:
+            "https://propertyleinnovation.com/_next/image?url=%2Fassets%2Fhome%2Fbrings5.png&w=1080&q=75",
+      ),
+      cat_model.ListElement(
+        name: "PentHouse",
+        image:
+            "https://propertyleinnovation.com/_next/image?url=%2Fassets%2Fhome%2Fbrings6.png&w=1080&q=75",
+      ),
+      cat_model.ListElement(
+        name: "Condos",
+        image:
+            "https://propertyleinnovation.com/_next/image?url=%2Fassets%2Fhome%2Fbrings7.png&w=1080&q=75",
+      ),
+      cat_model.ListElement(
+        name: "Studio",
+        image:
+            "https://propertyleinnovation.com/_next/image?url=%2Fassets%2Fhome%2Fbrings8.png&w=1080&q=75",
+      ),
+      cat_model.ListElement(
+        name: "Villa",
+        image:
+            "https://propertyleinnovation.com/_next/image?url=%2Fassets%2Fhome%2Fbrings9.png&w=1080&q=75",
+      ),
+    ];
   }
 }
 
@@ -3044,73 +3589,6 @@ class HomeService extends ConsumerStatefulWidget {
 }
 
 class _HomeServiceState extends ConsumerState<HomeService> {
-  final List<Map<String, String>> categories = const [
-    {
-      'label': 'ELECTRICIAN',
-      'url':
-          'https://media.istockphoto.com/id/1049775258/photo/smiling-handsome-electrician-repairing-electrical-box-with-pliers-in-corridor-and-looking-at.jpg?s=612x612&w=0&k=20&c=stdWozouV2XsrHk2xXD3C31nT90BG7ydZvcpAn1Fx7I=',
-    }, // Replace with actual
-    {
-      'label': 'CARPENTER',
-      'url':
-          'https://s3-media0.fl.yelpcdn.com/bphoto/y2N9GweV0RhaXx9dYbXHTA/l.jpg',
-    },
-    {
-      'label': 'PAINTER',
-      'url':
-          'https://www.shutterstock.com/image-vector/worker-repair-service-plumber-handyman-260nw-2234725577.jpg',
-    },
-    {
-      'label': 'PLUMBER',
-      'url':
-          'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/679085ac60c170e5ebba4b34_recBrwtY2JtNJji6k_image_1.webp',
-    },
-    {
-      'label': 'CLEANING',
-      'url':
-          'https://www.shutterstock.com/shutterstock/videos/3684051321/thumb/4.jpg?ip=x480',
-    },
-    {
-      'label': 'INTERIOR',
-      'url':
-          'https://s3-media0.fl.yelpcdn.com/bphoto/tuGs0mGEDRuE8omqeINuKQ/l.jpg',
-    },
-    {
-      'label': 'RENOVATION',
-      'url':
-          'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/677c007c62c5db1e8a3b1317_handyman-webflow-template.png',
-    },
-    {
-      'label': 'PEST CONTROL',
-      'url':
-          'https://img.freepik.com/free-photo/people-disinfecting-together-dangerous-area_23-2148848569.jpg?semt=ais_hybrid&w=740&q=80',
-    },
-  ];
-
-  final List<Map<String, String>> services = const [
-    {
-      'icon': 'Toilet Repair',
-      'title': 'Toilet Repair',
-      'desc':
-          'Fast, reliable toilet fixes that restore comfort and functionality.',
-    },
-    {
-      'icon': 'Faucet Installation',
-      'title': 'Faucet Installation',
-      'desc': 'Expert faucet installation and repair for every style.',
-    },
-    {
-      'icon': 'Sewer Inspection',
-      'title': 'Sewer Inspection',
-      'desc': 'Advanced camera inspections to prevent damage.',
-    },
-    {
-      'icon': 'Sewer Inspection',
-      'title': 'Sewer Inspection',
-      'desc': 'Advanced camera inspections to prevent damage.',
-    }, // Duplicate in screenshot, adjust if needed
-  ];
-
   String searchQuery = '';
 
   @override
@@ -3122,9 +3600,9 @@ class _HomeServiceState extends ConsumerState<HomeService> {
       ),
       child: Column(
         children: [
-          SizedBox(height: 15.h),
+          SizedBox(height: 12.h),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 22.w),
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
             child: TextField(
               onChanged: (value) {
                 setState(() {
@@ -3140,370 +3618,376 @@ class _HomeServiceState extends ConsumerState<HomeService> {
                 ),
                 filled: true,
                 fillColor: Colors.white,
-                prefixIcon: Icon(Icons.search, size: 18.sp, color: Colors.grey),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                  borderSide: BorderSide(
-                    color: Colors.grey.shade300,
-                    width: 1.w,
-                  ),
+                prefixIconConstraints: BoxConstraints(
+                  minWidth: 40.w,
+                  minHeight: 30.h,
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                  borderSide: BorderSide(
-                    color: const Color(0xFF24ADD7),
-                    width: 1.5.w,
-                  ),
+                prefixIcon: Icon(
+                  Icons.search,
+                  size: 20.sp,
+                  color: const Color(0xFF24ADD7),
                 ),
-                hintText: "Search Services...",
+                hintText: "Search Home Services...",
                 hintStyle: TextStyle(
                   fontSize: 13.sp,
                   color: Colors.grey.shade400,
                 ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30.r),
+                  borderSide: BorderSide(
+                    color: Colors.grey.shade200,
+                    width: 1.w,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30.r),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF24ADD7),
+                    width: 1.5,
+                  ),
+                ),
               ),
             ),
           ),
-          homeServiceProvider.when(
-            data: (service) {
-              final filteredServices = service.data!.list!.where((item) {
-                final name = (item.name ?? '').toLowerCase();
-                return name.contains(searchQuery);
-              }).toList();
-              if (filteredServices.isEmpty) {
-                return Column(
+
+          SizedBox(height: 12.h),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  CupertinoPageRoute(
+                    builder: (context) => const MyrequestPage(),
+                  ),
+                );
+              },
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(vertical: 13.h),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF24ADD7),
+                  borderRadius: BorderRadius.circular(16.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF24ADD7).withOpacity(0.32),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SizedBox(height: 20.h),
+                    Icon(
+                      Icons.assignment_outlined,
+                      size: 20.sp,
+                      color: Colors.white,
+                    ),
+                    SizedBox(width: 8.w),
                     Text(
-                      "No Service Found $searchQuery",
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey,
+                      "MY REQUESTS",
+                      style: GoogleFonts.inter(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        letterSpacing: 1.2,
                       ),
                     ),
                   ],
+                ),
+              ),
+            ),
+          ),
+
+          SizedBox(height: 6.h),
+
+          /// 🛠 SERVICES GRID
+          homeServiceProvider.when(
+            data: (service) {
+              final filteredServices = (service.data?.list ?? []).where((item) {
+                final name = (item.name ?? '').toLowerCase();
+                return name.contains(searchQuery);
+              }).toList();
+
+              if (filteredServices.isEmpty) {
+                return Padding(
+                  padding: EdgeInsets.symmetric(vertical: 40.h),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.search_off_rounded,
+                        size: 48.sp,
+                        color: Colors.grey.shade400,
+                      ),
+                      SizedBox(height: 10.h),
+                      Text(
+                        "No Services Found",
+                        style: GoogleFonts.inter(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
                 );
               }
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: 15.h),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 22.w),
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 45.h,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            CupertinoPageRoute(
-                              builder: (context) => const MyrequestPage(),
+
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 0.95,
+                  crossAxisSpacing: 14.w,
+                  mainAxisSpacing: 14.h,
+                ),
+                itemCount: filteredServices.length,
+                itemBuilder: (context, index) {
+                  final item = filteredServices[index];
+                  final hasRating = (item.averageRating ?? 0) > 0;
+
+                  return InkWell(
+                    borderRadius: BorderRadius.circular(16.r),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        CupertinoPageRoute(
+                          builder: (context) =>
+                              HomeServiceDetailsPage(id: item.id.toString()),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16.r),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16.r),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            /// Card Image
+                            Image.network(
+                              item.image ?? "",
+                              fit: BoxFit.cover,
+                              loadingBuilder:
+                                  (context, child, loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return Container(
+                                      color: Colors.grey.shade200,
+                                      child: Center(
+                                        child: SizedBox(
+                                          height: 20.h,
+                                          width: 20.w,
+                                          child: CircularProgressIndicator(
+                                            color: Color(0xFF24ADD7),
+                                            strokeWidth: 1.5.w,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: Colors.grey.shade300,
+                                  child: Center(
+                                    child: Icon(
+                                      Icons.handyman_outlined,
+                                      color: Colors.grey,
+                                      size: 30.sp,
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
-                          );
-                        },
-                        icon: Icon(
-                          Icons.assignment_outlined,
-                          size: 18.sp,
-                          color: Colors.white,
-                        ),
-                        label: Text(
-                          "MY Home Service Requests",
-                          style: GoogleFonts.inter(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF24ADD7),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.r),
-                          ),
+
+                            /// Dark Gradient Overlay (Matching Website Card)
+                            Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.transparent,
+                                    Colors.black.withOpacity(0.25),
+                                    Colors.black.withOpacity(0.85),
+                                  ],
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  stops: const [0.35, 0.65, 1.0],
+                                ),
+                              ),
+                            ),
+
+                            /// Top Rating Badge (if rating exists)
+                            if (hasRating)
+                              Positioned(
+                                top: 8.h,
+                                right: 8.w,
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 6.w,
+                                    vertical: 3.h,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.6),
+                                    borderRadius: BorderRadius.circular(12.r),
+                                    border: Border.all(
+                                      color: Colors.white24,
+                                      width: 0.8,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.star,
+                                        color: Colors.amber,
+                                        size: 11,
+                                      ),
+                                      SizedBox(width: 3.w),
+                                      Text(
+                                        (item.averageRating ?? 0)
+                                            .toStringAsFixed(1),
+                                        style: GoogleFonts.inter(
+                                          fontSize: 10.sp,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+
+                            /// Bottom Bar: Title + "Contact" Button
+                            Positioned(
+                              left: 10.w,
+                              right: 10.w,
+                              bottom: 10.h,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    (item.name ?? "").toUpperCase(),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                      letterSpacing: 0.4,
+                                      shadows: [
+                                        Shadow(
+                                          color: Colors.black.withOpacity(0.8),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 1),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  SizedBox(height: 6.h),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      if ((item.totalReviews ?? 0) > 0)
+                                        Text(
+                                          "${item.totalReviews} reviews",
+                                          style: GoogleFonts.inter(
+                                            fontSize: 9.sp,
+                                            color: Colors.white70,
+                                          ),
+                                        )
+                                      else
+                                        const SizedBox.shrink(),
+                                      Container(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 10.w,
+                                          vertical: 4.h,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF24ADD7),
+                                          borderRadius: BorderRadius.circular(
+                                            6.r,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: const Color(
+                                                0xFF24ADD7,
+                                              ).withOpacity(0.4),
+                                              blurRadius: 4,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Text(
+                                          "Contact",
+                                          style: GoogleFonts.inter(
+                                            fontSize: 10.sp,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                  ),
-
-                  SizedBox(height: 10.h),
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(14),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          childAspectRatio: 0.73,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                        ),
-
-                    // itemCount: service.data!.list!.length,
-                    itemCount: filteredServices.length,
-                    itemBuilder: (context, index) {
-                      // final item = service.data!.list![index];
-                      final item = filteredServices[index];
-                      return Column(
-                        children: [
-                          InkWell(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                CupertinoPageRoute(
-                                  builder: (context) => HomeServiceDetailsPage(
-                                    // service: item,
-                                    id: item.id.toString(),
-                                  ),
-                                ),
-                              );
-                            },
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8.r),
-                              child: Image.network(
-                                // categories[index]['url']!,
-                                item.image ??
-                                    "https://s3-media0.fl.yelpcdn.com/bphoto/y2N9GweV0RhaXx9dYbXHTA/l.jpg",
-                                width: 80.w,
-                                height: 80.h,
-                                fit: BoxFit.cover,
-                                loadingBuilder:
-                                    (context, child, loadingProgress) {
-                                      if (loadingProgress == null) return child;
-                                      return Container(
-                                        width: 80.w,
-                                        height: 80.h,
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(
-                                            8.r,
-                                          ),
-                                          color: Colors.grey.shade300,
-                                        ),
-                                        child: Center(
-                                          child: SizedBox(
-                                            width: 20.w,
-                                            height: 20.h,
-                                            child: CircularProgressIndicator(
-                                              color: Colors.deepOrange,
-                                              strokeWidth: 1.w,
-                                            ),
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    width: 80.w,
-                                    height: 80.h,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(8.r),
-                                      color: Colors.grey.shade300,
-                                    ),
-                                    child: Center(
-                                      child: Icon(
-                                        Icons.image_not_supported_outlined,
-                                        size: 30.sp,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 8.h),
-                          Text(
-                            //  categories[index]['label']!,
-                            textAlign: TextAlign.center,
-                            item.name ?? "N/A",
-                            style: GoogleFonts.inter(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: 4.h),
-
-                          // 🔹 Rating + Review Row
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.star,
-                                color: Colors.orange,
-                                size: 14.sp,
-                              ),
-                              SizedBox(width: 2.w),
-
-                              Text(
-                                (item.averageRating ?? 0).toStringAsFixed(1),
-                                style: GoogleFonts.inter(
-                                  fontSize: 10.sp,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-
-                              SizedBox(width: 4.w),
-
-                              Text(
-                                "(${item.totalReviews ?? 0} Review)",
-                                style: GoogleFonts.inter(
-                                  fontSize: 10.sp,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ],
+                  );
+                },
               );
             },
             error: (error, stackTrace) {
               log(stackTrace.toString());
-              return Center(child: Text(error.toString()));
+              return Center(
+                child: Padding(
+                  padding: EdgeInsets.all(20.w),
+                  child: Text(
+                    error.toString(),
+                    style: TextStyle(color: Colors.red.shade400),
+                  ),
+                ),
+              );
             },
             loading: () {
-              return SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      padding: const EdgeInsets.all(16),
-                      itemCount: 6, // shimmer items
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            childAspectRatio: 0.80,
-                            crossAxisSpacing: 16,
-                            mainAxisSpacing: 16,
-                          ),
-                      itemBuilder: (context, index) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            /// Image placeholder
-                            Shimmer.fromColors(
-                              baseColor: Colors.grey.shade300,
-                              highlightColor: Colors.grey.shade100,
-                              child: Container(
-                                width: 80.w,
-                                height: 80.h,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey,
-                                  borderRadius: BorderRadius.circular(8.r),
-                                ),
-                              ),
-                            ),
-
-                            SizedBox(height: 8.h),
-
-                            /// Text placeholder
-                            Shimmer.fromColors(
-                              baseColor: Colors.grey.shade300,
-                              highlightColor: Colors.grey.shade100,
-                              child: Container(
-                                width: 75.w,
-                                height: 12.h,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey,
-                                  borderRadius: BorderRadius.circular(6.r),
-                                ),
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                    SizedBox(height: 20.h),
-                    Center(
-                      child: Column(
-                        children: [
-                          Shimmer.fromColors(
-                            baseColor: Colors.grey.shade300,
-                            highlightColor: Colors.grey.shade100,
-                            child: Container(
-                              width: 100.w,
-                              height: 12.h,
-                              decoration: BoxDecoration(
-                                color: Colors.grey,
-                                borderRadius: BorderRadius.circular(6.r),
-                              ),
-                            ),
-                          ),
-
-                          SizedBox(height: 10.h),
-
-                          Shimmer.fromColors(
-                            baseColor: Colors.grey.shade300,
-                            highlightColor: Colors.grey.shade100,
-                            child: Container(
-                              width: 200.w,
-                              height: 12.h,
-                              decoration: BoxDecoration(
-                                color: Colors.grey,
-                                borderRadius: BorderRadius.circular(6.r),
-                              ),
-                            ),
-                          ),
-                        ],
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+                itemCount: 4,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 0.95,
+                  crossAxisSpacing: 14.w,
+                  mainAxisSpacing: 14.h,
+                ),
+                itemBuilder: (context, index) {
+                  return Shimmer.fromColors(
+                    baseColor: Colors.grey.shade300,
+                    highlightColor: Colors.grey.shade100,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16.r),
                       ),
                     ),
-                    SizedBox(height: 15.h),
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      padding: const EdgeInsets.all(16),
-                      itemCount: 4, // shimmer items
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            childAspectRatio: 0.80,
-                            crossAxisSpacing: 16,
-                            mainAxisSpacing: 16,
-                          ),
-                      itemBuilder: (context, index) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            /// Image placeholder
-                            Shimmer.fromColors(
-                              baseColor: Colors.grey.shade300,
-                              highlightColor: Colors.grey.shade100,
-                              child: Container(
-                                width: 200.w,
-                                height: 100.h,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey,
-                                  borderRadius: BorderRadius.circular(8.r),
-                                ),
-                              ),
-                            ),
-
-                            SizedBox(height: 8.h),
-
-                            /// Text placeholder
-                            Shimmer.fromColors(
-                              baseColor: Colors.grey.shade300,
-                              highlightColor: Colors.grey.shade100,
-                              child: Container(
-                                width: 75.w,
-                                height: 12.h,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey,
-                                  borderRadius: BorderRadius.circular(6.r),
-                                ),
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                  ],
-                ),
+                  );
+                },
               );
             },
           ),
@@ -3732,7 +4216,7 @@ class _LoanServiceState extends ConsumerState<LoanService> {
                 crossAxisCount: 2,
                 crossAxisSpacing: 12.w,
                 mainAxisSpacing: 12.h,
-                childAspectRatio: 1.25,
+                childAspectRatio: 0.98,
               ),
               itemBuilder: (context, index) {
                 final item = loanTypes[index];
@@ -3741,12 +4225,7 @@ class _LoanServiceState extends ConsumerState<LoanService> {
                     Navigator.push(
                       context,
                       CupertinoPageRoute(
-                        builder: (_) => LoanServiceDetailsPage(
-                          // item: CommonLoanModel(
-                          //   name: item["title"],
-                          //   bankLogo: item["image"],
-                          // ),
-                        ),
+                        builder: (_) => LoanServiceDetailsPage(),
                       ),
                     );
                   },
