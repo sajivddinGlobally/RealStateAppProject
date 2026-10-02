@@ -71,6 +71,7 @@ class ListElement {
   List<String>? amenities;
   List<String>? furnishingItems;
   String? permitNoUploadBy;
+  // String? permitNo;
   String? rera;
   String? ded;
   String? brn;
@@ -83,6 +84,13 @@ class ListElement {
   List<AroundProject>? aroundProject;
   AveneuOverView? aveneuOverView;
   String? propertyAddress;
+  String? pincode;
+  String? houseNumber;
+  String? availableFrom;
+  String? securityDeposit;
+  String? customSecurityDeposit;
+  String? guestRoom;
+  String? room;
   List<String>? uploadedPhotos;
   String? status;
   bool? verifyed;
@@ -100,9 +108,11 @@ class ListElement {
   String? fullName;
   String? email;
   String? phone;
+  String? handelPropertyBy;
 
   ListElement({
     this.id,
+    this.handelPropertyBy,
     this.property,
     this.propertyType,
     this.listingCategory,
@@ -118,7 +128,6 @@ class ListElement {
     this.bedRoom,
     this.amenities,
     this.furnishingItems,
-    // this.permitNo,
     this.rera,
     this.ded,
     this.brn,
@@ -128,6 +137,13 @@ class ListElement {
     this.aroundProject,
     this.aveneuOverView,
     this.propertyAddress,
+    this.pincode,
+    this.houseNumber,
+    this.availableFrom,
+    this.securityDeposit,
+    this.customSecurityDeposit,
+    this.guestRoom,
+    this.room,
     this.uploadedPhotos,
     this.status,
     this.verifyed,
@@ -166,7 +182,7 @@ class ListElement {
     furnishingItems: json["furnishingItems"] == null
         ? []
         : List<String>.from(json["furnishingItems"]!.map((x) => x)),
-    // permitNo: json["permitNo"],
+    permitNo: json["permitNo"],
     rera: json["rera"],
     ded: json["ded"],
     brn: json["brn"],
@@ -182,6 +198,13 @@ class ListElement {
         ? null
         : AveneuOverView.fromJson(json["aveneuOverView"]),
     propertyAddress: json["propertyAddress"],
+    pincode: json["pincode"],
+    houseNumber: json["houseNumber"],
+    availableFrom: json["availableFrom"],
+    securityDeposit: json["securityDeposit"],
+    customSecurityDeposit: json["customSecurityDeposit"],
+    guestRoom: json["guestRoom"],
+    room: json["room"],
     uploadedPhotos: json["uploadedPhotos"] == null
         ? []
         : List<String>.from(json["uploadedPhotos"]!.map((x) => x)),
@@ -202,10 +225,12 @@ class ListElement {
     fullName: json["fullName"],
     email: json["email"],
     phone: json["phone"],
+    handelPropertyBy: json["handelPropertyBy"],
   );
 
   Map<String, dynamic> toJson() => {
     "_id": id,
+    "handelPropertyBy": handelPropertyBy,
     "property": property,
     "propertyType": propertyType,
     "listingCategory": listingCategory,
@@ -223,6 +248,7 @@ class ListElement {
     "furnishingItems": furnishingItems == null
         ? []
         : List<dynamic>.from(furnishingItems!.map((x) => x)),
+    "permitNo": permitNo,
     "rera": rera,
     "ded": ded,
     "brn": brn,
@@ -234,6 +260,13 @@ class ListElement {
         : List<dynamic>.from(aroundProject!.map((x) => x.toJson())),
     "aveneuOverView": aveneuOverView?.toJson(),
     "propertyAddress": propertyAddress,
+    "pincode": pincode,
+    "houseNumber": houseNumber,
+    "availableFrom": availableFrom,
+    "securityDeposit": securityDeposit,
+    "customSecurityDeposit": customSecurityDeposit,
+    "guestRoom": guestRoom,
+    "room": room,
     "uploadedPhotos": uploadedPhotos == null
         ? []
         : List<dynamic>.from(uploadedPhotos!.map((x) => x)),

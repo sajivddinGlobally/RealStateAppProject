@@ -1041,15 +1041,25 @@ class _PerticulerPropertyPageState
                             child: InkWell(
                               borderRadius: BorderRadius.circular(12.r),
                               onTap: () async {
-                                final message =
-                                    "Hi, I am interested in your property: ${prop.propertyType ?? ""} in ${prop.localityArea ?? ""}\nProperty Link: https://propertyleinnovation.com/property/${prop.slug ?? prop.id ?? ""}";
-                                final url = Uri.parse(
-                                  "https://wa.me/91$sellerPhone?text=${Uri.encodeComponent(message)}",
+                                final String msg =
+                                    "Hi, I am interested in your property services.";
+                                final Uri url = Uri.parse(
+                                  "whatsapp://send?phone=919171719060&text=${Uri.encodeComponent(msg)}",
                                 );
-                                await launchUrl(
-                                  url,
-                                  mode: LaunchMode.externalApplication,
-                                );
+                                try {
+                                  await launchUrl(
+                                    url,
+                                    mode: LaunchMode.externalApplication,
+                                  );
+                                } catch (e) {
+                                  final Uri webUrl = Uri.parse(
+                                    "https://wa.me/919171719060?text=${Uri.encodeComponent(msg)}",
+                                  );
+                                  await launchUrl(
+                                    webUrl,
+                                    mode: LaunchMode.externalApplication,
+                                  );
+                                }
                               },
                               child: Container(
                                 height: 44.h,
@@ -1094,14 +1104,13 @@ class _PerticulerPropertyPageState
                           ),
 
                           SizedBox(width: 8.w),
-
                           // Call Now Button
                           Expanded(
                             flex: 3,
                             child: InkWell(
                               borderRadius: BorderRadius.circular(12.r),
                               onTap: () async {
-                                final url = Uri.parse("tel:+91$sellerPhone");
+                                final url = Uri.parse("tel:+919171719060");
                                 await launchUrl(
                                   url,
                                   mode: LaunchMode.externalApplication,
@@ -1135,48 +1144,6 @@ class _PerticulerPropertyPageState
                                       "Call Now",
                                       style: GoogleFonts.inter(
                                         color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13.sp,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          SizedBox(width: 8.w),
-
-                          // Contact Sheet Button
-                          Expanded(
-                            flex: 3,
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(12.r),
-                              onTap: () =>
-                                  showContactBottomSheet(context, ref, prop),
-                              child: Container(
-                                height: 44.h,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12.r),
-                                  border: Border.all(
-                                    color: const Color(0xFF24ADD7),
-                                    width: 1.5,
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.mail_outline,
-                                      color: const Color(0xFF24ADD7),
-                                      size: 16.sp,
-                                    ),
-                                    SizedBox(width: 4.w),
-                                    Text(
-                                      "Contact",
-                                      style: GoogleFonts.inter(
-                                        color: const Color(0xFF24ADD7),
                                         fontWeight: FontWeight.bold,
                                         fontSize: 13.sp,
                                       ),
@@ -1710,7 +1677,7 @@ class _PerticulerPropertyPageState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildSectionHeader("Contact Owner / Agent"),
+                      _buildSectionHeader("Contact"),
                       Row(
                         children: [
                           Container(
@@ -1724,10 +1691,7 @@ class _PerticulerPropertyPageState
                             ),
                             child: Center(
                               child: Text(
-                                (prop.uploadBy?.name != null &&
-                                        prop.uploadBy!.name!.isNotEmpty)
-                                    ? prop.uploadBy!.name![0].toUpperCase()
-                                    : "A",
+                                "A",
                                 style: GoogleFonts.inter(
                                   color: Colors.white,
                                   fontSize: 20.sp,
@@ -1742,35 +1706,13 @@ class _PerticulerPropertyPageState
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  prop.uploadBy?.name ?? "Owner",
+                                  "Admin",
                                   style: GoogleFonts.inter(
                                     fontSize: 15.sp,
                                     fontWeight: FontWeight.bold,
                                     color: const Color(0xFF111827),
                                   ),
                                 ),
-                                if (prop.uploadBy?.phone != null &&
-                                    prop.uploadBy!.phone!.isNotEmpty) ...[
-                                  SizedBox(height: 2.h),
-                                  Text(
-                                    "+91 ${prop.uploadBy!.phone}",
-                                    style: GoogleFonts.inter(
-                                      fontSize: 12.sp,
-                                      color: const Color(0xFF6B7280),
-                                    ),
-                                  ),
-                                ],
-                                if (prop.uploadBy?.email != null &&
-                                    prop.uploadBy!.email!.isNotEmpty) ...[
-                                  SizedBox(height: 2.h),
-                                  Text(
-                                    prop.uploadBy!.email!,
-                                    style: GoogleFonts.inter(
-                                      fontSize: 11.sp,
-                                      color: const Color(0xFF9CA3AF),
-                                    ),
-                                  ),
-                                ],
                               ],
                             ),
                           ),
@@ -1790,7 +1732,7 @@ class _PerticulerPropertyPageState
                           onPressed: () =>
                               showContactBottomSheet(context, ref, prop),
                           child: Text(
-                            "Contact Owner",
+                            "Contact Us",
                             style: GoogleFonts.inter(
                               color: Colors.white,
                               fontSize: 14.sp,

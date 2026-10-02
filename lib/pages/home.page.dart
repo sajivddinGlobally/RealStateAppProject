@@ -18,6 +18,7 @@ import 'package:realstate/Controller/getCityListController.dart';
 import 'package:realstate/Controller/getHeroBannerProvider.dart';
 import 'package:realstate/Controller/getMyPropertyController.dart';
 import 'package:realstate/Controller/getPropertyCategoryProvider.dart';
+import 'package:realstate/Model/Body/updateDesablePropertyBodyModel.dart';
 import 'package:realstate/Model/getPropertyCategoryModel.dart' as cat_model;
 import 'package:realstate/Controller/homeServiceCategoryController.dart';
 import 'package:realstate/Controller/likePropertyController.dart';
@@ -117,10 +118,13 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
   Future<void> _loadSavedCity() async {
     final saved = await ref.read(savedCityProvider.future);
     if (saved != null && mounted) {
-      setState(() {
-        _currentCity = saved;
-      });
-      ref.read(currentCityProvider.notifier).state = saved;
+      if (_currentCity == null) {
+        setState(() {
+          _currentCity = saved;
+          selectedCity = saved;
+        });
+        ref.read(currentCityProvider.notifier).state = saved;
+      }
     }
   }
 
@@ -154,50 +158,17 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
       if (placemarks.isNotEmpty && mounted) {
         String? city =
             placemarks.first.locality ?? placemarks.first.subAdministrativeArea;
-        // if (city != null && city.isNotEmpty) {
-        //   setState(() {
-        //     _currentCity = city;
-        //     selectedCity = city; // ✅ yaha set kar diya
-        //   });
-        //   ref.read(currentCityProvider.notifier).state = city;
-        //   await saveCity(city);
-        //   Fluttertoast.showToast(
-        //     msg: "Location set to $city",
-        //     gravity: ToastGravity.BOTTOM,
-        //   );
-        // }
         if (city != null && city.isNotEmpty) {
-          try {
-            final cityResponse = await ref.read(getCityController.future);
-            bool isCityValid = false;
-            if (cityResponse.data != null) {
-              final validCities = cityResponse.data!
-                  .map((e) => e.cityName?.toString().toLowerCase())
-                  .toList();
-              if (validCities.contains(city.toLowerCase())) {
-                isCityValid = true;
-              }
-            }
-
-            if (isCityValid && mounted) {
-              setState(() {
-                _currentCity = city;
-                selectedCity = city; // Force update UI with actual location
-              });
-              ref.read(currentCityProvider.notifier).state = city;
-              await saveCity(city);
-              Fluttertoast.showToast(
-                msg: "Location set to $city",
-                gravity: ToastGravity.BOTTOM,
-              );
-            } else {
-              log(
-                "City $city from GPS is not in the allowed city list. Ignoring.",
-              );
-            }
-          } catch (e) {
-            log("Error checking city validity: $e");
-          }
+          setState(() {
+            _currentCity = city;
+            selectedCity = city;
+          });
+          ref.read(currentCityProvider.notifier).state = city;
+          await saveCity(city);
+          Fluttertoast.showToast(
+            msg: "Location set to $city",
+            gravity: ToastGravity.BOTTOM,
+          );
         }
       }
     } catch (e) {
@@ -696,14 +667,21 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                           .toSet()
                           .toList();
 
-                      // First time initialize
-                      if (selectedCity == null) {
-                        if (_currentCity != null && _currentCity!.isNotEmpty) {
-                          selectedCity = _currentCity;
-                        } else if (!_isFetchingLocation &&
-                            cityNames.isNotEmpty) {
-                          selectedCity = cityNames.first;
-                        }
+                      final effectiveCity =
+                          selectedCity ?? _currentCity ?? city;
+
+                      if (selectedCity == null && effectiveCity != null) {
+                        selectedCity = effectiveCity;
+                      }
+
+                      // Check if selectedCity matches any city in backend cityNames
+                      String? matchedValue;
+                      try {
+                        matchedValue = cityNames.firstWhere(
+                          (c) => c.toLowerCase() == selectedCity?.toLowerCase(),
+                        );
+                      } catch (_) {
+                        matchedValue = null;
                       }
 
                       // ✅ FIX: Dropdown ko responsive parent size dene ke liye aur design matching ke liye Container lagaya hai
@@ -720,9 +698,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                             isExpanded: true,
                             isDense: true,
 
-                            value: cityNames.contains(selectedCity)
-                                ? selectedCity
-                                : null,
+                            value: matchedValue,
                             hint: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
@@ -732,12 +708,13 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                                   color: const Color(0xFF24ADD7),
                                 ),
                                 SizedBox(width: 4.w),
-                                SizedBox(
-                                  // width: 100.w,
+                                Expanded(
                                   child: Text(
                                     _isFetchingLocation
                                         ? "Fetching..."
-                                        : (_currentCity ?? "Select"),
+                                        : (selectedCity ??
+                                              _currentCity ??
+                                              "Select"),
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       color: const Color(0xFF24ADD7),
@@ -1496,94 +1473,163 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
       top: false,
       child: Column(
         children: [
+          // Header (Website Style Adapted for Mobile)
           Container(
-            height: 90.h,
-            padding: EdgeInsets.symmetric(horizontal: 16.w),
-            color: const Color(0xFF24ADD7),
-            child: Padding(
-              padding: EdgeInsets.only(top: 25.h),
-              child: Row(
-                children: [
-                  Text(
-                    "My Property Manage",
-                    style: GoogleFonts.inter(
-                      color: Colors.white,
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.bold,
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + 10.h,
+              left: 16.w,
+              right: 16.w,
+              bottom: 14.h,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "My Properties",
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFF1E293B),
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        "Manage listings, update & track status",
+                        style: GoogleFonts.inter(
+                          color: Colors.grey.shade500,
+                          fontSize: 11.sp,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      bottomIndex = 2; // Add Property Tab
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(20.r),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 7.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF24ADD7),
+                      borderRadius: BorderRadius.circular(20.r),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF24ADD7).withOpacity(0.3),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.add, color: Colors.white, size: 15.sp),
+                        SizedBox(width: 4.w),
+                        Text(
+                          "List New",
+                          style: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
+
+          // Search bar
           if (getMyPropertyProvider.valueOrNull?.data?.list?.isNotEmpty ==
               true) ...[
-            SizedBox(height: 20.h),
             Padding(
-              padding: EdgeInsets.only(left: 16.w, right: 16.w),
-              child: TextField(
-                onChanged: (value) {
-                  setState(() {
-                    searchListing = value.toLowerCase();
-                  });
-                },
-                style: TextStyle(fontSize: 14.sp),
-                decoration: InputDecoration(
-                  isDense: true,
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 12.h,
-                    horizontal: 16.w,
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  prefixIcon: Icon(
-                    Icons.search,
-                    size: 18.sp,
-                    color: Colors.grey,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    borderSide: BorderSide(
-                      color: Colors.grey.shade300,
-                      width: 1.w,
+              padding: EdgeInsets.only(
+                left: 16.w,
+                right: 16.w,
+                top: 12.h,
+                bottom: 8.h,
+              ),
+              child: Container(
+                height: 44.h,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    borderSide: BorderSide(
+                  ],
+                ),
+                child: TextField(
+                  onChanged: (value) {
+                    setState(() {
+                      searchListing = value.toLowerCase();
+                    });
+                  },
+                  style: GoogleFonts.inter(fontSize: 13.sp),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(
+                      vertical: 10.h,
+                      horizontal: 12.w,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.search,
+                      size: 18.sp,
                       color: const Color(0xFF24ADD7),
-                      width: 1.5.w,
                     ),
-                  ),
-                  hintText: "Search your listings...",
-                  hintStyle: TextStyle(
-                    fontSize: 13.sp,
-                    color: Colors.grey.shade400,
+                    border: InputBorder.none,
+                    hintText: "Search your listings...",
+                    hintStyle: GoogleFonts.inter(
+                      fontSize: 13.sp,
+                      color: Colors.grey.shade400,
+                    ),
                   ),
                 ),
               ),
             ),
-            SizedBox(height: 16.h),
           ],
+
+          // List / Empty State / Loading
           Expanded(
             child: RefreshIndicator(
-              backgroundColor: Color(0xFF24ADD7),
+              backgroundColor: const Color(0xFF24ADD7),
               color: Colors.white,
               onRefresh: () async {
-                // सबसे साफ तरीका
                 await ref.refresh(getMyPropertyController.future);
               },
               child: getMyPropertyProvider.when(
                 data: (snap) {
                   final allProperties = snap.data?.list ?? [];
-
                   final filteredProperties = allProperties.where((property) {
                     final propertyType =
                         property.propertyType?.toLowerCase() ?? '';
-
                     final listingCategory =
                         property.listingCategory?.toLowerCase() ?? '';
-
                     final bedroom = property.bedRoom?.toLowerCase() ?? "";
                     final localityArea =
                         property.localityArea?.toLowerCase() ?? "";
@@ -1596,78 +1642,106 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                         city.contains(searchListing);
                   }).toList();
 
-                  if (snap.data!.list!.isEmpty) {
+                  // Empty State matching website
+                  if (allProperties.isEmpty) {
                     return Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(24.w),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.home_outlined,
-                              size: 80.sp,
-                              color: Colors.grey.shade400,
-                            ),
-                            SizedBox(height: 16.h),
-                            Text(
-                              "No properties listed yet",
-                              style: TextStyle(
-                                fontSize: 18.sp,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            SizedBox(height: 8.h),
-                            Text(
-                              "Start by adding your first property to manage listings easily.",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                color: Colors.grey,
-                              ),
-                            ),
-                            SizedBox(height: 20.h),
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                setState(() {
-                                  bottomIndex = 2;
-                                });
-                              },
-                              icon: const Icon(Icons.add, color: Colors.white),
-                              label: const Text(
-                                "Add Property",
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF24ADD7),
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 24.w,
-                                  vertical: 12.h,
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: Padding(
+                          padding: EdgeInsets.all(24.w),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 80.r,
+                                height: 80.r,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFFFFF7ED), // Orange-50 tint
+                                  shape: BoxShape.circle,
                                 ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12.r),
+                                child: Center(
+                                  child: Icon(
+                                    Icons.home_work_outlined,
+                                    size: 40.sp,
+                                    color: const Color(0xFF24ADD7),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                              SizedBox(height: 18.h),
+                              Text(
+                                "No Properties Listed Yet",
+                                style: GoogleFonts.inter(
+                                  fontSize: 18.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color(0xFF1E293B),
+                                ),
+                              ),
+                              SizedBox(height: 8.h),
+                              Text(
+                                "You haven't listed any properties yet. Start your journey by listing your first property today.",
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.inter(
+                                  fontSize: 13.sp,
+                                  color: Colors.grey.shade500,
+                                  height: 1.4,
+                                ),
+                              ),
+                              SizedBox(height: 24.h),
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  setState(() {
+                                    bottomIndex = 2;
+                                  });
+                                },
+                                icon: const Icon(
+                                  Icons.add,
+                                  color: Colors.white,
+                                ),
+                                label: Text(
+                                  "List New Property",
+                                  style: GoogleFonts.inter(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF24ADD7),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 24.w,
+                                    vertical: 12.h,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(24.r),
+                                  ),
+                                  elevation: 3,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     );
                   }
+
                   if (filteredProperties.isEmpty) {
                     return Center(
                       child: Text(
-                        "No Property Found $searchListing",
-                        style: TextStyle(color: Colors.grey, fontSize: 15.sp),
+                        "No Property Found for \"$searchListing\"",
+                        style: GoogleFonts.inter(
+                          color: Colors.grey.shade500,
+                          fontSize: 14.sp,
+                        ),
                       ),
                     );
                   }
+
                   return ListView.builder(
                     padding: EdgeInsets.only(
                       left: 16.w,
                       right: 16.w,
-                      bottom: 16.h,
+                      top: 8.h,
+                      bottom: 24.h,
                     ),
-                    // itemCount: snap.data!.list!.length,
                     itemCount: filteredProperties.length,
                     itemBuilder: (context, index) {
                       return PropertyCard(data: filteredProperties[index]);
@@ -1676,13 +1750,14 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                 },
                 error: (error, stackTrace) {
                   log(stackTrace.toString());
-                  return Center(child: Text(error.toString()));
+                  return Center(child: Text("Error: $error"));
                 },
-                loading: () => Center(child: CircularProgressIndicator()),
+                loading: () => const Center(
+                  child: CircularProgressIndicator(color: Color(0xFF24ADD7)),
+                ),
               ),
             ),
           ),
-          SizedBox(height: 16.h),
         ],
       ),
     );
@@ -2743,6 +2818,23 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
         }
         if (propKey == "plots") propKey = "land";
 
+        final rawCity =
+            selectedCity ?? _currentCity ?? ref.read(currentCityProvider) ?? "";
+
+        // Check if rawCity exists in available city list (getCityController)
+        String validCity = "";
+        final citiesData = ref.read(getCityController).value?.data ?? [];
+        try {
+          final found = citiesData.firstWhere(
+            (c) =>
+                c.cityName?.trim().toLowerCase() ==
+                rawCity.trim().toLowerCase(),
+          );
+          validCity = found.cityName ?? "";
+        } catch (_) {
+          validCity = "";
+        }
+
         Navigator.push(
           context,
           CupertinoPageRoute(
@@ -2753,7 +2845,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                     : "residential",
                 propertyType: propKey,
                 listingCategory: isBuy ? "buy" : "rent",
-                // listingCategory: isBuy ? "sell" : "rent",
+                city: validCity,
               ),
             ),
           ),
@@ -3045,68 +3137,220 @@ class Property {
 }
 
 // ==================== PROPERTY CARD ====================
-class PropertyCard extends StatefulWidget {
+// ==================== PROPERTY CARD (WEBSITE STYLE FOR MOBILE) ====================
+class PropertyCard extends ConsumerStatefulWidget {
   final ListElement data;
   const PropertyCard({super.key, required this.data});
 
   @override
-  State<PropertyCard> createState() => _PropertyCardState();
+  ConsumerState<PropertyCard> createState() => _PropertyCardState();
 }
 
-class _PropertyCardState extends State<PropertyCard> {
-  bool isDelete = false;
+class _PropertyCardState extends ConsumerState<PropertyCard> {
+  bool isDeleting = false;
+  bool isTogglingVisibility = false;
+
+  String _formatPrice(String? priceStr) {
+    if (priceStr == null || priceStr.isEmpty) return "Price on Request";
+    final cleanStr = priceStr.replaceAll(RegExp(r'[^0-9.]'), '');
+    final t = double.tryParse(cleanStr);
+    if (t == null) return "₹$priceStr";
+    if (t >= 10000000) {
+      return "₹${(t / 10000000).toStringAsFixed(2).replaceAll(RegExp(r'\.00$'), '')} Cr";
+    } else if (t >= 100000) {
+      return "₹${(t / 100000).toStringAsFixed(2).replaceAll(RegExp(r'\.00$'), '')} L";
+    } else if (t >= 1000) {
+      return "₹${(t / 1000).toStringAsFixed(2).replaceAll(RegExp(r'\.00$'), '')} K";
+    } else {
+      return "₹${t.toInt()}";
+    }
+  }
+
+  Future<void> _toggleVisibility() async {
+    final status = (widget.data.status ?? "").toLowerCase();
+    if (status == "pending" || status == "rejected") {
+      Fluttertoast.showToast(
+        msg: "Cannot change visibility while under review or rejected.",
+      );
+      return;
+    }
+
+    setState(() => isTogglingVisibility = true);
+    try {
+      final body = UpdateDesablePropertyBodyModel(id: widget.data.id);
+      final service = APIStateNetwork(createDio());
+      final res = await service.updatePropertyDisable(body);
+
+      if (res.error == false || res.code == 0) {
+        Fluttertoast.showToast(msg: "Property status updated successfully!");
+        ref.invalidate(getMyPropertyController);
+      } else {
+        Fluttertoast.showToast(msg: "Failed to update status.");
+      }
+    } catch (e) {
+      log("updatePropertyDisable error: $e");
+    } finally {
+      if (mounted) setState(() => isTogglingVisibility = false);
+    }
+  }
+
+  void _confirmDelete() {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.red, size: 24.sp),
+            SizedBox(width: 8.w),
+            Text(
+              "Delete Property",
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.bold,
+                fontSize: 16.sp,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          "Are you sure you want to delete this property?",
+          style: GoogleFonts.inter(fontSize: 13.sp, color: Colors.black87),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx),
+            child: Text(
+              "Cancel",
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+            ),
+            onPressed: () async {
+              Navigator.pop(dialogCtx);
+              setState(() => isDeleting = true);
+              try {
+                final body = MyListingProperyDeleteBodyModel(
+                  id: widget.data.id.toString(),
+                );
+                final service = APIStateNetwork(createDio());
+                final res = await service.myListingPropertyDelete(body);
+                if (res.code == 0 && res.error == false) {
+                  Fluttertoast.showToast(
+                    msg: res.message ?? "Property deleted successfully!",
+                  );
+                  ref.invalidate(getMyPropertyController);
+                } else {
+                  Fluttertoast.showToast(
+                    msg: res.message ?? "Failed to delete property.",
+                  );
+                }
+              } catch (e) {
+                log("deleteProperty error: $e");
+                Fluttertoast.showToast(msg: "Failed to delete property.");
+              } finally {
+                if (mounted) setState(() => isDeleting = false);
+              }
+            },
+            child: const Text("Delete", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final primary = const Color(0xFF24ADD7);
+    final status = (widget.data.status ?? "pending").toLowerCase();
+    final bool isDisabled = widget.data.isDisable == true;
+    final bool isRejected = status == "rejected";
+    final bool isPending = status == "pending";
 
-    final String status = (widget.data.status ?? "").toLowerCase();
+    // Matching Website status badge logic
+    String badgeLabel;
+    Color badgeBg;
+    Color badgeTextColor;
+    IconData badgeIcon;
 
-    String statusText;
-    Color statusBgColor;
-    Color statusTextColor;
-
-    switch (status) {
-      case "pending":
-        statusText = "UNDER REVIEW";
-        statusBgColor = const Color(0xFFFFF8E1); // Light Yellow
-        statusTextColor = const Color(0xFFE6A700); // Dark Yellow
-        break;
-
-      case "approved":
-        statusText = "ACTIVE";
-        statusBgColor = const Color(0xFFE9FFF3); // Light Green
-        statusTextColor = const Color(0xFF16A34A); // Green
-        break;
-
-      case "rejected":
-        statusText = "REJECTED";
-        statusBgColor = const Color(0xFFFFF1F2); // Light Red
-        statusTextColor = const Color(0xFFEF4444); // Red
-        break;
-
-      default:
-        statusText = (widget.data.status ?? "").toUpperCase();
-        statusBgColor = Colors.grey.shade200;
-        statusTextColor = Colors.grey.shade700;
+    if (isDisabled) {
+      badgeLabel = "INACTIVE";
+      badgeBg = Colors.grey.shade100;
+      badgeTextColor = Colors.grey.shade600;
+      badgeIcon = Icons.visibility_off_outlined;
+    } else {
+      switch (status) {
+        case "active":
+        case "approved":
+          badgeLabel = "ACTIVE";
+          badgeBg = const Color(0xFFDCFCE7); // green-50
+          badgeTextColor = const Color(0xFF16A34A); // green-600
+          badgeIcon = Icons.check_circle_outline;
+          break;
+        case "pending":
+          badgeLabel = "UNDER REVIEW";
+          badgeBg = const Color(0xFFFEF9C3); // yellow-50
+          badgeTextColor = const Color(0xFFCA8A04); // yellow-600
+          badgeIcon = Icons.access_time_rounded;
+          break;
+        case "rejected":
+          badgeLabel = "REJECTED";
+          badgeBg = const Color(0xFFFEE2E2); // red-50
+          badgeTextColor = const Color(0xFFDC2626); // red-600
+          badgeIcon = Icons.cancel_outlined;
+          break;
+        case "sold":
+          badgeLabel = "SOLD OUT";
+          badgeBg = const Color(0xFFDBEAFE); // blue-50
+          badgeTextColor = const Color(0xFF2563EB); // blue-600
+          badgeIcon = Icons.sell_outlined;
+          break;
+        default:
+          badgeLabel = status.toUpperCase();
+          badgeBg = Colors.grey.shade100;
+          badgeTextColor = Colors.grey.shade600;
+          badgeIcon = Icons.info_outline;
+      }
     }
+
+    final String title =
+        "${widget.data.bedRoom != null && widget.data.bedRoom!.isNotEmpty ? '${widget.data.bedRoom} BHK ' : ''}${widget.data.propertyType ?? 'Property'} in ${widget.data.localityArea?.isNotEmpty == true ? widget.data.localityArea : widget.data.city ?? ''}";
+    final String location =
+        "${widget.data.localityArea ?? ''}, ${widget.data.city ?? ''}"
+            .trim()
+            .replaceAll(RegExp(r'^,\s*|,\s*$'), '');
+
+    final bool isUpdateDisabled = isRejected || isDisabled;
+    final bool isCustomer =
+        widget.data.handelPropertyBy?.toLowerCase() == "customer";
 
     return Container(
       margin: EdgeInsets.only(bottom: 16.h),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(
+          color: isRejected ? Colors.red.shade200 : Colors.grey.shade200,
+          width: isRejected ? 1.5.w : 1.w,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(.08),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
-            offset: const Offset(0, 6),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ================= IMAGE =================
+          // ================= IMAGE STACK =================
           Stack(
             children: [
               InkWell(
@@ -3122,302 +3366,484 @@ class _PropertyCardState extends State<PropertyCard> {
                 },
                 child: ClipRRect(
                   borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(16.r),
+                    top: Radius.circular(15.r),
                   ),
-                  child: Image.network(
-                    (widget.data.uploadedPhotos != null &&
-                            widget.data.uploadedPhotos!.isNotEmpty)
-                        ? widget.data.uploadedPhotos!.first
-                        : '',
-                    height: 190.h,
+                  child: SizedBox(
+                    height: 180.h,
                     width: double.infinity,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Container(
-                        height: 190.h,
-                        width: double.infinity,
-                        child: Center(
-                          child: CircularProgressIndicator(strokeWidth: 1),
-                        ),
-                      );
-                    },
-                    errorBuilder: (_, __, ___) => Container(
-                      width: double.infinity,
-                      height: 190.h,
-                      color: Colors.grey.shade300,
-                      child: Center(child: const Icon(Icons.image, size: 40)),
+                    child:
+                        (widget.data.uploadedPhotos != null &&
+                            widget.data.uploadedPhotos!.isNotEmpty)
+                        ? Image.network(
+                            widget.data.uploadedPhotos!.first,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              color: Colors.grey.shade200,
+                              child: Center(
+                                child: Icon(
+                                  Icons.home_outlined,
+                                  size: 40.sp,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ),
+                          )
+                        : Container(
+                            color: Colors.grey.shade200,
+                            child: Center(
+                              child: Icon(
+                                Icons.home_outlined,
+                                size: 40.sp,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+
+              // Gradient Overlay for Asking Price
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(15.r),
+                      ),
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.black.withOpacity(0.3),
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.75),
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        stops: const [0.0, 0.4, 1.0],
+                      ),
                     ),
                   ),
                 ),
               ),
 
-              // BUY / RENT CHIP
+              // Status Badge (Top-Left)
               Positioned(
-                top: 12.h,
-                left: 12.w,
+                top: 10.h,
+                left: 10.w,
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: badgeBg.withOpacity(0.95),
+                    borderRadius: BorderRadius.circular(20.r),
+                    border: Border.all(
+                      color: badgeTextColor.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(badgeIcon, size: 12.sp, color: badgeTextColor),
+                      SizedBox(width: 4.w),
+                      Text(
+                        badgeLabel,
+                        style: GoogleFonts.inter(
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.w700,
+                          color: badgeTextColor,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Listing Category (Top-Right)
+              Positioned(
+                top: 10.h,
+                right: 10.w,
                 child: Container(
                   padding: EdgeInsets.symmetric(
                     horizontal: 10.w,
-                    vertical: 5.h,
+                    vertical: 4.h,
                   ),
                   decoration: BoxDecoration(
-                    color: statusBgColor,
-                    border: Border.all(
-                      color: statusTextColor.withOpacity(0.35),
-                      width: 1,
-                    ),
+                    color: const Color(0xFF24ADD7),
                     borderRadius: BorderRadius.circular(20.r),
                   ),
                   child: Text(
-                    statusText,
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      color: statusTextColor,
-                      fontWeight: FontWeight.w600,
+                    (widget.data.listingCategory ?? "BUY").toUpperCase(),
+                    style: GoogleFonts.inter(
+                      fontSize: 10.sp,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
-              ),
-              Positioned(
-                top: 12,
-                right: 12,
-                child: Row(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 10.w,
-                        vertical: 5.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: primary,
-                        borderRadius: BorderRadius.circular(20.r),
-                      ),
-                      child: Text(
-                        (widget.data.listingCategory ?? '').toUpperCase(),
-                        style: TextStyle(
-                          fontSize: 11.sp,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
                 ),
               ),
 
-              // PRICE
+              // Asking Price (Bottom-Left)
               Positioned(
-                bottom: 12,
-                left: 12,
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 12.w,
-                    vertical: 6.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20.r),
-                  ),
-                  child: Text(
-                    "₹ ${widget.data.price}",
-                    style: TextStyle(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.bold,
-                      color: primary,
+                bottom: 10.h,
+                left: 12.w,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "Asking Price",
+                      style: GoogleFonts.inter(
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white70,
+                      ),
                     ),
-                  ),
+                    Text(
+                      _formatPrice(widget.data.price),
+                      style: GoogleFonts.inter(
+                        fontSize: 17.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
 
-          // ================= DETAILS =================
+          // ================= CARD BODY =================
           Padding(
             padding: EdgeInsets.all(14.w),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // TITLE
+                // Title
                 Text(
-                  // "${data.bedRoom} BHK ${data.propertyType}",
-                  widget.data.propertyType?.toLowerCase() == 'land'
-                      ? "${widget.data.propertyType}"
-                      : "${widget.data.bedRoom} BHK ${widget.data.propertyType}",
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1E293B),
                   ),
                 ),
-
                 SizedBox(height: 4.h),
 
-                // LOCATION
+                // Location
+                if (location.isNotEmpty) ...[
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.location_on,
+                        size: 14.sp,
+                        color: const Color(0xFF24ADD7),
+                      ),
+                      SizedBox(width: 4.w),
+                      Expanded(
+                        child: Text(
+                          location,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            fontSize: 12.sp,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 10.h),
+                ],
+
+                // Grid 2-chips (Type and Size)
                 Row(
                   children: [
-                    const Icon(Icons.location_on, size: 14, color: Colors.grey),
-                    SizedBox(width: 4.w),
                     Expanded(
-                      child: Text(
-                        "${widget.data.localityArea}, ${widget.data.city}",
-                        style: TextStyle(fontSize: 13.sp, color: Colors.grey),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          vertical: 6.h,
+                          horizontal: 8.w,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 6.r,
+                              height: 6.r,
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Color(0xFF3B82F6),
+                              ),
+                            ),
+                            SizedBox(width: 6.w),
+                            Flexible(
+                              child: Text(
+                                widget.data.bedRoom != null &&
+                                        widget.data.bedRoom!.isNotEmpty
+                                    ? "${widget.data.bedRoom} BHK"
+                                    : (widget.data.propertyType ?? "Property"),
+                                style: GoogleFonts.inter(
+                                  fontSize: 11.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey.shade700,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          vertical: 6.h,
+                          horizontal: 8.w,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.square_foot,
+                              size: 14.sp,
+                              color: Colors.grey.shade500,
+                            ),
+                            SizedBox(width: 4.w),
+                            Flexible(
+                              child: Text(
+                                widget.data.area != null &&
+                                        widget.data.area!.isNotEmpty
+                                    ? "${widget.data.area} sqft"
+                                    : "N/A",
+                                style: GoogleFonts.inter(
+                                  fontSize: 11.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey.shade700,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
                 ),
 
+                SizedBox(height: 12.h),
+                Divider(height: 1, color: Colors.grey.shade200),
                 SizedBox(height: 10.h),
 
+                // ================= VISIBILITY TOGGLE (WEBSITE FEATURE) =================
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    if (widget.data.bedRoom != null &&
-                        widget.data.bedRoom!.isNotEmpty)
-                      _spec(Icons.king_bed, widget.data.bedRoom!),
-
-                    if (widget.data.bathrooms != null &&
-                        widget.data.bathrooms!.isNotEmpty)
-                      _spec(Icons.bathtub, widget.data.bathrooms!),
-
-                    if (widget.data.area != null &&
-                        widget.data.area!.isNotEmpty)
-                      _spec(Icons.square_foot, "${widget.data.area} sqft"),
-
-                    if (widget.data.furnishing != null &&
-                        widget.data.furnishing!.isNotEmpty)
-                      _spec(Icons.chair, widget.data.furnishing!),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: 10.h),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12.w),
-            child: Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 42.h,
-                    child: OutlinedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => CreatePropertyScreen(
-                              widget.data,
-                              fromBottomNav: false,
-                            ),
-                          ),
-                        );
-                      },
-                      style: OutlinedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 8.h),
-                        side: BorderSide(
-                          color: const Color(0xFF24ADD7),
-                          width: 1.2.w,
+                    Row(
+                      children: [
+                        Icon(
+                          isDisabled
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                          size: 16.sp,
+                          color: isDisabled
+                              ? Colors.grey
+                              : const Color(0xFF24ADD7),
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.r),
+                        SizedBox(width: 6.w),
+                        Text(
+                          "Visibility (Active / Inactive)",
+                          style: GoogleFonts.inter(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF334155),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (isTogglingVisibility)
+                      SizedBox(
+                        width: 20.r,
+                        height: 20.r,
+                        child: const CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Color(0xFF24ADD7),
+                        ),
+                      )
+                    else
+                      Transform.scale(
+                        scale: 0.8,
+                        child: Switch(
+                          value: !isDisabled,
+                          activeColor: const Color(0xFF24ADD7),
+                          onChanged: (isPending || isRejected)
+                              ? null
+                              : (_) => _toggleVisibility(),
                         ),
                       ),
-                      child: Text(
-                        "Edit",
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF24ADD7),
+                  ],
+                ),
+
+                SizedBox(height: 8.h),
+
+                // ================= ACTION BUTTONS =================
+                Row(
+                  children: [
+                    // UPDATE BUTTON
+                    Expanded(
+                      flex: 2,
+                      child: SizedBox(
+                        height: 38.h,
+                        child: ElevatedButton.icon(
+                          onPressed: isUpdateDisabled
+                              ? null
+                              : () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          CreatePropertyScreen(
+                                            widget.data,
+                                            fromBottomNav: false,
+                                          ),
+                                    ),
+                                  );
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: isUpdateDisabled
+                                ? Colors.grey.shade200
+                                : const Color(0xFF24ADD7),
+                            foregroundColor: isUpdateDisabled
+                                ? Colors.grey.shade400
+                                : Colors.white,
+                            elevation: isUpdateDisabled ? 0 : 2,
+                            padding: EdgeInsets.zero,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                          ),
+                          icon: Icon(Icons.edit_outlined, size: 14.sp),
+                          label: Text(
+                            "Update",
+                            style: GoogleFonts.inter(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
 
-                SizedBox(width: 12.w),
-                Consumer(
-                  builder: (context, ref, child) {
-                    return Expanded(
-                      child: SizedBox(
-                        height: 42.h,
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            setState(() {
-                              isDelete = true;
-                            });
-                            final body = MyListingProperyDeleteBodyModel(
-                              id: widget.data.id.toString(),
-                            );
-                            try {
-                              final service = APIStateNetwork(createDio());
-                              final res = await service.myListingPropertyDelete(
-                                body,
-                              );
-                              if (res.code == 0 && res.error == false) {
-                                Fluttertoast.showToast(msg: res.message ?? "");
-                                ref.invalidate(getMyPropertyController);
-                              } else {
-                                Fluttertoast.showToast(msg: res.message ?? "");
-                                setState(() {
-                                  isDelete = false;
-                                });
-                              }
-                            } catch (e) {
-                              log(e.toString());
-                            } finally {
-                              setState(() {
-                                isDelete = false;
-                              });
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            padding: EdgeInsets.symmetric(vertical: 8.h),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.r),
+                    // QUERIES BUTTON (if Customer listed)
+                    if (isCustomer) ...[
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        flex: 2,
+                        child: SizedBox(
+                          height: 38.h,
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              Fluttertoast.showToast(msg: "Queries feature");
+                            },
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(color: Colors.grey.shade300),
+                              padding: EdgeInsets.zero,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                            ),
+                            icon: Icon(
+                              Icons.question_answer_outlined,
+                              size: 14.sp,
+                              color: Colors.grey.shade700,
+                            ),
+                            label: Text(
+                              "Queries",
+                              style: GoogleFonts.inter(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey.shade700,
+                              ),
                             ),
                           ),
-                          child: isDelete
-                              ? SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: Center(
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 1.5,
-                                    ),
-                                  ),
-                                )
-                              : Text(
-                                  "Delete",
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
                         ),
                       ),
-                    );
-                  },
+                    ],
+
+                    SizedBox(width: 8.w),
+
+                    // DELETE BUTTON
+                    Expanded(
+                      flex: 2,
+                      child: SizedBox(
+                        height: 38.h,
+                        child: ElevatedButton.icon(
+                          onPressed: isDeleting ? null : _confirmDelete,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFDC2626),
+                            foregroundColor: Colors.white,
+                            elevation: 2,
+                            padding: EdgeInsets.zero,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                          ),
+                          icon: isDeleting
+                              ? SizedBox(
+                                  width: 14.r,
+                                  height: 14.r,
+                                  child: const CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Icon(Icons.delete_outline, size: 14.sp),
+                          label: Text(
+                            "Delete",
+                            style: GoogleFonts.inter(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
+
+                // Rejected Needs Attention Warning
+                if (isRejected) ...[
+                  SizedBox(height: 8.h),
+                  Row(
+                    children: [
+                      Icon(Icons.error_outline, size: 14.sp, color: Colors.red),
+                      SizedBox(width: 4.w),
+                      Text(
+                        "Needs attention - Listing was rejected",
+                        style: GoogleFonts.inter(
+                          fontSize: 11.sp,
+                          color: Colors.red,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
-          SizedBox(height: 10.h),
         ],
       ),
-    );
-  }
-
-  // ================= HELPERS (SAME CLASS) =================
-  Widget _spec(IconData icon, String text) {
-    return Column(
-      children: [
-        Icon(icon, size: 18, color: Colors.grey),
-        SizedBox(height: 4.h),
-        Text(text, style: TextStyle(fontSize: 12.sp)),
-      ],
     );
   }
 }

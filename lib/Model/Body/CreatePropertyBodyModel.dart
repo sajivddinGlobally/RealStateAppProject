@@ -36,6 +36,13 @@ class CreatePropertyBodyModel {
   AveneuOverView? aveneuOverView;
 
   String? propertyAddress;
+  String? pincode;
+  String? houseNumber;
+  String? availableFrom;
+  String? securityDeposit;
+  String? customSecurityDeposit;
+  String? guestRoom;
+  String? room;
 
   List<String>? uploadedPhotos;
 
@@ -65,6 +72,13 @@ class CreatePropertyBodyModel {
     this.propertyAddress,
     this.uploadedPhotos,
     this.isBroker,
+    this.pincode,
+    this.houseNumber,
+    this.availableFrom,
+    this.securityDeposit,
+    this.customSecurityDeposit,
+    this.guestRoom,
+    this.room,
   });
 
   factory CreatePropertyBodyModel.fromJson(Map<String, dynamic> json) =>
@@ -74,7 +88,7 @@ class CreatePropertyBodyModel {
         localityArea: json["localityArea"],
         listingCategory: json["listingCategory"],
         city: json["city"],
-        balcony: json["balcony"],
+        balcony: json["balcony"] ?? json["balcny"],
         parking: json["parking"],
         price: json["price"],
         area: json["area"],
@@ -107,7 +121,14 @@ class CreatePropertyBodyModel {
             ? []
             : List<String>.from(json["uploadedPhotos"]!.map((x) => x)),
 
-        isBroker: json['isBroker '],
+        isBroker: json['isBroker'] ?? json['isBroker '],
+        pincode: json["pincode"],
+        houseNumber: json["houseNumber"],
+        availableFrom: json["availableFrom"],
+        securityDeposit: json["securityDeposit"],
+        customSecurityDeposit: json["customSecurityDeposit"],
+        guestRoom: json["guestRoom"],
+        room: json["room"],
       );
 
   Map<String, dynamic> toJson() => {
@@ -117,7 +138,7 @@ class CreatePropertyBodyModel {
     "listingCategory": listingCategory,
     "city": city,
     "parking": parking,
-    "balcny": balcony,
+    "balcony": balcony,
     "price": price,
     "area": area,
     "bedRoom": bedRoom,
@@ -144,6 +165,13 @@ class CreatePropertyBodyModel {
         ? []
         : List<dynamic>.from(uploadedPhotos!.map((x) => x)),
     "isBroker": isBroker,
+    "pincode": pincode,
+    "houseNumber": houseNumber,
+    "availableFrom": availableFrom,
+    "securityDeposit": securityDeposit,
+    "customSecurityDeposit": customSecurityDeposit,
+    "guestRoom": guestRoom,
+    "room": room,
   };
 }
 

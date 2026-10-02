@@ -37,6 +37,13 @@ class UpdatePropertyBodyModel {
   AveneuOverView? aveneuOverView;
 
   String? propertyAddress;
+  String? pincode;
+  String? houseNumber;
+  String? availableFrom;
+  String? securityDeposit;
+  String? customSecurityDeposit;
+  String? guestRoom;
+  String? room;
 
   List<String>? uploadedPhotos;
 
@@ -67,6 +74,13 @@ class UpdatePropertyBodyModel {
     this.propertyAddress,
     this.uploadedPhotos,
     this.isBroker,
+    this.pincode,
+    this.houseNumber,
+    this.availableFrom,
+    this.securityDeposit,
+    this.customSecurityDeposit,
+    this.guestRoom,
+    this.room,
   });
 
   factory UpdatePropertyBodyModel.fromJson(Map<String, dynamic> json) =>
@@ -78,7 +92,7 @@ class UpdatePropertyBodyModel {
         listingCategory: json["listingCategory"],
         city: json["city"],
         price: json["price"],
-        balcony: json["balcony"],
+        balcony: json["balcony"] ?? json["balcny"],
         parking: json["parking"],
         area: json["area"],
         bedRoom: json["bedRoom"],
@@ -108,7 +122,14 @@ class UpdatePropertyBodyModel {
         uploadedPhotos: json["uploadedPhotos"] == null
             ? []
             : List<String>.from(json["uploadedPhotos"]!.map((x) => x)),
-        isBroker: json['isBroker '],
+        isBroker: json['isBroker'] ?? json['isBroker '],
+        pincode: json["pincode"],
+        houseNumber: json["houseNumber"],
+        availableFrom: json["availableFrom"],
+        securityDeposit: json["securityDeposit"],
+        customSecurityDeposit: json["customSecurityDeposit"],
+        guestRoom: json["guestRoom"],
+        room: json["room"],
       );
 
   Map<String, dynamic> toJson() => {
@@ -145,8 +166,14 @@ class UpdatePropertyBodyModel {
     "uploadedPhotos": uploadedPhotos == null
         ? []
         : List<dynamic>.from(uploadedPhotos!.map((x) => x)),
-
     "isBroker": isBroker,
+    "pincode": pincode,
+    "houseNumber": houseNumber,
+    "availableFrom": availableFrom,
+    "securityDeposit": securityDeposit,
+    "customSecurityDeposit": customSecurityDeposit,
+    "guestRoom": guestRoom,
+    "room": room,
   };
 }
 

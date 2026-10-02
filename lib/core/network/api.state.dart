@@ -49,6 +49,7 @@ import 'package:realstate/Model/saveContactInPropertyResModel.dart';
 import 'package:realstate/Model/saveServiceBodyModel.dart';
 import 'package:realstate/Model/saveServiceResModel.dart';
 import 'package:realstate/Model/serviceRatingResModel.dart';
+import 'package:realstate/Model/updatePropertyDesableResModel.dart';
 import 'package:realstate/Model/uploadImageResModel.dart';
 import 'package:realstate/Model/userProfileResModel.dart';
 import 'package:realstate/Model/verfiyServiceAgenetBodyModel.dart';
@@ -57,6 +58,7 @@ import 'package:realstate/Model/verifyResModel.dart';
 import 'package:realstate/Model/verifyServiceAgenetResModel.dart';
 import 'package:retrofit/retrofit.dart';
 import '../../Model/Body/PropertyListBodyModel.dart';
+import '../../Model/Body/updateDesablePropertyBodyModel.dart';
 import '../../Model/CityResponseModel.dart';
 import '../../Model/CreatePropertyResponseModel.dart';
 import '../../Model/GetLoanQueryModel.dart';
@@ -147,6 +149,11 @@ abstract class APIStateNetwork {
 
   @POST("/user/getMyProperty")
   Future<PropertyGetReponseModel> getMyProperty();
+
+  @POST("/user/updatePropertyDisable")
+  Future<UpdateDesablePropertyResModel> updatePropertyDisable(
+    @Body() UpdateDesablePropertyBodyModel body,
+  );
 
   @POST("/user/getMyPropertyContantList")
   Future<SavedListModel> getMyPropertyContantList();

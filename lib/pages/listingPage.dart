@@ -13,11 +13,6 @@ import 'package:flutter_svg/svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:realstate/pages/filter_drawer.dart';
 
-import '../Model/propertyDetailModel.dart';
-
-const String _cityBoxName = 'user_prefs';
-const String _cityKey = 'user_city';
-
 final searchQueryProvider = StateProvider.autoDispose<String>((ref) => '');
 
 class ListingPage extends ConsumerStatefulWidget {
@@ -32,11 +27,29 @@ class ListingPage extends ConsumerStatefulWidget {
 class _ListingPageState extends ConsumerState<ListingPage> {
   int currentPage = 1;
   late PropertyListBodyModel body;
+  final TextEditingController _searchCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
     super.initState();
-    final initialCity = widget.initialData?.city ?? "";
+    String initialCity = widget.initialData?.city ?? "";
+    if (initialCity.isNotEmpty) {
+      final citiesData = ref.read(getCityController).value?.data ?? [];
+      final isFound = citiesData.any(
+        (c) =>
+            c.cityName?.trim().toLowerCase() ==
+            initialCity.trim().toLowerCase(),
+      );
+      if (!isFound) {
+        initialCity = "";
+      }
+    }
 
     body = PropertyListBodyModel(
       size: 20,
@@ -66,9 +79,41 @@ class _ListingPageState extends ConsumerState<ListingPage> {
     ref.invalidate(getPropertyController);
   }
 
+  void _clearAllFilters() {
+    _searchCtrl.clear();
+    ref.read(searchQueryProvider.notifier).state = "";
+    setState(() {
+      currentPage = 1;
+      body = PropertyListBodyModel(
+        size: 20,
+        pageNo: 1,
+        sortBy: 'createdAt',
+        sortOrder: 'desc',
+        city: "",
+        propertyType: "",
+        listingCategory: "",
+        minPrice: "",
+        maxPrice: "",
+        furnishing: null,
+        keyWord: "",
+        balcony: [],
+        bathrooms: [],
+        bedroom: [],
+        kitchen: [],
+        locality: [],
+        parking: [],
+      );
+    });
+    ref.invalidate(getPropertyController);
+  }
+
   int get _activeFilterCount {
     int count = 0;
     if (body.city != null && body.city!.isNotEmpty) count++;
+    if (body.propertyType != null && body.propertyType!.isNotEmpty) count++;
+    if (body.listingCategory != null && body.listingCategory!.isNotEmpty) {
+      count++;
+    }
     if (body.locality != null && body.locality!.isNotEmpty) {
       count += body.locality!.length;
     }
@@ -90,6 +135,8 @@ class _ListingPageState extends ConsumerState<ListingPage> {
     if (body.minPrice != null && body.minPrice!.isNotEmpty) count++;
     if (body.maxPrice != null && body.maxPrice!.isNotEmpty) count++;
     if (body.furnishing != null && body.furnishing!.isNotEmpty) count++;
+    if (body.keyWord != null && body.keyWord!.isNotEmpty) count++;
+    if (body.sortBy == 'price') count++;
     return count;
   }
 
@@ -133,18 +180,25 @@ class _ListingPageState extends ConsumerState<ListingPage> {
     final cityAsync = ref.watch(getCityController);
     final selectedCityFromHome = ref.watch(currentCityProvider);
 
-    final isRent =
-        (body.listingCategory ?? widget.initialData?.listingCategory)
-            ?.toLowerCase() ==
-        'rent';
-    final action = isRent ? 'RENT' : 'BUY';
-    String type = (body.propertyType?.isNotEmpty == true)
-        ? body.propertyType!.toUpperCase()
-        : (widget.initialData?.property?.toUpperCase() ?? '');
-    if (type == "HOME") type = "HOUSE";
-    final String pageTitle = widget.initialData != null
-        ? '$action $type PROPERTIES'.trim()
-        : 'Property Listing';
+    final String pageTitle;
+    final bool hasType = body.propertyType != null && body.propertyType!.isNotEmpty;
+    final bool hasCat = body.listingCategory != null && body.listingCategory!.isNotEmpty;
+
+    if (hasType && hasCat) {
+      final action = body.listingCategory!.toLowerCase() == 'rent' ? 'RENT' : 'BUY';
+      String type = body.propertyType!.toUpperCase();
+      if (type == "HOME") type = "HOUSE";
+      pageTitle = '$action $type PROPERTIES';
+    } else if (hasType) {
+      String type = body.propertyType!.toUpperCase();
+      if (type == "HOME") type = "HOUSE";
+      pageTitle = '$type PROPERTIES';
+    } else if (hasCat) {
+      final action = body.listingCategory!.toLowerCase() == 'rent' ? 'RENT' : 'BUY';
+      pageTitle = '$action PROPERTIES';
+    } else {
+      pageTitle = 'All Properties';
+    }
 
     final userDataBox = Hive.box('userdata');
     final profileImage = userDataBox.get('image', defaultValue: "") as String;
@@ -262,6 +316,7 @@ class _ListingPageState extends ConsumerState<ListingPage> {
                   ],
                 ),
                 child: TextField(
+                  controller: _searchCtrl,
                   textInputAction: TextInputAction.search,
                   onSubmitted: (value) {
                     ref.read(searchQueryProvider.notifier).state = value
@@ -468,6 +523,29 @@ class _ListingPageState extends ConsumerState<ListingPage> {
                               setState(() => body.city = "");
                               ref.invalidate(getPropertyController);
                             }),
+                          if (body.propertyType != null &&
+                              body.propertyType!.isNotEmpty)
+                            _buildFilterChip("Type: ${body.propertyType}", () {
+                              setState(() => body.propertyType = "");
+                              ref.invalidate(getPropertyController);
+                            }),
+                          if (body.listingCategory != null &&
+                              body.listingCategory!.isNotEmpty)
+                            _buildFilterChip(
+                              "Action: ${body.listingCategory!.toUpperCase()}",
+                              () {
+                                setState(() => body.listingCategory = "");
+                                ref.invalidate(getPropertyController);
+                              },
+                            ),
+                          if (body.locality != null &&
+                              body.locality!.isNotEmpty)
+                            ...body.locality!.map(
+                              (loc) => _buildFilterChip(loc, () {
+                                setState(() => body.locality!.remove(loc));
+                                ref.invalidate(getPropertyController);
+                              }),
+                            ),
                           if (body.bedroom != null && body.bedroom!.isNotEmpty)
                             ...body.bedroom!.map(
                               (b) => _buildFilterChip("$b BHK", () {
@@ -480,6 +558,27 @@ class _ListingPageState extends ConsumerState<ListingPage> {
                             ...body.bathrooms!.map(
                               (b) => _buildFilterChip("$b Bath", () {
                                 setState(() => body.bathrooms!.remove(b));
+                                ref.invalidate(getPropertyController);
+                              }),
+                            ),
+                          if (body.kitchen != null && body.kitchen!.isNotEmpty)
+                            ...body.kitchen!.map(
+                              (k) => _buildFilterChip("$k Kitchen", () {
+                                setState(() => body.kitchen!.remove(k));
+                                ref.invalidate(getPropertyController);
+                              }),
+                            ),
+                          if (body.balcony != null && body.balcony!.isNotEmpty)
+                            ...body.balcony!.map(
+                              (b) => _buildFilterChip("$b Balcony", () {
+                                setState(() => body.balcony!.remove(b));
+                                ref.invalidate(getPropertyController);
+                              }),
+                            ),
+                          if (body.parking != null && body.parking!.isNotEmpty)
+                            ...body.parking!.map(
+                              (p) => _buildFilterChip("$p Parking", () {
+                                setState(() => body.parking!.remove(p));
                                 ref.invalidate(getPropertyController);
                               }),
                             ),
@@ -504,43 +603,59 @@ class _ListingPageState extends ConsumerState<ListingPage> {
                                 ref.invalidate(getPropertyController);
                               },
                             ),
-                          InkWell(
-                            onTap: () {
-                              setState(() {
-                                body = PropertyListBodyModel(
-                                  size: 20,
-                                  pageNo: 1,
-                                  sortBy: 'createdAt',
-                                  sortOrder: 'desc',
-                                  city: widget.initialData?.city ?? "",
-                                  propertyType:
-                                      widget.initialData?.propertyType ?? "",
-                                  listingCategory:
-                                      widget.initialData?.listingCategory ?? "",
-                                  keyWord: "",
-                                  balcony: [],
-                                  bathrooms: [],
-                                  bedroom: [],
-                                  kitchen: [],
-                                  locality: [],
-                                  parking: [],
-                                );
-                              });
+                          if (body.keyWord != null && body.keyWord!.isNotEmpty)
+                            _buildFilterChip("Search: ${body.keyWord}", () {
+                              _searchCtrl.clear();
+                              ref.read(searchQueryProvider.notifier).state = "";
+                              setState(() => body.keyWord = "");
                               ref.invalidate(getPropertyController);
-                            },
-                            child: Padding(
+                            }),
+                          if (body.sortBy == 'price')
+                            _buildFilterChip(
+                              body.sortOrder == 'asc'
+                                  ? "Price: Low to High"
+                                  : "Price: High to Low",
+                              () {
+                                setState(() {
+                                  body.sortBy = 'createdAt';
+                                  body.sortOrder = 'desc';
+                                });
+                                ref.invalidate(getPropertyController);
+                              },
+                            ),
+                          InkWell(
+                            onTap: _clearAllFilters,
+                            child: Container(
+                              margin: EdgeInsets.only(left: 4.w),
                               padding: EdgeInsets.symmetric(
-                                horizontal: 8.w,
+                                horizontal: 10.w,
                                 vertical: 4.h,
                               ),
-                              child: Text(
-                                "Clear All",
-                                style: GoogleFonts.inter(
-                                  color: Colors.red,
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w600,
-                                  decoration: TextDecoration.underline,
+                              decoration: BoxDecoration(
+                                color: Colors.red.withOpacity(0.08),
+                                borderRadius: BorderRadius.circular(20.r),
+                                border: Border.all(
+                                  color: Colors.red.withOpacity(0.3),
                                 ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.delete_sweep_outlined,
+                                    size: 14.sp,
+                                    color: Colors.red,
+                                  ),
+                                  SizedBox(width: 4.w),
+                                  Text(
+                                    "Clear All",
+                                    style: GoogleFonts.inter(
+                                      color: Colors.red,
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
@@ -556,23 +671,66 @@ class _ListingPageState extends ConsumerState<ListingPage> {
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
               child: propertyAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, stk) => Center(child: Text("Error: $err")),
+                loading: () => SizedBox(
+                  width: double.infinity,
+                  height: MediaQuery.of(context).size.height / 2.6,
+                  child: const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF24ADD7)),
+                  ),
+                ),
+                error: (err, stk) => SizedBox(
+                  width: double.infinity,
+                  height: MediaQuery.of(context).size.height / 2.6,
+                  child: Center(child: Text("Error: $err")),
+                ),
                 data: (res) {
                   final allProperties = res?.data?.list ?? [];
                   final filteredList = allProperties;
 
                   if (filteredList.isEmpty) {
                     final searchQuery = ref.read(searchQueryProvider);
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: Text(
-                          searchQuery.isNotEmpty
-                              ? "No properties found for \"$searchQuery\""
-                              : "No properties match your filters",
-                          style: TextStyle(fontSize: 16.sp, color: Colors.grey),
-                          textAlign: TextAlign.center,
+                    return SizedBox(
+                      width: double.infinity,
+                      height: MediaQuery.of(context).size.height / 2.6,
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(32),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                searchQuery.isNotEmpty
+                                    ? "No properties found for \"$searchQuery\""
+                                    : "No properties match your filters",
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  color: Colors.grey,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              if (_activeFilterCount > 0) ...[
+                                SizedBox(height: 12.h),
+                                ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF24ADD7),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20.r),
+                                    ),
+                                  ),
+                                  onPressed: _clearAllFilters,
+                                  icon: const Icon(
+                                    Icons.refresh,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                  label: const Text(
+                                    "Clear All Filters",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
                         ),
                       ),
                     );

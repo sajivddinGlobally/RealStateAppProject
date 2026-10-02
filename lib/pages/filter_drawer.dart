@@ -53,10 +53,17 @@ class _FilterDrawerState extends ConsumerState<FilterDrawer> {
     _initFiltersFromModel(widget.currentFilters);
   }
 
+  @override
+  void didUpdateWidget(covariant FilterDrawer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _initFiltersFromModel(widget.currentFilters);
+  }
+
   void _initFiltersFromModel(PropertyListBodyModel model) {
     _selectedCity = (model.city != null && model.city!.isNotEmpty)
         ? model.city
         : null;
+    _selectedLocalities.clear();
     if (model.locality != null) {
       _selectedLocalities.addAll(model.locality!);
     }
@@ -192,6 +199,28 @@ class _FilterDrawerState extends ConsumerState<FilterDrawer> {
       _minPriceCtrl.clear();
       _maxPriceCtrl.clear();
     });
+
+    final newBody = PropertyListBodyModel(
+      size: 20,
+      pageNo: 1,
+      sortBy: "createdAt",
+      sortOrder: "desc",
+      minPrice: "",
+      maxPrice: "",
+      bedroom: [],
+      city: "",
+      listingCategory: "",
+      propertyType: "",
+      keyWord: "",
+      balcony: [],
+      bathrooms: [],
+      kitchen: [],
+      locality: [],
+      parking: [],
+      furnishing: null,
+    );
+    widget.onApply(newBody);
+    Navigator.pop(context);
   }
 
   Widget _buildDropdown(
