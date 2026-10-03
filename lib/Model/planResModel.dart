@@ -46,6 +46,7 @@ class Datum {
     String? description;
     List<Point>? points;
     bool? isActive;
+    bool? isPopular;
     DateTime? createdAt;
     DateTime? updatedAt;
     int? v;
@@ -60,6 +61,7 @@ class Datum {
         this.description,
         this.points,
         this.isActive,
+        this.isPopular,
         this.createdAt,
         this.updatedAt,
         this.v,
@@ -75,6 +77,7 @@ class Datum {
         description: json["description"],
         points: json["points"] == null ? [] : List<Point>.from(json["points"]!.map((x) => Point.fromJson(x))),
         isActive: json["isActive"],
+        isPopular: json["isPopular"],
         createdAt: json["createdAt"] == null ? null : DateTime.parse(json["createdAt"]),
         updatedAt: json["updatedAt"] == null ? null : DateTime.parse(json["updatedAt"]),
         v: json["__v"],
@@ -90,6 +93,7 @@ class Datum {
         "description": description,
         "points": points == null ? [] : List<dynamic>.from(points!.map((x) => x.toJson())),
         "isActive": isActive,
+        "isPopular": isPopular,
         "createdAt": createdAt?.toIso8601String(),
         "updatedAt": updatedAt?.toIso8601String(),
         "__v": v,

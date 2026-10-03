@@ -18,6 +18,7 @@ class HomeBookingServiceBodyModel {
   String? serviceTimeSlot;
   int? serviceFee;
   String? problemImgae;
+  String? paymentMethod;
   List<Item>? items;
 
   HomeBookingServiceBodyModel({
@@ -28,6 +29,7 @@ class HomeBookingServiceBodyModel {
     this.serviceTimeSlot,
     this.serviceFee,
     this.problemImgae,
+    this.paymentMethod,
     this.items,
   });
 
@@ -42,6 +44,7 @@ class HomeBookingServiceBodyModel {
         serviceTimeSlot: json["serviceTimeSlot"],
         serviceFee: json["serviceFee"],
         problemImgae: json["problemImgae"],
+        paymentMethod: json["paymentMethod"],
         items: json["items"] == null
             ? []
             : List<Item>.from(json["items"]!.map((x) => Item.fromJson(x))),
@@ -57,6 +60,7 @@ class HomeBookingServiceBodyModel {
     "serviceTimeSlot": serviceTimeSlot,
     "serviceFee": serviceFee,
     "problemImgae": problemImgae,
+    if (paymentMethod != null) "paymentMethod": paymentMethod,
     "items": items == null
         ? []
         : List<dynamic>.from(items!.map((x) => x.toJson())),

@@ -11,6 +11,7 @@ import 'package:realstate/pages/myRequest.page.dart';
 import 'MyPropertyRequest.dart';
 import 'loginwithOtp.page.dart';
 import 'myLoanRequest.dart';
+import 'myPlan.page.dart';
 
 class AppDrawer extends ConsumerStatefulWidget {
   final AsyncValue<UserProfileResModel> profileController;
@@ -25,7 +26,6 @@ class AppDrawer extends ConsumerStatefulWidget {
 }
 
 class _AppDrawerState extends ConsumerState<AppDrawer> {
-
   Future<void> showLogoutDialog() async {
     const primaryColor = Color(0xFF24ADD7);
     await showDialog(
@@ -187,7 +187,21 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                     );
                   },
                 ),
-                
+                _drawerItem(
+                  icon: Icons.workspace_premium_outlined,
+                  label: 'My Plan',
+                  context: context,
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      CupertinoPageRoute(
+                        builder: (context) => const MyPlanPage(),
+                      ),
+                    );
+                  },
+                ),
+
                 const Divider(
                   height: 30,
                   thickness: 1,

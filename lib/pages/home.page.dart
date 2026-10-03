@@ -396,7 +396,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
         backgroundColor: const Color(0xffF5F7FA),
         body: <Widget>[
           HomeScreen(city),
-          MyListingsScreen(),
+          MyPropertyScreen(),
           CreatePropertyScreen(
             fromBottomNav: true,
             ListElement(),
@@ -462,7 +462,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
               child: Row(
                 children: [
                   buildNavItem(Icons.home_outlined, 'Home', 0),
-                  buildNavItem(Icons.description_outlined, 'My Listings', 1),
+                  buildNavItem(Icons.description_outlined, 'My Property', 1),
                   buildNavItem(
                     Icons.description_outlined,
                     //  'Add\nProperty',
@@ -1467,7 +1467,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
   }
 
   // ==================== MY LISTINGS SCREEN ====================
-  Widget MyListingsScreen() {
+  Widget MyPropertyScreen() {
     final getMyPropertyProvider = ref.watch(getMyPropertyController);
     return SafeArea(
       top: false,

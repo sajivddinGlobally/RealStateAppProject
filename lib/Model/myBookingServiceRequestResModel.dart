@@ -91,6 +91,9 @@ class ListElement {
   List<Rating>? ratings;
   String? beforeImage;
   String? afterImage;
+  String? qrCodeImage;
+  String? serviceProviderArrivalTime;
+  int? serviceCharge;
 
   ListElement({
     this.id,
@@ -119,6 +122,9 @@ class ListElement {
     this.ratings,
     this.beforeImage,
     this.afterImage,
+    this.qrCodeImage,
+    this.serviceProviderArrivalTime,
+    this.serviceCharge,
   });
 
   factory ListElement.fromJson(Map<String, dynamic> json) => ListElement(
@@ -158,6 +164,9 @@ class ListElement {
         : List<Rating>.from(json["ratings"]!.map((x) => Rating.fromJson(x))),
     beforeImage: json["beforeImage"],
     afterImage: json["afterImage"],
+    qrCodeImage: json["qrCodeImage"],
+    serviceProviderArrivalTime: json["serviceProviderArrivalTime"],
+    serviceCharge: json["serviceCharge"],
   );
 
   Map<String, dynamic> toJson() => {
@@ -191,6 +200,9 @@ class ListElement {
         : List<dynamic>.from(ratings!.map((x) => x.toJson())),
     "beforeImage": beforeImage,
     "afterImage": afterImage,
+    "qrCodeImage": qrCodeImage,
+    "serviceProviderArrivalTime": serviceProviderArrivalTime,
+    "serviceCharge": serviceCharge,
   };
 }
 

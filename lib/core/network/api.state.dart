@@ -20,8 +20,6 @@ import 'package:realstate/Model/editProfileBodyModel.dart';
 import 'package:realstate/Model/editProfileResModel.dart';
 import 'package:realstate/Model/forgotPassSentOtpResModel.dart';
 import 'package:realstate/Model/getLikeProperyResModel.dart';
-import 'package:realstate/Model/getMyPropertyBodyModel.dart';
-import 'package:realstate/Model/getMyPropertyDetailsResModel.dart';
 import 'package:realstate/Model/getNotificationModel.dart';
 import 'package:realstate/Model/getPropertyCategoryModel.dart';
 import 'package:realstate/Model/homeBookingServiceBodyModel.dart';
@@ -54,19 +52,31 @@ import 'package:realstate/Model/uploadImageResModel.dart';
 import 'package:realstate/Model/userProfileResModel.dart';
 import 'package:realstate/Model/verfiyServiceAgenetBodyModel.dart';
 import 'package:realstate/Model/verifyBodyModel.dart';
+import 'package:realstate/Model/verifyRazorpayPaymentResModel.dart';
 import 'package:realstate/Model/verifyResModel.dart';
 import 'package:realstate/Model/verifyServiceAgenetResModel.dart';
 import 'package:retrofit/retrofit.dart';
 import '../../Model/Body/PropertyListBodyModel.dart';
+import '../../Model/Body/createPlanBodyModel.dart';
+import '../../Model/Body/createRazorpayOrderBodyModel.dart';
+import '../../Model/Body/paymentFailedBodyModel.dart';
 import '../../Model/Body/updateDesablePropertyBodyModel.dart';
+import '../../Model/Body/verifyPlanBodyModel.dart';
+import '../../Model/Body/verifyRazorpayPaymentBodyModel.dart';
 import '../../Model/CityResponseModel.dart';
 import '../../Model/CreatePropertyResponseModel.dart';
 import '../../Model/GetLoanQueryModel.dart';
 import '../../Model/MultipleImgaeResponseModel.dart';
 import '../../Model/SavedModel.dart';
+import '../../Model/createPlanResModel.dart';
+import '../../Model/createRazorpayOrderResModel.dart';
 import '../../Model/getHeroBannerModel.dart';
 import '../../Model/getPropertyResponsemodel.dart';
+import '../../Model/paymentFailedResModel.dart';
 import '../../Model/searchPropertyListResponse.dart';
+import '../../Model/verifyPlanResModel.dart';
+import '../../Model/mySubscriptionResModel.dart';
+import '../../Model/subscriptionHistoryResModel.dart';
 
 part 'api.state.g.dart';
 
@@ -255,4 +265,33 @@ abstract class APIStateNetwork {
 
   @POST("/user/getPropertyCategories")
   Future<GetPropertyCategoriyModel> getPropertyCategorie();
+
+  @POST("/user/createPlanRazorpayOrder")
+  Future<CreatePlanResModel> createPaln(@Body() CreatePlanBodyModel body);
+
+  @POST("/user/verifyPlanRazorpayPayment")
+  Future<VerifyPlanResModel> verifyPlanRazorpayPayment(
+    @Body() VerifyPlanBodyModel body,
+  );
+
+  @POST("/user/updatePaymentFailedStatus")
+  Future<PaymentFailedResModel> paymentFailed(
+    @Body() PaymentFailedBodyModel body,
+  );
+
+  @GET("/user/my-subscription")
+  Future<MySubscriptionResModel> getMySubscription();
+
+  @GET("/user/subscription-history")
+  Future<SubscriptionHistoryResModel> getSubscriptionHistory();
+
+  @POST("/user/verifyRazorpayPayment")
+  Future<VerifyRazorpayPaymentResModel> verfiyRazorpayPayment(
+    @Body() VerifyRazorpayPaymentBodyModel body,
+  );
+
+  @POST("/user/createRazorpayOrder")
+  Future<CreateRazorpayOrderResModel> createRazorpayOrder(
+    @Body() CreateRazorpayOrderBodyModel body,
+  );
 }

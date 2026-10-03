@@ -596,6 +596,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
             localityName,
             cityName,
             stateName,
+            if (postalCode.isNotEmpty) postalCode,
           ].where((e) => e.isNotEmpty).join(", ");
         }
       } catch (e) {
@@ -635,6 +636,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                 place.subLocality,
                 place.locality,
                 place.administrativeArea,
+                if (postalCode.isNotEmpty) postalCode,
                 place.country,
               ].where((e) => e != null && e.trim().isNotEmpty).join(", ");
             }
@@ -680,6 +682,11 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
         isLocalityFromDropdown = areas.any(
           (a) => a.toLowerCase() == localityName.toLowerCase(),
         );
+        if (postalCode.isNotEmpty && !addressStr.contains(postalCode)) {
+          addressStr = addressStr.isNotEmpty
+              ? "$addressStr, $postalCode"
+              : postalCode;
+        }
         if (addressStr.isNotEmpty) {
           _propertyAddressController.text = addressStr;
         }
@@ -740,96 +747,12 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
   }
 
   bool _validateStep(int step) {
-    if (step == 0) {
-      if (selectedType == null) {
-        _showError("Please select Listing Purpose (Sell / Rent Out)");
-        return false;
-      }
-      if (selectedPropertyType == null) {
-        _showError("Please select Property Sector (Residential / Commercial)");
-        return false;
-      }
-      if (selectedPropertySubType == null || selectedPropertySubType!.isEmpty) {
-        _showError("Please select Specific Property Type");
-        return false;
-      }
-      if (isBroker == null) {
-        _showError("Please specify if you are a broker");
-        return false;
-      }
-    } else if (step == 1) {
-      if (selectedCity == null || selectedCity!.trim().isEmpty) {
-        _showError("City is required");
-        return false;
-      }
-      if (selectedLocality == null || selectedLocality!.trim().isEmpty) {
-        _showError("Locality / Area is required");
-        return false;
-      }
-      if (_houseNumberController.text.trim().isEmpty) {
-        _showError("House / Flat Number is required");
-        return false;
-      }
-      if (_propertyAddressController.text.trim().isEmpty) {
-        _showError("Property Address is required");
-        return false;
-      }
-      if (_pincodeController.text.trim().isEmpty) {
-        _showError("Pincode is required");
-        return false;
-      }
-    } else if (step == 2) {
-      if (_priceController.text.trim().isEmpty) {
-        _showError("Valid price is required");
-        return false;
-      }
-      if (_areaController.text.trim().isEmpty) {
-        _showError("Valid area is required");
-        return false;
-      }
-      final isLand = selectedPropertySubType?.contains("land") ?? false;
-      if (!isLand && (_selectedBhk == null || _selectedBhk!.isEmpty)) {
-        _showError("BHK is required");
-        return false;
-      }
-      if (selectedType == 2 && _availableFromController.text.trim().isEmpty) {
-        _showError("Available From date is required for Rent");
-        return false;
-      }
-    } else if (step == 3) {
-      final isLand = selectedPropertySubType?.contains("land") ?? false;
-      if (!isLand &&
-          (selectedFurnishing == null || selectedFurnishing!.isEmpty)) {
-        _showError("Furnishing status is required");
-        return false;
-      }
-      if (isEditMode &&
-          isBroker == true &&
-          _reraController.text.trim().isEmpty) {
-        _showError("RERA registration number is required for brokers");
-        return false;
-      }
-    } else if (step == 4) {
-      if (propertyImages.length < 3) {
-        _showError("Upload at least 3 photos of your property");
-        return false;
-      }
-    }
-    return true;
-  }
-
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red.shade700,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    final formValid = _formKey.currentState?.validate() ?? true;
+    return formValid;
   }
 
   void _handleNextStep() {
-    if (!isEditMode && !_validateStep(_currentStep)) return;
+    if (!_validateStep(_currentStep)) return;
 
     if (_isLastStep) {
       _submitProperty();
@@ -882,7 +805,6 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
       }
 
       if (finalImageUrls.length < 3) {
-        _showError("Upload at least 3 photos of your property");
         return;
       }
 
@@ -1107,6 +1029,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
       ),
       body: Form(
         key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -1123,12 +1046,11 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                 child: _buildCurrentStep(cityAsync, categoryAsync),
               ),
 
-              const SizedBox(height: 30),
+              const SizedBox(height: 20),
 
-              // Original Navigation Buttons (BACK & SAVE & CONTINUE)
               _buildOriginalNavigationButtons(),
 
-              const SizedBox(height: 30),
+              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -1145,22 +1067,22 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
           Expanded(
             flex: 1,
             child: SizedBox(
-              height: 50.h,
+              height: 48.h,
               child: ElevatedButton(
                 onPressed: _goToPreviousStep,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent,
                   foregroundColor: const Color(0xFF24ADD7),
                   elevation: 0,
-                  side: const BorderSide(color: Color(0xFF24ADD7)),
+                  side: const BorderSide(color: Color(0xFF24ADD7), width: 1.5),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.r),
+                    borderRadius: BorderRadius.circular(10.r),
                   ),
                 ),
                 child: Text(
                   'BACK',
                   style: TextStyle(
-                    fontSize: 14.sp,
+                    fontSize: 13.5.sp,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -1172,7 +1094,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
         Expanded(
           flex: _currentStep > 0 ? 2 : 1,
           child: SizedBox(
-            height: 50.h,
+            height: 48.h,
             child: ElevatedButton(
               onPressed: _isLoading ? null : _handleNextStep,
               style: ElevatedButton.styleFrom(
@@ -1183,17 +1105,17 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                 ).withValues(alpha: 0.5),
                 elevation: 2,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.r),
+                  borderRadius: BorderRadius.circular(10.r),
                 ),
               ),
               child: _isLoading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: Center(
+                  ? SizedBox(
+                      width: 20.w,
+                      height: 20.w,
+                      child: const Center(
                         child: CircularProgressIndicator(
-                          color: Color(0xFFFF5722),
-                          strokeWidth: 1,
+                          color: Colors.white,
+                          strokeWidth: 2,
                         ),
                       ),
                     )
@@ -1202,7 +1124,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                           ? (isEditMode ? 'Update Property' : 'Submit Property')
                           : 'SAVE & CONTINUE',
                       style: TextStyle(
-                        fontSize: 14.sp,
+                        fontSize: 13.5.sp,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -1216,10 +1138,10 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
   // ────── Modern 5-Step Stepper Header ──────
   Widget _buildStepperHeader() {
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 8.w),
+      padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 6.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
+        borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -1235,7 +1157,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
           return Expanded(
             child: GestureDetector(
               onTap: () {
-                if (isEditMode || isPassed || _validateStep(_currentStep)) {
+                if (isPassed || _validateStep(_currentStep)) {
                   setState(() => _currentStep = index);
                 }
               },
@@ -1402,86 +1324,120 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 1. Listing Category (Sell / Rent Out)
-          Text(
-            "Listing Purpose *",
-            style: TextStyle(
-              fontSize: 13.5.sp,
-              color: Colors.grey.shade700,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          SizedBox(height: 8.h),
-          Container(
-            height: 46.h,
-            padding: EdgeInsets.all(4.r),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F3F5),
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        selectedType = 1;
-                        selectedListingCategory = "sell";
-                      });
-                    },
-                    child: Container(
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10.r),
-                        color: selectedType == 1
-                            ? const Color(0xFF24ADD7)
-                            : Colors.transparent,
-                      ),
+          FormField<int>(
+            key: ValueKey(selectedType),
+            initialValue: selectedType,
+            validator: (_) {
+              if (selectedType == null) {
+                return "Please select Listing Purpose (Sell / Rent Out)";
+              }
+              return null;
+            },
+            builder: (fieldState) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Listing Purpose *",
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      color: Colors.grey.shade800,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(height: 6.h),
+                  Container(
+                    height: 46.h,
+                    padding: EdgeInsets.all(4.r),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F3F5),
+                      borderRadius: BorderRadius.circular(10.r),
+                      border: fieldState.hasError
+                          ? Border.all(color: Colors.red, width: 1.2)
+                          : null,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                selectedType = 1;
+                                selectedListingCategory = "sell";
+                              });
+                              fieldState.didChange(1);
+                            },
+                            child: Container(
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8.r),
+                                color: selectedType == 1
+                                    ? const Color(0xFF24ADD7)
+                                    : Colors.transparent,
+                              ),
+                              child: Text(
+                                'SELL',
+                                style: TextStyle(
+                                  color: selectedType == 1
+                                      ? Colors.white
+                                      : Colors.grey.shade700,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13.sp,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                selectedType = 2;
+                                selectedListingCategory = "rent";
+                              });
+                              fieldState.didChange(2);
+                            },
+                            child: Container(
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8.r),
+                                color: selectedType == 2
+                                    ? const Color(0xFF24ADD7)
+                                    : Colors.transparent,
+                              ),
+                              child: Text(
+                                'RENT OUT',
+                                style: TextStyle(
+                                  color: selectedType == 2
+                                      ? Colors.white
+                                      : Colors.grey.shade700,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13.sp,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (fieldState.hasError)
+                    Padding(
+                      padding: EdgeInsets.only(top: 4.h, left: 4.w),
                       child: Text(
-                        'SELL',
+                        fieldState.errorText!,
                         style: TextStyle(
-                          color: selectedType == 1
-                              ? Colors.white
-                              : Colors.grey.shade700,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13.sp,
+                          color: Colors.red.shade700,
+                          fontSize: 11.5.sp,
+                          height: 1.1,
                         ),
                       ),
                     ),
-                  ),
-                ),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        selectedType = 2;
-                        selectedListingCategory = "rent";
-                      });
-                    },
-                    child: Container(
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10.r),
-                        color: selectedType == 2
-                            ? const Color(0xFF24ADD7)
-                            : Colors.transparent,
-                      ),
-                      child: Text(
-                        'RENT OUT',
-                        style: TextStyle(
-                          color: selectedType == 2
-                              ? Colors.white
-                              : Colors.grey.shade700,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13.sp,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+                ],
+              );
+            },
           ),
-          SizedBox(height: 16.h),
+          SizedBox(height: 14.h),
 
           // 2. Property Sector (Residential / Commercial)
           _buildDropdown(
@@ -1494,74 +1450,118 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
             }),
             isRequired: true,
           ),
-          SizedBox(height: 16.h),
+          SizedBox(height: 14.h),
 
           // 3. Specific Property Type
-          Text(
-            "Specific Property Type *",
-            style: TextStyle(
-              fontSize: 13.5.sp,
-              color: Colors.grey.shade700,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          SizedBox(height: 8.h),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: displayCount,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 8.h,
-              crossAxisSpacing: 8.w,
-              mainAxisExtent: 42.h,
-            ),
-            itemBuilder: (context, index) {
-              final item = currentOptions[index];
-              final isSelected =
-                  selectedPropertySubType != null &&
-                  (selectedPropertySubType!.toLowerCase() ==
-                          item.value.toLowerCase() ||
-                      selectedPropertySubType!.toLowerCase() ==
-                          item.title.toLowerCase() ||
-                      selectedPropertySubType!.toLowerCase().replaceAll(
-                            '-',
-                            ' ',
-                          ) ==
-                          item.title.toLowerCase());
-
-              return GestureDetector(
-                onTap: () =>
-                    setState(() => selectedPropertySubType = item.value),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  alignment: Alignment.center,
-                  padding: EdgeInsets.symmetric(horizontal: 6.w),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? const Color(0xFF24ADD7)
-                        : const Color(0xFFF8F9FA),
-                    borderRadius: BorderRadius.circular(10.r),
-                    border: Border.all(
-                      color: isSelected
-                          ? const Color(0xFF24ADD7)
-                          : Colors.grey.shade300,
-                    ),
-                  ),
-                  child: Text(
-                    item.title.toUpperCase(),
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+          FormField<String>(
+            key: ValueKey(selectedPropertySubType),
+            initialValue: selectedPropertySubType,
+            validator: (_) {
+              if (selectedPropertySubType == null ||
+                  selectedPropertySubType!.isEmpty) {
+                return "Please select Specific Property Type";
+              }
+              return null;
+            },
+            builder: (fieldState) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Specific Property Type *",
                     style: TextStyle(
+                      fontSize: 13.sp,
+                      color: Colors.grey.shade800,
                       fontWeight: FontWeight.w600,
-                      fontSize: 11.5.sp,
-                      color: isSelected
-                          ? Colors.white
-                          : const Color(0xFF344054),
                     ),
                   ),
-                ),
+                  SizedBox(height: 6.h),
+                  Container(
+                    decoration: fieldState.hasError
+                        ? BoxDecoration(
+                            borderRadius: BorderRadius.circular(10.r),
+                            border: Border.all(color: Colors.red, width: 1.2),
+                          )
+                        : null,
+                    padding: fieldState.hasError
+                        ? EdgeInsets.all(4.r)
+                        : EdgeInsets.zero,
+                    child: GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: displayCount,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 8.h,
+                        crossAxisSpacing: 8.w,
+                        mainAxisExtent: 42.h,
+                      ),
+                      itemBuilder: (context, index) {
+                        final item = currentOptions[index];
+                        final isSelected =
+                            selectedPropertySubType != null &&
+                            (selectedPropertySubType!.toLowerCase() ==
+                                    item.value.toLowerCase() ||
+                                selectedPropertySubType!.toLowerCase() ==
+                                    item.title.toLowerCase() ||
+                                selectedPropertySubType!
+                                        .toLowerCase()
+                                        .replaceAll('-', ' ') ==
+                                    item.title.toLowerCase());
+
+                        return GestureDetector(
+                          onTap: () {
+                            setState(
+                              () => selectedPropertySubType = item.value,
+                            );
+                            fieldState.didChange(item.value);
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 180),
+                            alignment: Alignment.center,
+                            padding: EdgeInsets.symmetric(horizontal: 6.w),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? const Color(0xFF24ADD7)
+                                  : const Color(0xFFF8F9FA),
+                              borderRadius: BorderRadius.circular(10.r),
+                              border: Border.all(
+                                color: isSelected
+                                    ? const Color(0xFF24ADD7)
+                                    : Colors.grey.shade300,
+                              ),
+                            ),
+                            child: Text(
+                              item.title.toUpperCase(),
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 11.5.sp,
+                                color: isSelected
+                                    ? Colors.white
+                                    : const Color(0xFF344054),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  if (fieldState.hasError)
+                    Padding(
+                      padding: EdgeInsets.only(top: 4.h, left: 4.w),
+                      child: Text(
+                        fieldState.errorText!,
+                        style: TextStyle(
+                          color: Colors.red.shade700,
+                          fontSize: 11.5.sp,
+                          height: 1.1,
+                        ),
+                      ),
+                    ),
+                ],
               );
             },
           ),
@@ -1569,7 +1569,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
-                style: ButtonStyle(
+                style: const ButtonStyle(
                   padding: WidgetStatePropertyAll(EdgeInsets.zero),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
@@ -1588,84 +1588,123 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                 ),
               ),
             ),
-          SizedBox(height: 6.h),
+          // SizedBox(height: 6.h),
 
           // 4. Are you a broker?
-          Text(
-            "Are You A Broker? *",
-            style: TextStyle(
-              fontSize: 13.5.sp,
-              color: Colors.grey.shade700,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          SizedBox(height: 8.h),
-          Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => isBroker = true),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 12.h),
-                    decoration: BoxDecoration(
-                      color: isBroker == true
-                          ? const Color(0xFF24ADD7)
-                          : const Color(0xFFF8F9FA),
-                      borderRadius: BorderRadius.circular(10.r),
-                      border: Border.all(
-                        color: isBroker == true
-                            ? const Color(0xFF24ADD7)
-                            : Colors.grey.shade300,
-                      ),
+          FormField<bool>(
+            key: ValueKey(isBroker),
+            initialValue: isBroker,
+            validator: (_) {
+              if (isBroker == null) {
+                return "Please specify if you are a broker";
+              }
+              return null;
+            },
+            builder: (fieldState) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Are You A Broker? *",
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      color: Colors.grey.shade800,
+                      fontWeight: FontWeight.w600,
                     ),
-                    child: Center(
+                  ),
+                  SizedBox(height: 6.h),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() => isBroker = true);
+                            fieldState.didChange(true);
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(vertical: 12.h),
+                            decoration: BoxDecoration(
+                              color: isBroker == true
+                                  ? const Color(0xFF24ADD7)
+                                  : const Color(0xFFF8F9FA),
+                              borderRadius: BorderRadius.circular(10.r),
+                              border: Border.all(
+                                color: fieldState.hasError
+                                    ? Colors.red
+                                    : (isBroker == true
+                                          ? const Color(0xFF24ADD7)
+                                          : Colors.grey.shade300),
+                              ),
+                            ),
+                            child: Center(
+                              child: Text(
+                                "Yes",
+                                style: TextStyle(
+                                  color: isBroker == true
+                                      ? Colors.white
+                                      : Colors.black87,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13.sp,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() => isBroker = false);
+                            fieldState.didChange(false);
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(vertical: 12.h),
+                            decoration: BoxDecoration(
+                              color: isBroker == false
+                                  ? const Color(0xFF24ADD7)
+                                  : const Color(0xFFF8F9FA),
+                              borderRadius: BorderRadius.circular(10.r),
+                              border: Border.all(
+                                color: fieldState.hasError
+                                    ? Colors.red
+                                    : (isBroker == false
+                                          ? const Color(0xFF24ADD7)
+                                          : Colors.grey.shade300),
+                              ),
+                            ),
+                            child: Center(
+                              child: Text(
+                                "No",
+                                style: TextStyle(
+                                  color: isBroker == false
+                                      ? Colors.white
+                                      : Colors.black87,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13.sp,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (fieldState.hasError)
+                    Padding(
+                      padding: EdgeInsets.only(top: 4.h, left: 4.w),
                       child: Text(
-                        "Yes",
+                        fieldState.errorText!,
                         style: TextStyle(
-                          color: isBroker == true
-                              ? Colors.white
-                              : Colors.black87,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13.sp,
+                          color: Colors.red.shade700,
+                          fontSize: 11.5.sp,
+                          height: 1.1,
                         ),
                       ),
                     ),
-                  ),
-                ),
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => isBroker = false),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 12.h),
-                    decoration: BoxDecoration(
-                      color: isBroker == false
-                          ? const Color(0xFF24ADD7)
-                          : const Color(0xFFF8F9FA),
-                      borderRadius: BorderRadius.circular(10.r),
-                      border: Border.all(
-                        color: isBroker == false
-                            ? const Color(0xFF24ADD7)
-                            : Colors.grey.shade300,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        "No",
-                        style: TextStyle(
-                          color: isBroker == false
-                              ? Colors.white
-                              : Colors.black87,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13.sp,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -1714,18 +1753,9 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
             ),
           ),
 
-          // State (Website field: State)
-          _buildTextField(
-            'State',
-            _stateController,
-            hint: 'e.g. Rajasthan, Madhya Pradesh',
-            isRequired: false,
-          ),
-          SizedBox(height: 14.h),
-
           // City
           _buildCityDropdown(cityAsync),
-          SizedBox(height: 14.h),
+          SizedBox(height: 12.h),
 
           // Locality / Area
           Column(
@@ -1734,12 +1764,12 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
               Text(
                 'Locality / Area *',
                 style: TextStyle(
-                  fontSize: 13.sp,
-                  color: Colors.grey.shade700,
+                  fontSize: 12.5.sp,
+                  color: Colors.grey.shade800,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              SizedBox(height: 6.h),
+              SizedBox(height: 4.h),
               AbsorbPointer(
                 absorbing: !isCitySelected,
                 child: Opacity(
@@ -1770,9 +1800,20 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                           return TextFormField(
                             controller: controller,
                             focusNode: focusNode,
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              color: Colors.black87,
+                              fontWeight: FontWeight.w500,
+                            ),
                             onChanged: (value) {
                               selectedLocality = value;
                               isLocalityFromDropdown = false;
+                            },
+                            validator: (val) {
+                              if (val == null || val.trim().isEmpty) {
+                                return 'Locality / Area is required';
+                              }
+                              return null;
                             },
                             decoration: _inputDecoration(
                               hint: isCitySelected
@@ -1786,16 +1827,22 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
               ),
             ],
           ),
-          SizedBox(height: 14.h),
+          SizedBox(height: 12.h),
 
           // House / Flat / Plot Number (Website field: houseNumber)
           _buildTextField(
             'House No / Tower / Block',
             _houseNumberController,
             hint: 'e.g. A-101, Royal Residency',
-            isRequired: true,
+            isRequired: false,
+            // validator: (val) {
+            //   if (val == null || val.trim().isEmpty) {
+            //     return 'House / Flat number is required';
+            //   }
+            //   return null;
+            // },
           ),
-          SizedBox(height: 14.h),
+          SizedBox(height: 12.h),
 
           // Property Address
           _buildTextField(
@@ -1804,16 +1851,12 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
             hint: 'Detailed street address, landmarks...',
             maxLines: 2,
             isRequired: true,
-          ),
-          SizedBox(height: 14.h),
-
-          // Pincode (Website field: pincode)
-          _buildTextField(
-            'Pincode',
-            _pincodeController,
-            hint: 'e.g. 474001',
-            type: TextInputType.number,
-            isRequired: true,
+            validator: (val) {
+              if (val == null || val.trim().isEmpty) {
+                return 'Property address is required';
+              }
+              return null;
+            },
           ),
         ],
       ),
@@ -1833,23 +1876,35 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
         children: [
           // Price
           _buildTextField(
-            isRent ? 'Monthly Rent (₹) *' : 'Sell Price (₹) *',
+            isRent ? 'Monthly Rent (₹)' : 'Sell Price (₹)',
             _priceController,
             hint: isRent ? 'e.g. 25000' : 'e.g. 7500000',
             type: TextInputType.number,
             isRequired: true,
+            validator: (v) {
+              if (v == null || v.trim().isEmpty) {
+                return 'Valid price is required';
+              }
+              return null;
+            },
           ),
-          SizedBox(height: 14.h),
+          SizedBox(height: 12.h),
 
           // Area (sq.ft)
           _buildTextField(
-            'Area (Sqft) *',
+            'Area (Sqft)',
             _areaController,
             hint: 'e.g. 1500',
             type: TextInputType.number,
             isRequired: true,
+            validator: (v) {
+              if (v == null || v.trim().isEmpty) {
+                return 'Valid area is required';
+              }
+              return null;
+            },
           ),
-          SizedBox(height: 14.h),
+          SizedBox(height: 12.h),
 
           // BHK (hidden if land)
           if (!isLand) ...[
@@ -1873,14 +1928,20 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                 });
               },
               isRequired: true,
+              validator: (v) {
+                if (v == null || v.isEmpty) {
+                  return 'BHK is required';
+                }
+                return null;
+              },
             ),
-            SizedBox(height: 14.h),
+            SizedBox(height: 12.h),
           ],
 
           // Rent-specific fields (Available From & Security Deposit)
           if (isRent) ...[
             _buildTextField(
-              'Available From *',
+              'Available From',
               _availableFromController,
               hint: "DD/MM/YYYY",
               readOnly: true,
@@ -1888,27 +1949,40 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
               suffixIcon: Icon(
                 Icons.calendar_today,
                 color: const Color(0xFF24ADD7),
-                size: 18.sp,
+                size: 16.sp,
               ),
               isRequired: true,
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) {
+                  return 'Available from date is required';
+                }
+                return null;
+              },
             ),
-            SizedBox(height: 14.h),
+            SizedBox(height: 12.h),
 
             Text(
               "Security Deposit",
               style: TextStyle(
-                fontSize: 13.sp,
-                color: Colors.grey.shade700,
+                fontSize: 12.5.sp,
+                color: Colors.grey.shade800,
                 fontWeight: FontWeight.w600,
               ),
             ),
-            SizedBox(height: 8.h),
+            SizedBox(height: 6.h),
             Wrap(
               spacing: 8.w,
               runSpacing: 8.h,
               children: ["None", "1 month", "2 month", "Custom"].map((dep) {
                 final isSelected = selectedSecurityDeposit == dep;
                 return ChoiceChip(
+                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  showCheckmark: true,
+                  labelPadding: EdgeInsets.symmetric(
+                    horizontal: 1.w,
+                    vertical: -4.h,
+                  ),
                   label: Text(
                     dep,
                     style: TextStyle(
@@ -1935,16 +2009,23 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
               }).toList(),
             ),
             if (selectedSecurityDeposit == "Custom") ...[
-              SizedBox(height: 14.h),
+              SizedBox(height: 12.h),
               _buildTextField(
                 'Custom Security Deposit (₹)',
                 _customSecurityDepositController,
                 hint: 'e.g. 50000',
                 type: TextInputType.number,
                 isRequired: true,
+                validator: (v) {
+                  if (selectedSecurityDeposit == "Custom" &&
+                      (v == null || v.trim().isEmpty)) {
+                    return 'Custom security deposit is required';
+                  }
+                  return null;
+                },
               ),
             ],
-            SizedBox(height: 14.h),
+            SizedBox(height: 12.h),
           ],
         ],
       ),
@@ -2188,6 +2269,11 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                       Expanded(
                         child: TextFormField(
                           controller: applianceController,
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w500,
+                          ),
                           decoration: _inputDecoration(
                             hint: "Add other furnishing item...",
                           ),
@@ -2272,12 +2358,17 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                 SizedBox(height: 12.h),
 
                 _buildTextField(
-                  isBroker == true
-                      ? 'RERA Registration No. *'
-                      : 'RERA Registration No.',
+                  'RERA Registration No.',
                   _reraController,
                   hint: 'e.g. RAJ/P/2023/1234',
                   isRequired: isBroker == true,
+                  validator: (val) {
+                    if (isBroker == true &&
+                        (val == null || val.trim().isEmpty)) {
+                      return 'RERA registration number is required for brokers';
+                    }
+                    return null;
+                  },
                 ),
                 SizedBox(height: 12.h),
 
@@ -2439,6 +2530,11 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                   Expanded(
                     child: TextFormField(
                       controller: _customAmenityController,
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w500,
+                      ),
                       decoration: _inputDecoration(
                         hint: "Add custom amenity...",
                       ),
@@ -2563,6 +2659,11 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                                   child: TextFormField(
                                     controller: distCtrl,
                                     keyboardType: TextInputType.number,
+                                    style: TextStyle(
+                                      fontSize: 13.sp,
+                                      color: Colors.black87,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                     decoration: _inputDecoration(
                                       hint: 'e.g. 500',
                                     ),
@@ -2692,106 +2793,151 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
           ),
           SizedBox(height: 14.h),
 
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: propertyImages.length + 1,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 10.w,
-              mainAxisSpacing: 10.h,
-              childAspectRatio: 1,
-            ),
-            itemBuilder: (context, index) {
-              if (index < propertyImages.length) {
-                final img = propertyImages[index];
-                return Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12.r),
-                      child: img is File
-                          ? Image.file(img, fit: BoxFit.cover)
-                          : Image.network(img.toString(), fit: BoxFit.cover),
-                    ),
-                    Positioned(
-                      bottom: 6,
-                      left: 6,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 8.w,
-                          vertical: 2.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF24ADD7),
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                        child: Text(
-                          "Photo ${index + 1}",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: 6,
-                      right: 6,
-                      child: GestureDetector(
-                        onTap: () => removeImage(index),
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.close,
-                            size: 16,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
+          FormField<List>(
+            key: ValueKey(propertyImages.length),
+            validator: (_) {
+              if (propertyImages.length < 3) {
+                return "Upload at least 3 photos of your property";
               }
-
-              // Upload Button Slot
-              return GestureDetector(
-                onTap: pickImages,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF24ADD7).withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(
-                      color: const Color(0xFF24ADD7),
-                      width: 1.5,
-                      style: BorderStyle.solid,
+              return null;
+            },
+            builder: (fieldState) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: propertyImages.length + 1,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 10.w,
+                      mainAxisSpacing: 10.h,
+                      childAspectRatio: 1,
                     ),
+                    itemBuilder: (context, index) {
+                      if (index < propertyImages.length) {
+                        final img = propertyImages[index];
+                        return Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12.r),
+                              child: img is File
+                                  ? Image.file(img, fit: BoxFit.cover)
+                                  : Image.network(
+                                      img.toString(),
+                                      fit: BoxFit.cover,
+                                    ),
+                            ),
+                            Positioned(
+                              bottom: 6,
+                              left: 6,
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 8.w,
+                                  vertical: 2.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF24ADD7),
+                                  borderRadius: BorderRadius.circular(12.r),
+                                ),
+                                child: Text(
+                                  "Photo ${index + 1}",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10.sp,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              top: 6,
+                              right: 6,
+                              child: GestureDetector(
+                                onTap: () {
+                                  removeImage(index);
+                                  fieldState.didChange(propertyImages);
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.close,
+                                    size: 16,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+
+                      // Upload Button Slot
+                      return GestureDetector(
+                        onTap: () async {
+                          await pickImages();
+                          fieldState.didChange(propertyImages);
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: const Color(
+                              0xFF24ADD7,
+                            ).withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(
+                              color: fieldState.hasError
+                                  ? Colors.red
+                                  : const Color(0xFF24ADD7),
+                              width: 1.5,
+                              style: BorderStyle.solid,
+                            ),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.add_a_photo_outlined,
+                                size: 32.sp,
+                                color: fieldState.hasError
+                                    ? Colors.red
+                                    : const Color(0xFF24ADD7),
+                              ),
+                              SizedBox(height: 8.h),
+                              Text(
+                                "Upload Photos",
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: fieldState.hasError
+                                      ? Colors.red
+                                      : const Color(0xFF24ADD7),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.add_a_photo_outlined,
-                        size: 32.sp,
-                        color: const Color(0xFF24ADD7),
-                      ),
-                      SizedBox(height: 8.h),
-                      Text(
-                        "Upload Photos",
+                  if (fieldState.hasError)
+                    Padding(
+                      padding: EdgeInsets.only(top: 8.h, left: 4.w),
+                      child: Text(
+                        fieldState.errorText!,
                         style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF24ADD7),
+                          color: Colors.red.shade700,
+                          fontSize: 11.5.sp,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                    ],
-                  ),
-                ),
+                    ),
+                ],
               );
             },
           ),
@@ -2801,18 +2947,24 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
           Text(
             "Deep Property Description",
             style: TextStyle(
-              fontSize: 14.sp,
+              fontSize: 13.5.sp,
               fontWeight: FontWeight.bold,
               color: Colors.grey.shade900,
             ),
           ),
-          SizedBox(height: 6.h),
+          SizedBox(height: 4.h),
           TextFormField(
             controller: _descriptionController,
-            maxLines: 5,
+            maxLines: 4,
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: Colors.black87,
+              fontWeight: FontWeight.w500,
+            ),
             decoration: _inputDecoration(
               hint:
                   "Describe your property highlights, nearby landmarks, furnishing, community features...",
+              isMultiline: true,
             ),
           ),
         ],
@@ -2841,32 +2993,50 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
     );
   }
 
-  InputDecoration _inputDecoration({String? hint, Widget? suffixIcon}) {
+  InputDecoration _inputDecoration({
+    String? hint,
+    Widget? suffixIcon,
+    bool isMultiline = false,
+  }) {
     return InputDecoration(
+      isDense: true,
       hintText: hint,
-      hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13.sp),
+      hintStyle: TextStyle(
+        color: Colors.grey.shade400,
+        fontSize: 13.sp,
+        fontWeight: FontWeight.normal,
+      ),
+      errorStyle: TextStyle(
+        fontSize: 11.5.sp,
+        height: 1.1,
+        color: Colors.red.shade700,
+      ),
       filled: true,
       fillColor: const Color(0xFFF8F9FA),
       suffixIcon: suffixIcon,
-      contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+      suffixIconConstraints: BoxConstraints(minWidth: 40.w, minHeight: 40.h),
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: 14.w,
+        vertical: isMultiline ? 12.h : 13.h,
+      ),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(10.r),
         borderSide: BorderSide(color: Colors.grey.shade300),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(10.r),
         borderSide: BorderSide(color: Colors.grey.shade300),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12.r),
-        borderSide: const BorderSide(color: Color(0xFF24ADD7), width: 1.6),
+        borderRadius: BorderRadius.circular(10.r),
+        borderSide: const BorderSide(color: Color(0xFF24ADD7), width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(10.r),
         borderSide: const BorderSide(color: Colors.red),
       ),
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(10.r),
         borderSide: const BorderSide(color: Colors.red, width: 1.5),
       ),
     );
@@ -2882,6 +3052,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
     bool readOnly = false,
     bool isRequired = true,
     Widget? suffixIcon,
+    String? Function(String?)? validator,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2890,7 +3061,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
           label + (isRequired ? " *" : ""),
           style: TextStyle(
             fontSize: 13.sp,
-            color: Colors.grey.shade700,
+            color: Colors.grey.shade800,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -2901,7 +3072,26 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
           keyboardType: type ?? TextInputType.text,
           readOnly: readOnly,
           onTap: onTap,
-          decoration: _inputDecoration(hint: hint, suffixIcon: suffixIcon),
+          style: TextStyle(
+            fontSize: 13.5.sp,
+            color: Colors.black87,
+            fontWeight: FontWeight.w500,
+          ),
+          validator:
+              validator ??
+              (isRequired
+                  ? (val) {
+                      if (val == null || val.trim().isEmpty) {
+                        return '$label is required';
+                      }
+                      return null;
+                    }
+                  : null),
+          decoration: _inputDecoration(
+            hint: hint,
+            suffixIcon: suffixIcon,
+            isMultiline: maxLines > 1,
+          ),
         ),
       ],
     );
@@ -2913,6 +3103,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
     List<String> items,
     Function(String?) onChanged, {
     bool isRequired = true,
+    String? Function(String?)? validator,
   }) {
     String? safeValue = items.contains(value) ? value : null;
 
@@ -2923,14 +3114,20 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
           label + (isRequired ? " *" : ""),
           style: TextStyle(
             fontSize: 13.sp,
-            color: Colors.grey.shade700,
+            color: Colors.grey.shade800,
             fontWeight: FontWeight.w600,
           ),
         ),
         SizedBox(height: 6.h),
         DropdownButtonFormField<String>(
-          value: safeValue,
+          key: ValueKey(safeValue),
+          initialValue: safeValue,
           isExpanded: true,
+          style: TextStyle(
+            fontSize: 13.5.sp,
+            color: Colors.black87,
+            fontWeight: FontWeight.w500,
+          ),
           hint: Text(
             'Select $label',
             style: TextStyle(color: Colors.grey.shade400, fontSize: 13.sp),
@@ -2949,6 +3146,13 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
               )
               .toList(),
           onChanged: onChanged,
+          validator:
+              validator ??
+              (isRequired
+                  ? (val) => (val == null || val.isEmpty)
+                        ? 'Please select $label'
+                        : null
+                  : null),
           decoration: _inputDecoration(),
         ),
       ],
@@ -2965,12 +3169,12 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
             Text(
               "City *",
               style: TextStyle(
-                fontSize: 13.sp,
-                color: Colors.grey.shade700,
+                fontSize: 12.5.sp,
+                color: Colors.grey.shade800,
                 fontWeight: FontWeight.w600,
               ),
             ),
-            SizedBox(height: 6.h),
+            SizedBox(height: 4.h),
             Autocomplete<String>(
               key: ValueKey(selectedCity),
               initialValue: TextEditingValue(text: selectedCity ?? ""),
@@ -3008,11 +3212,22 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                     return TextFormField(
                       controller: controller,
                       focusNode: focusNode,
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w500,
+                      ),
                       onChanged: (value) {
                         setState(() {
                           selectedCity = value;
                           selectedCityId = null;
                         });
+                      },
+                      validator: (val) {
+                        if (val == null || val.trim().isEmpty) {
+                          return 'City is required';
+                        }
+                        return null;
                       },
                       decoration: _inputDecoration(
                         hint: 'Select or Enter City',
