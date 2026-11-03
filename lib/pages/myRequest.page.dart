@@ -235,12 +235,6 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
       isPaymentLoading = true;
     });
     try {
-      // final dio = createDio();
-      // final res = await dio.post(
-      //   "/user/createRazorpayOrder",
-      //   data: {"bookingId": item.id},
-      // );
-
       final service = APIStateNetwork(createDio());
       final res = await service.createRazorpayOrder(
         CreateRazorpayOrderBodyModel(bookingId: item.id),

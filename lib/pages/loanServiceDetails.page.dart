@@ -1107,26 +1107,6 @@ class _LoanServiceDetailsPageState
                   _bulletText("Lowest Interest Rate"),
                   _bulletText("Highest Loan Value"),
 
-                  SizedBox(height: 14.h),
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: 45.h,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF24ADD7),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30.r),
-                        ),
-                      ),
-                      onPressed: () {},
-                      child: Text(
-                        "Check Bank Offers",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ),
-
                   SizedBox(height: 20.h),
 
                   /// 🔹 FAQs
@@ -1152,19 +1132,35 @@ class _LoanServiceDetailsPageState
                     ),
                     child: Column(
                       children: [
-                        _faq("What are the key features?", context),
-                        _faq("What are the different types?", context),
                         _faq(
-                          "What are the factors you should consider?",
+                          "What are the key features and benefits of home loans?",
                           context,
+                          "Home loans provide easy financing to buy or build a house. Key benefits include tax savings, lower interest rates, and flexible repayment tenures up to 30 years.",
+                        ),
+                        _faq(
+                          "What are the different types of home loans available?",
+                          context,
+                          "The main types include loans for purchasing a new home, constructing a house, home renovation, and transferring an existing loan (balance transfer).",
+                        ),
+                        _faq(
+                          "What are the factors you should know before applying for a home loan?",
+                          context,
+                          "Before applying, you should check your credit score, compare interest rates, understand the processing fees, and ensure you have the required down payment.",
+                        ),
+                        _faq(
+                          "What are the different types of home loan fees and charges?",
+                          context,
+                          "Common charges include processing fees, administrative charges, prepayment penalties (on fixed-rate loans), and late payment fees.",
                         ),
                         _faq(
                           "How does Credit score impact your interest rate?",
                           context,
+                          "A high credit score (750+) shows you are a reliable borrower, which helps you get the lowest possible interest rates and much faster loan approvals.",
                         ),
                         _faq(
                           "What's the benefit of having a female co-applicant?",
                           context,
+                          "Banks usually offer lower interest rates (0.05% to 0.1% discount) and reduced stamp duty charges if a woman is a co-applicant or co-owner.",
                         ),
                       ],
                     ),
@@ -1393,24 +1389,22 @@ class _LoanServiceDetailsPageState
     );
   }
 
-  Widget _faq(String text, BuildContext context) {
+  Widget _faq(String text, BuildContext context, String anser) {
     return Theme(
-      data: Theme.of(context).copyWith(
-        dividerColor: Colors.transparent, // 👈 border remove
-      ),
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: ExpansionTile(
         tilePadding: EdgeInsets.zero,
         childrenPadding: EdgeInsets.zero,
         title: Text(text, style: TextStyle(fontSize: 13.sp)),
         children: [
           Align(
-            alignment: Alignment.centerLeft, // 👈 LEFT align
+            alignment: Alignment.centerLeft,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Detailed explanation will appear here.",
-                  textAlign: TextAlign.start, // 👈 safe side
+                  anser,
+                  textAlign: TextAlign.start,
                   style: TextStyle(fontSize: 12.sp),
                 ),
               ],

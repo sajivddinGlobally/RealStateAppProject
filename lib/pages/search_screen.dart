@@ -67,10 +67,13 @@ class _SearchResultScreenState extends ConsumerState<SearchResultScreen> {
     }
   }
 
-  String _formatPrice(num price) {
+  String _formatPrice(String? priceStr) {
+    if (priceStr == null || priceStr.isEmpty) return '—';
+    final clean = priceStr.replaceAll(RegExp(r'[^0-9.]'), '');
+    final price = double.tryParse(clean) ?? double.tryParse(priceStr) ?? 0;
     if (price >= 10000000) return '${(price / 10000000).toStringAsFixed(2)} Cr';
     if (price >= 100000) return '${(price / 100000).toStringAsFixed(1)} Lac';
-    return price.toStringAsFixed(0);
+    return price > 0 ? price.toStringAsFixed(0) : priceStr;
   }
 
   @override
@@ -290,10 +293,10 @@ class _SearchResultScreenState extends ConsumerState<SearchResultScreen> {
                                           ),
 
                                           Text(
-                                            "₹ ${property.price}",
+                                            "₹ ${_formatPrice(property.price)}",
                                             style: GoogleFonts.inter(
                                               color: const Color(0xFF24ADD7),
-                                              fontWeight: FontWeight.bold,
+                                              fontWeight: FontWeight.w800,
                                               fontSize: 10.sp,
                                             ),
                                           ),

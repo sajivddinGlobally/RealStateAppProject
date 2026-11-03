@@ -28,6 +28,7 @@ import 'package:realstate/Controller/userProfileController.dart';
 import 'package:realstate/Model/commonLoanModel.dart';
 import 'package:realstate/Model/contactUsBodyModel.dart';
 import 'package:realstate/Model/getLikeProperyResModel.dart';
+import 'package:realstate/Model/likePropertyBodyModel.dart';
 import 'package:realstate/Model/getPropertyResponsemodel.dart';
 import 'package:realstate/Model/myListingPropertyDeleteBodyModel.dart';
 import 'package:realstate/Model/propertyDetailModel.dart';
@@ -2524,43 +2525,295 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
 
   Widget SavedScreen() {
     final likeProvider = ref.watch(likePropertyController);
-    return SafeArea(
-      top: false,
-      child: Column(
-        children: [
-          Container(
-            height: 90.h,
-            padding: EdgeInsets.symmetric(horizontal: 16.w),
-            color: const Color(0xFF24ADD7),
-            child: Padding(
-              padding: EdgeInsets.only(top: 25.h),
+    return Container(
+      color: const Color(0xFFF8F9FA),
+      child: SafeArea(
+        top: true,
+        bottom: false,
+        child: Column(
+          children: [
+            // Top Web-styled Header
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  bottom: BorderSide(color: Colors.grey.shade200, width: 1),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
               child: Row(
                 children: [
-                  Text(
-                    "Saved Property",
-                    style: GoogleFonts.inter(
-                      color: Colors.white,
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.bold,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Saved Properties",
+                          style: GoogleFonts.inter(
+                            color: const Color(0xFF111827),
+                            fontSize: 22.sp,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 2.h),
+                        likeProvider.when(
+                          data: (snap) {
+                            final count = snap.data?.length ?? 0;
+                            return Text(
+                              "$count saved ${count == 1 ? 'property' : 'properties'}",
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                color: const Color(0xFF6B7280),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            );
+                          },
+                          loading: () => Text(
+                            "Loading properties...",
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              color: const Color(0xFF6B7280),
+                            ),
+                          ),
+                          error: (_, __) => Text(
+                            "Saved items",
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              color: const Color(0xFF6B7280),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  InkWell(
+                    onTap: () {
+                      setState(() {
+                        bottomIndex = 0;
+                      });
+                      // Navigator.push(
+                      //   context,
+                      //   MaterialPageRoute(
+                      //     builder: (context) => SearchResultScreen(selectedCity),
+                      //   ),
+                      // );
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => ListingPage()),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(14.r),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 14.w,
+                        vertical: 9.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF24ADD7),
+                        borderRadius: BorderRadius.circular(14.r),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(
+                              0xFF24ADD7,
+                            ).withValues(alpha: 0.35),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            "Browse All",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(width: 4.w),
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            color: Colors.white,
+                            size: 14.sp,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-          Expanded(
-            child: RefreshIndicator(
-              backgroundColor: Color(0xFF24ADD7),
-              color: Colors.white,
-              onRefresh: () async {
-                // सबसे साफ तरीका
-                await ref.refresh(likePropertyController.future);
-                // या
-                // ref.invalidate(getMyPropertyController);
-              },
-              child: likeProvider.when(
-                data: (snap) {
-                  if (snap.data!.isEmpty) {
+
+            // Content Area
+            Expanded(
+              child: RefreshIndicator(
+                backgroundColor: const Color(0xFF24ADD7),
+                color: Colors.white,
+                onRefresh: () async {
+                  ref.invalidate(likePropertyController);
+                  await ref.read(likePropertyController.future);
+                },
+                child: likeProvider.when(
+                  data: (snap) {
+                    final items = snap.data ?? [];
+                    if (items.isEmpty) {
+                      return Center(
+                        child: SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 24.w,
+                            vertical: 36.h,
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 80.r,
+                                height: 80.r,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFFF3F4F6),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.favorite_rounded,
+                                  size: 38.sp,
+                                  color: const Color(0xFFCBD5E1),
+                                ),
+                              ),
+                              SizedBox(height: 18.h),
+                              Text(
+                                "No saved properties yet",
+                                style: GoogleFonts.inter(
+                                  fontSize: 19.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color(0xFF1F2937),
+                                ),
+                              ),
+                              SizedBox(height: 6.h),
+                              Text(
+                                "Start exploring and save properties you love!",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  color: const Color(0xFF9CA3AF),
+                                ),
+                              ),
+                              SizedBox(height: 24.h),
+                              InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    bottomIndex = 0;
+                                  });
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          SearchResultScreen(selectedCity),
+                                    ),
+                                  );
+                                },
+                                borderRadius: BorderRadius.circular(16.r),
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 26.w,
+                                    vertical: 13.h,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF24ADD7),
+                                    borderRadius: BorderRadius.circular(16.r),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(
+                                          0xFF24ADD7,
+                                        ).withValues(alpha: 0.35),
+                                        blurRadius: 14,
+                                        offset: const Offset(0, 5),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        "Explore Properties",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14.sp,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      SizedBox(width: 8.w),
+                                      Icon(
+                                        Icons.arrow_forward_rounded,
+                                        color: Colors.white,
+                                        size: 16.sp,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
+                    return LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isTablet = constraints.maxWidth >= 600;
+                        if (isTablet) {
+                          return GridView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 16.h,
+                            ),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 16,
+                                  mainAxisSpacing: 16,
+                                  childAspectRatio: 0.82,
+                                ),
+                            itemCount: items.length,
+                            itemBuilder: (context, index) {
+                              return PropertyCardSaved(
+                                data: items[index],
+                                isGrid: true,
+                              );
+                            },
+                          );
+                        }
+
+                        return ListView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 16.w,
+                            vertical: 16.h,
+                          ),
+                          itemCount: items.length,
+                          itemBuilder: (context, index) {
+                            return PropertyCardSaved(
+                              data: items[index],
+                              isGrid: false,
+                            );
+                          },
+                        );
+                      },
+                    );
+                  },
+                  error: (error, stackTrace) {
+                    log(stackTrace.toString());
+                    log(error.toString());
                     return Center(
                       child: Padding(
                         padding: EdgeInsets.all(24.w),
@@ -2568,89 +2821,57 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              Icons.bookmark_border,
-                              size: 80.sp,
-                              color: Colors.grey.shade400,
+                              Icons.error_outline_rounded,
+                              size: 48.sp,
+                              color: Colors.redAccent,
                             ),
-                            SizedBox(height: 16.h),
-
+                            SizedBox(height: 12.h),
                             Text(
-                              "No saved properties",
+                              "Failed to load saved properties",
                               style: TextStyle(
-                                fontSize: 18.sp,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF1F2937),
                               ),
                             ),
-
-                            SizedBox(height: 8.h),
-
+                            SizedBox(height: 6.h),
                             Text(
-                              "You haven’t saved any properties yet.\nTap the bookmark icon to save your favorites.",
+                              error.toString(),
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                fontSize: 14.sp,
+                                fontSize: 12.sp,
                                 color: Colors.grey,
                               ),
                             ),
-
-                            SizedBox(height: 20.h),
-
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                setState(() {
-                                  bottomIndex = 0;
-                                });
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        SearchResultScreen(selectedCity),
-                                  ),
-                                );
-                              },
-                              icon: const Icon(
-                                Icons.search,
-                                color: Colors.white,
-                              ),
-                              label: const Text(
-                                "Explore Properties",
-                                style: TextStyle(color: Colors.white),
-                              ),
+                            SizedBox(height: 16.h),
+                            ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF24ADD7),
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 24.w,
-                                  vertical: 12.h,
-                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12.r),
                                 ),
+                              ),
+                              onPressed: () {
+                                ref.invalidate(likePropertyController);
+                              },
+                              child: const Text(
+                                "Retry",
+                                style: TextStyle(color: Colors.white),
                               ),
                             ),
                           ],
                         ),
                       ),
                     );
-                  }
-
-                  return ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: snap.data!.length,
-                    itemBuilder: (context, index) {
-                      return PropertyCardSaved(data: snap.data![index]);
-                    },
-                  );
-                },
-                error: (error, stackTrace) {
-                  log(stackTrace.toString());
-                  log(error.toString());
-                  return Center(child: Text(error.toString()));
-                },
-                loading: () => Center(child: CircularProgressIndicator()),
+                  },
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF24ADD7)),
+                  ),
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -3848,186 +4069,444 @@ class _PropertyCardState extends ConsumerState<PropertyCard> {
   }
 }
 
-class PropertyCardSaved extends StatelessWidget {
-  final Datum data; // Aapka model class yaha aayega
-  const PropertyCardSaved({super.key, required this.data});
+class PropertyCardSaved extends ConsumerStatefulWidget {
+  final Datum data;
+  final bool isGrid;
+  const PropertyCardSaved({super.key, required this.data, this.isGrid = false});
+
+  @override
+  ConsumerState<PropertyCardSaved> createState() => _PropertyCardSavedState();
+}
+
+class _PropertyCardSavedState extends ConsumerState<PropertyCardSaved> {
+  bool isLiked = true;
+  bool isToggling = false;
+
+  String _formatPrice(String? priceStr) {
+    if (priceStr == null || priceStr.isEmpty) return "Price on Request";
+    final cleanStr = priceStr.replaceAll(RegExp(r'[^0-9.]'), '');
+    final t = double.tryParse(cleanStr);
+    if (t == null) return "₹$priceStr";
+    if (t >= 10000000) {
+      return "₹${(t / 10000000).toStringAsFixed(2).replaceAll(RegExp(r'\.00$'), '')} Cr";
+    } else if (t >= 100000) {
+      return "₹${(t / 100000).toStringAsFixed(1).replaceAll(RegExp(r'\.0$'), '')} L";
+    } else if (t >= 1000) {
+      return "₹${(t / 1000).toStringAsFixed(1).replaceAll(RegExp(r'\.0$'), '')} K";
+    } else {
+      return "₹${t.toStringAsFixed(0)}";
+    }
+  }
+
+  Future<void> _toggleLike() async {
+    final propId = widget.data.propertyId?.id ?? widget.data.id;
+    if (propId == null || propId.isEmpty) return;
+
+    setState(() {
+      isToggling = true;
+    });
+
+    try {
+      final likeBody = LikePropertyBodyModel(propertyId: propId);
+      final service = APIStateNetwork(createDio());
+      final res = await service.likeProperties(likeBody);
+
+      if (res.code == 0 || res.error == false) {
+        Fluttertoast.showToast(msg: "Removed from saved properties");
+        ref.invalidate(likePropertyController);
+      } else {
+        Fluttertoast.showToast(msg: res.message ?? "Failed to update like");
+      }
+    } catch (e) {
+      log("Error toggling like: $e");
+      Fluttertoast.showToast(msg: "Server error");
+    } finally {
+      if (mounted) {
+        setState(() {
+          isToggling = false;
+        });
+      }
+    }
+  }
+
+  void _navigateToDetails() {
+    final slug = widget.data.propertyId?.slug;
+    if (slug != null && slug.isNotEmpty) {
+      Navigator.push(
+        context,
+        CupertinoPageRoute(
+          builder: (context) => PerticulerPropertyPage(propertyId: slug),
+        ),
+      );
+    } else if (widget.data.propertyId?.id != null) {
+      Navigator.push(
+        context,
+        CupertinoPageRoute(
+          builder: (context) =>
+              PerticulerPropertyPage(propertyId: widget.data.propertyId!.id!),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xFF24ADD7);
+    final prop = widget.data.propertyId;
+    final photos = prop?.uploadedPhotos ?? [];
+    final hasPhoto = photos.isNotEmpty && photos.first.isNotEmpty;
+    final propertyType = (prop?.propertyType?.isNotEmpty == true)
+        ? prop!.propertyType!
+        : "PROPERTY";
+
+    final locationText = (prop?.localityArea?.isNotEmpty == true)
+        ? prop!.localityArea!
+        : (prop?.propertyAddress?.isNotEmpty == true
+              ? prop!.propertyAddress!
+              : (prop?.city ?? "Location Unavailable"));
+
+    final areaText = (prop?.area?.isNotEmpty == true) ? prop!.area! : "--";
+    final bedText = (prop?.bedRoom?.isNotEmpty == true) ? prop!.bedRoom! : "--";
 
     return Container(
-      margin: EdgeInsets.only(bottom: 16.h),
+      margin: EdgeInsets.only(bottom: widget.isGrid ? 0 : 16.h),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(24.r),
+        border: Border.all(color: const Color(0xFFF1F5F9), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+            color: const Color(0xFF0F172A).withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 1. Image Section with Price Badge
-          Stack(
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(24.r),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(24.r),
+          onTap: _navigateToDetails,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              InkWell(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    CupertinoPageRoute(
-                      builder: (context) => PerticulerPropertyPage(
-                        propertyId: data.propertyId!.slug.toString(),
-                      ),
-                    ),
-                  );
-                },
-                child: ClipRRect(
-                  borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(16.r),
-                  ),
-                  child: Image.network(
-                    data.propertyId!.uploadedPhotos![0],
-                    // API se image
-                    height: 180.h,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return SizedBox(
-                        height: 180.h,
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: primaryColor,
-                            strokeWidth: 1.w,
+              // 1. Image section with Heart button & "New Listing" badge
+              ClipRRect(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+                child: Stack(
+                  children: [
+                    hasPhoto
+                        ? Image.network(
+                            photos.first,
+                            height: 200.h,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, progress) {
+                              if (progress == null) return child;
+                              return Container(
+                                height: 200.h,
+                                width: double.infinity,
+                                color: const Color(0xFFF3F4F6),
+                                child: const Center(
+                                  child: CircularProgressIndicator(
+                                    color: Color(0xFF24ADD7),
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              );
+                            },
+                            errorBuilder: (_, __, ___) => Container(
+                              height: 200.h,
+                              width: double.infinity,
+                              color: const Color(0xFFF3F4F6),
+                              child: Icon(
+                                Icons.home_work_outlined,
+                                size: 48.sp,
+                                color: Colors.grey.shade400,
+                              ),
+                            ),
+                          )
+                        : Container(
+                            height: 200.h,
+                            width: double.infinity,
+                            color: const Color(0xFFF3F4F6),
+                            child: Icon(
+                              Icons.home_work_outlined,
+                              size: 48.sp,
+                              color: Colors.grey.shade400,
+                            ),
+                          ),
+
+                    // Top-right Heart button
+                    Positioned(
+                      top: 12.h,
+                      right: 12.w,
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(25.r),
+                          onTap: isToggling ? null : _toggleLike,
+                          child: Container(
+                            padding: EdgeInsets.all(8.r),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.12),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: isToggling
+                                ? SizedBox(
+                                    width: 20.sp,
+                                    height: 20.sp,
+                                    child: const CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Color(0xFFEF4444),
+                                    ),
+                                  )
+                                : Icon(
+                                    isLiked
+                                        ? Icons.favorite_rounded
+                                        : Icons.favorite_border_rounded,
+                                    color: isLiked
+                                        ? const Color(0xFFEF4444)
+                                        : const Color(0xFF4B5563),
+                                    size: 20.sp,
+                                  ),
                           ),
                         ),
-                      );
-                    },
-                    errorBuilder: (context, error, stack) => Container(
-                      height: 180.h,
-                      width: double.infinity,
-                      color: Colors.grey[200],
-                      child: const Icon(Icons.image_not_supported),
+                      ),
                     ),
-                  ),
+
+                    // Bottom-left "New Listing" badge
+                    Positioned(
+                      bottom: 12.h,
+                      left: 12.w,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 10.w,
+                          vertical: 5.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.92),
+                          borderRadius: BorderRadius.circular(8.r),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          "New Listing",
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF1F2937),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              // Price Badge
-              Positioned(
-                bottom: 12,
-                left: 12,
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 12.w,
-                    vertical: 6.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: primaryColor,
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Text(
-                    "₹${data.propertyId!.price}",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16.sp,
+
+              // 2. Details body
+              Padding(
+                padding: EdgeInsets.all(16.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Row 1: Price & Property Type
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _formatPrice(prop?.price),
+                            style: GoogleFonts.inter(
+                              fontSize: 20.sp,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF111827),
+                              letterSpacing: -0.5,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        SizedBox(width: 8.w),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8.w,
+                            vertical: 4.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF7ED), // orange-50
+                            borderRadius: BorderRadius.circular(4.r),
+                          ),
+                          child: Text(
+                            propertyType.toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 11.sp,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
+                              color: const Color(0xFFEA580C), // orange-600
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
+                    SizedBox(height: 6.h),
+
+                    // Row 2: Location
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.location_on_outlined,
+                          size: 15.sp,
+                          color: const Color(0xFF6B7280),
+                        ),
+                        SizedBox(width: 4.w),
+                        Expanded(
+                          child: Text(
+                            locationText,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              color: const Color(0xFF6B7280),
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 12.h),
+
+                    // Row 3: Specs divider (Area & BHK Beds)
+                    Container(
+                      padding: EdgeInsets.symmetric(vertical: 10.h),
+                      decoration: const BoxDecoration(
+                        border: Border.symmetric(
+                          horizontal: BorderSide(
+                            color: Color(0xFFF3F4F6),
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          // Area
+                          Row(
+                            children: [
+                              Container(
+                                padding: EdgeInsets.all(5.r),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF3F4F6),
+                                  borderRadius: BorderRadius.circular(6.r),
+                                ),
+                                child: Icon(
+                                  Icons.crop_free_rounded,
+                                  size: 14.sp,
+                                  color: const Color(0xFF374151),
+                                ),
+                              ),
+                              SizedBox(width: 6.w),
+                              Text(
+                                "$areaText sqft",
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF374151),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(width: 18.w),
+
+                          // BHK
+                          Row(
+                            children: [
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 6.w,
+                                  vertical: 3.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF3F4F6),
+                                  borderRadius: BorderRadius.circular(6.r),
+                                ),
+                                child: Text(
+                                  "BHK",
+                                  style: TextStyle(
+                                    fontSize: 10.sp,
+                                    fontWeight: FontWeight.w800,
+                                    color: const Color(0xFF374151),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 6.w),
+                              Text(
+                                "$bedText Beds",
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF374151),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 14.h),
+
+                    // Row 4: Details CTA Button
+                    InkWell(
+                      onTap: _navigateToDetails,
+                      borderRadius: BorderRadius.circular(12.r),
+                      child: Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF24ADD7),
+                          borderRadius: BorderRadius.circular(12.r),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(
+                                0xFF24ADD7,
+                              ).withValues(alpha: 0.35),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          "Details",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15.sp,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-
-          // 2. Details Section
-          Padding(
-            padding: EdgeInsets.all(12.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      //property.propertyType!.toUpperCase(),
-                      data.propertyId!.propertyType!.toUpperCase(),
-                      style: TextStyle(
-                        color: primaryColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12.sp,
-                      ),
-                    ),
-                    Text(
-                      "Status: ${data.propertyId!.status}",
-                      style: TextStyle(
-                        color: Colors.green,
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  //property.propertyAddress ?? "",
-                  data.propertyId!.propertyAddress ?? "",
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 4.h),
-                Row(
-                  children: [
-                    Icon(Icons.location_on, size: 14.sp, color: Colors.grey),
-                    SizedBox(width: 4.w),
-                    Text(
-                      "${data.propertyId!.city}",
-                      style: TextStyle(color: Colors.grey, fontSize: 13.sp),
-                    ),
-                  ],
-                ),
-                Divider(height: 20.h),
-                // 3. Icons Row (Area, Bathrooms, Furnishing)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _buildIconDetail(
-                      Icons.square_foot,
-                      "${data.propertyId!.area} sqft",
-                    ),
-                    _buildIconDetail(
-                      Icons.bathtub_outlined,
-                      "${data.propertyId!.bathrooms} Bath",
-                    ),
-                    _buildIconDetail(Icons.chair_outlined, "Semi-Furnished"),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: 10.h),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildIconDetail(IconData icon, String text) {
-    return Row(
-      children: [
-        Icon(icon, size: 16.sp, color: Colors.grey[600]),
-        SizedBox(width: 4.w),
-        Text(
-          text,
-          style: TextStyle(fontSize: 12.sp, color: Colors.grey[700]),
         ),
-      ],
+      ),
     );
   }
 }

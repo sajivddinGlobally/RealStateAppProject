@@ -1315,9 +1315,9 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
         ? dynamicOptions
         : (isCommercial ? fallbackCommercial : fallbackResidential);
 
-    final displayCount = showAllPropertySubTypes
-        ? currentOptions.length
-        : (currentOptions.length > 6 ? 6 : currentOptions.length);
+    // final displayCount = showAllPropertySubTypes
+    //     ? currentOptions.length
+    //     : (currentOptions.length > 6 ? 6 : currentOptions.length);
 
     return _buildCard(
       child: Column(
@@ -1489,7 +1489,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                     child: GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      itemCount: displayCount,
+                      itemCount: currentOptions.length,
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
                         mainAxisSpacing: 8.h,
@@ -1565,31 +1565,30 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
               );
             },
           ),
-          if (currentOptions.length > 6)
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                style: const ButtonStyle(
-                  padding: WidgetStatePropertyAll(EdgeInsets.zero),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                onPressed: () {
-                  setState(() {
-                    showAllPropertySubTypes = !showAllPropertySubTypes;
-                  });
-                },
-                child: Text(
-                  showAllPropertySubTypes ? "View Less" : "View All",
-                  style: TextStyle(
-                    color: const Color(0xFF24ADD7),
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          // SizedBox(height: 6.h),
-
+          // if (currentOptions.length > 6)
+          //   Align(
+          //     alignment: Alignment.centerRight,
+          //     child: TextButton(
+          //       style: const ButtonStyle(
+          //         padding: WidgetStatePropertyAll(EdgeInsets.zero),
+          //         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          //       ),
+          //       onPressed: () {
+          //         setState(() {
+          //           showAllPropertySubTypes = !showAllPropertySubTypes;
+          //         });
+          //       },
+          //       child: Text(
+          //         showAllPropertySubTypes ? "View Less" : "View All",
+          //         style: TextStyle(
+          //           color: const Color(0xFF24ADD7),
+          //           fontSize: 12.sp,
+          //           fontWeight: FontWeight.w600,
+          //         ),
+          //       ),
+          //     ),
+          //   ),
+          SizedBox(height: 10.h),
           // 4. Are you a broker?
           FormField<bool>(
             key: ValueKey(isBroker),

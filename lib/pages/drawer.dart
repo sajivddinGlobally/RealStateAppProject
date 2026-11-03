@@ -159,20 +159,20 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                     );
                   },
                 ),
-                _drawerItem(
-                  icon: Icons.house_outlined,
-                  label: 'My Property Request',
-                  context: context,
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      CupertinoPageRoute(
-                        builder: (context) => MyListedPropertiesScreen(),
-                      ),
-                    );
-                  },
-                ),
+                // _drawerItem(
+                //   icon: Icons.house_outlined,
+                //   label: 'My Property Request',
+                //   context: context,
+                //   onTap: () {
+                //     Navigator.pop(context);
+                //     Navigator.push(
+                //       context,
+                //       CupertinoPageRoute(
+                //         builder: (context) => MyListedPropertiesScreen(),
+                //       ),
+                //     );
+                //   },
+                // ),
                 _drawerItem(
                   icon: Icons.account_balance_wallet,
                   label: 'My Loan Request',
