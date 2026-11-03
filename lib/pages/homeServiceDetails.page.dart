@@ -227,14 +227,53 @@ class _HomeServiceDetailsPageState
       return false;
     }
     try {
-      final startTimePart = slotStr.split(" - ").first.trim();
-      final parsedTime = DateFormat("hh:mm a").parse(startTimePart);
+      final s = slotStr.toLowerCase().replaceAll(RegExp(r'\s+'), ' ').trim();
+      List<String> parts;
+      if (s.contains(' to ')) {
+        parts = s.split(' to ');
+      } else if (s.contains('-')) {
+        parts = s.split('-');
+      } else {
+        parts = [s];
+      }
+
+      final startPart = parts[0].trim();
+      final endPart = parts.length > 1 ? parts[1].trim() : '';
+
+      final match = RegExp(r'(\d+)(?::(\d+))?').firstMatch(startPart);
+      if (match == null) return false;
+
+      int hour = int.parse(match.group(1)!);
+      int minute = match.group(2) != null ? int.parse(match.group(2)!) : 0;
+
+      bool isPM = false;
+      bool isAM = false;
+
+      if (startPart.contains('pm')) {
+        isPM = true;
+      } else if (startPart.contains('am')) {
+        isAM = true;
+      } else if (endPart.contains('pm')) {
+        if (hour == 12) {
+          isPM = true;
+        } else if (hour >= 1 && hour <= 6) {
+          isPM = true;
+        } else {
+          isAM = true;
+        }
+      } else if (endPart.contains('am')) {
+        isAM = true;
+      }
+
+      if (isPM && hour < 12) hour += 12;
+      if (isAM && hour == 12) hour = 0;
+
       final slotDateTime = DateTime(
         now.year,
         now.month,
         now.day,
-        parsedTime.hour,
-        parsedTime.minute,
+        hour,
+        minute,
       );
       return now.isAfter(slotDateTime);
     } catch (e) {
@@ -1975,7 +2014,7 @@ class _HomeServiceDetailsPageState
     final issueController = TextEditingController();
     final PageController pageController = PageController();
 
-    DateTime selectedDate = DateTime.now();
+    DateTime? selectedDate;
     String? selectedSlot;
     String paymentMethod = "online"; // 'online' or 'cod'
     int currentStep = 1;
@@ -2126,6 +2165,12 @@ class _HomeServiceDetailsPageState
                                   );
                                   return;
                                 }
+                                if (selectedDate == null) {
+                                  Fluttertoast.showToast(
+                                    msg: "Please select a visit date",
+                                  );
+                                  return;
+                                }
                                 if (selectedSlot == null) {
                                   Fluttertoast.showToast(
                                     msg: "Please select a time slot",
@@ -2210,7 +2255,7 @@ class _HomeServiceDetailsPageState
                               scrollController,
                               setSheetState,
                               addressController.text.trim(),
-                              selectedDate,
+                              selectedDate ?? DateTime.now(),
                               selectedSlot ?? "",
                               issueController.text.trim(),
                               paymentMethod,
@@ -2310,7 +2355,7 @@ class _HomeServiceDetailsPageState
     ScrollController scrollController,
     StateSetter setSheetState,
     TextEditingController addressController,
-    DateTime selectedDate,
+    DateTime? selectedDate,
     String? selectedSlot,
     List<String> slots,
     String serviceId,
@@ -2527,6 +2572,9 @@ class _HomeServiceDetailsPageState
           // Address Input
           TextField(
             controller: addressController,
+            maxLines: 3,
+            minLines: 2,
+            keyboardType: TextInputType.multiline,
             decoration: InputDecoration(
               hintText: "e.g. Flat 402, Block B, Society Name",
               hintStyle: GoogleFonts.inter(
@@ -2579,7 +2627,7 @@ class _HomeServiceDetailsPageState
             onTap: () async {
               final picked = await showDatePicker(
                 context: context,
-                initialDate: selectedDate,
+                initialDate: selectedDate ?? DateTime.now(),
                 firstDate: DateTime.now(),
                 lastDate: DateTime.now().add(const Duration(days: 30)),
                 builder: (context, child) {
@@ -2610,11 +2658,17 @@ class _HomeServiceDetailsPageState
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    DateFormat("EEEE, dd MMM yyyy").format(selectedDate),
+                    selectedDate != null
+                        ? DateFormat("EEEE, dd MMM yyyy").format(selectedDate)
+                        : "Select Date",
                     style: GoogleFonts.inter(
                       fontSize: 13.sp,
-                      fontWeight: FontWeight.w700,
-                      color: textDark,
+                      fontWeight: selectedDate != null
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                      color: selectedDate != null
+                          ? textDark
+                          : Colors.grey.shade400,
                     ),
                   ),
                   Icon(Icons.edit_calendar, color: primaryColor, size: 18.sp),
@@ -2659,7 +2713,17 @@ class _HomeServiceDetailsPageState
               final bool isPast = _isSlotPast(slot, selectedDate);
 
               return InkWell(
-                onTap: isPast ? null : () => onSlotChange(slot),
+                onTap: isPast
+                    ? null
+                    : () {
+                        if (selectedDate == null) {
+                          Fluttertoast.showToast(
+                            msg: "Please select a visit date first",
+                          );
+                          return;
+                        }
+                        onSlotChange(slot);
+                      },
                 borderRadius: BorderRadius.circular(12.r),
                 child: Container(
                   alignment: Alignment.center,

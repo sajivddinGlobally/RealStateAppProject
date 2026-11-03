@@ -848,22 +848,6 @@ class _MyrequestPageState extends ConsumerState<MyrequestPage> {
             ),
           ],
         ),
-        actions: [
-          Container(
-            margin: EdgeInsets.only(right: 16.w),
-            padding: EdgeInsets.all(8.w),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: Colors.grey.shade200),
-            ),
-            child: Icon(
-              Icons.handyman_outlined,
-              color: primaryCyan,
-              size: 20.sp,
-            ),
-          ),
-        ],
       ),
       body: SafeArea(
         child: RefreshIndicator(

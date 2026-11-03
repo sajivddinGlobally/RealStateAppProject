@@ -330,9 +330,9 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
     "assets/loan3.jpg",
   ];
   List<String> get currentImages {
-    if (selectIndex == 0) {
+    if (selectIndex == 0 || selectIndex == 1) {
       return propertyImages;
-    } else if (selectIndex == 1) {
+    } else if (selectIndex == 2) {
       return homeServiceImages;
     } else {
       return loanImages;
@@ -467,7 +467,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                   buildNavItem(
                     Icons.description_outlined,
                     //  'Add\nProperty',
-                    selectIndex == 1 ? 'Add\nVendor' : 'Add\nProperty',
+                    selectIndex == 2 ? 'Add\nVendor' : 'Add\nProperty',
                     2,
                   ),
                   buildNavItem(Icons.call_outlined, 'Call us', 3),
@@ -538,6 +538,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
   // ==================== HOME SCREEN ====================
   Widget HomeScreen(String? city) {
     final cityListState = ref.watch(getCityController);
+    final profileController = ref.watch(userProfileController);
 
     final notificationState = ref.watch(notificationController);
     final unreadCount = notificationState.maybeWhen(
@@ -863,590 +864,728 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
             ),
           ),
 
+          // ==================== HERO BANNER (MATCHING WEBSITE EXACTLY) ====================
           Builder(
             builder: (context) {
-              // 1. Determine target tab category according to selectIndex
-              String targetCategory = "Buy Property";
+              // 1. Determine tab name
+              final String targetCategory = selectIndex == 0
+                  ? "Buy Property"
+                  : selectIndex == 1
+                  ? "Rent Property"
+                  : selectIndex == 2
+                  ? "Home Services"
+                  : "Loan Services";
+
+              // 2. Default slides per tab category (exact data & styling from website propertyleinnovation.com)
+              final List<Map<String, String>> defaultSlides;
               if (selectIndex == 0) {
-                targetCategory = "Buy Property";
+                // Buy Property
+                defaultSlides = [
+                  {
+                    "img": "https://propertyleinnovation.com/assets/home/homeheroslide1.png",
+                    "fallback": "assets/property1.jpg",
+                    "title": "FIND POPULAR PROPERTIES",
+                    "highlight": "IN JAIPUR",
+                  },
+                  {
+                    "img": "https://propertyleinnovation.com/assets/home/homeheroslide2.png",
+                    "fallback": "assets/property2.jfif",
+                    "title": "BEST REAL ESTATE DEALS",
+                    "highlight": "IN UDAIPUR",
+                  },
+                  {
+                    "img": "https://propertyleinnovation.com/assets/home/homeheroslide3.png",
+                    "fallback": "assets/property3.jfif",
+                    "title": "LUXURY HOMES FOR YOU",
+                    "highlight": "PREMIUM LIVING",
+                  },
+                ];
               } else if (selectIndex == 1) {
-                targetCategory = "Rent Property";
+                // Rent Property
+                defaultSlides = [
+                  {
+                    "img": "https://propertyleinnovation.com/assets/home/homeheroslide1.png",
+                    "fallback": "assets/property1.jpg",
+                    "title": "FIND RENTAL HOMES",
+                    "highlight": "IN YOUR CITY",
+                  },
+                  {
+                    "img": "https://propertyleinnovation.com/assets/home/homeheroslide2.png",
+                    "fallback": "assets/property2.jfif",
+                    "title": "AFFORDABLE APARTMENTS",
+                    "highlight": "FOR RENT",
+                  },
+                  {
+                    "img": "https://propertyleinnovation.com/assets/home/homeheroslide3.png",
+                    "fallback": "assets/property3.jfif",
+                    "title": "SPACIOUS VILLAS",
+                    "highlight": "READY TO MOVE",
+                  },
+                ];
               } else if (selectIndex == 2) {
-                targetCategory = "Home Services";
+                // Home Services
+                defaultSlides = [
+                  {
+                    "img": "https://propertyleinnovation.com/assets/service/servicehero.png",
+                    "fallback": "assets/home1.webp",
+                    "title": "EXPERT HOME SERVICES",
+                    "highlight": "AT YOUR DOORSTEP",
+                  },
+                  {
+                    "img": "https://propertyleinnovation.com/assets/service/repair1.png",
+                    "fallback": "assets/home2.jfif",
+                    "title": "RELIABLE PROFESSIONALS",
+                    "highlight": "FOR EVERY NEED",
+                  },
+                  {
+                    "img": "https://propertyleinnovation.com/assets/service/service1.png",
+                    "fallback": "assets/home3.jfif",
+                    "title": "QUICK & EFFICIENT",
+                    "highlight": "HOME REPAIRS",
+                  },
+                ];
               } else {
-                targetCategory = "Loan Services";
+                // Loan Services
+                defaultSlides = [
+                  {
+                    "img": "https://propertyleinnovation.com/assets/home/HomeLoan.png",
+                    "fallback": "assets/loan1.jpg",
+                    "title": "EASY HOME LOANS",
+                    "highlight": "LOW INTEREST RATES",
+                  },
+                  {
+                    "img": "https://propertyleinnovation.com/assets/home/CarLoan.png",
+                    "fallback": "assets/loan2.jfif",
+                    "title": "QUICK APPROVALS",
+                    "highlight": "DREAM HOME",
+                  },
+                  {
+                    "img": "https://propertyleinnovation.com/assets/home/PERSONAL.png",
+                    "fallback": "assets/loan3.jpg",
+                    "title": "FLEXIBLE EMIS",
+                    "highlight": "HASSLE FREE",
+                  },
+                ];
               }
 
-              return getBannerState.when(
-                data: (bannerData) {
-                  final allBanners = bannerData.data?.list ?? [];
+              // 3. Resolve slides list from API or default fallback
+              final List<Map<String, dynamic>> slides = [];
 
-                  // Filter banners by tab category
-                  final filteredBanners = allBanners.where((banner) {
-                    final cat = (banner.tabCategory ?? "").trim().toLowerCase();
-                    final target = targetCategory.toLowerCase();
-                    final isActive = banner.isActive ?? true;
-                    final notDeleted = banner.isDeleted != true;
-                    return isActive &&
-                        notDeleted &&
-                        (cat == target ||
-                            cat.contains(target.split(" ").first));
-                  }).toList();
+              getBannerState.whenData((bannerData) {
+                final allBanners = bannerData.data?.list ?? [];
+                final apiFiltered = allBanners.where((banner) {
+                  final cat = (banner.tabCategory ?? "").trim().toLowerCase();
+                  final target = targetCategory.toLowerCase();
+                  final isActive = banner.isActive ?? true;
+                  final notDeleted = banner.isDeleted != true;
+                  return isActive &&
+                      notDeleted &&
+                      (cat == target ||
+                          cat.contains(target.split(" ").first));
+                }).toList();
 
-                  final hasDynamicBanners = filteredBanners.isNotEmpty;
-                  final bannerCount = hasDynamicBanners
-                      ? filteredBanners.length
-                      : currentImages.length;
-                  final activeDotIndex = bannerCount > 0
-                      ? (currentBannerIndex % bannerCount)
-                      : 0;
+                if (apiFiltered.isNotEmpty) {
+                  for (int i = 0; i < apiFiltered.length; i++) {
+                    final b = apiFiltered[i];
+                    final fallbackSlide =
+                        defaultSlides[i % defaultSlides.length];
+                    final hasTitle =
+                        b.title != null && b.title!.trim().isNotEmpty;
+                    final hasHighlight =
+                        b.highlight != null && b.highlight!.trim().isNotEmpty;
 
-                  return Stack(
-                    children: [
-                      CarouselSlider(
-                        options: CarouselOptions(
-                          height: 260.h,
-                          viewportFraction: 1,
-                          autoPlay: bannerCount > 1,
-                          autoPlayInterval: const Duration(seconds: 3),
-                          autoPlayAnimationDuration: const Duration(
-                            milliseconds: 800,
-                          ),
-                          onPageChanged: (index, reason) {
-                            setState(() {
-                              currentBannerIndex = index;
-                            });
-                          },
-                        ),
-                        items: hasDynamicBanners
-                            ? filteredBanners.map((banner) {
-                                return GestureDetector(
-                                  onTap: () async {
-                                    if (banner.link != null &&
-                                        banner.link!.trim().isNotEmpty) {
-                                      final uri = Uri.tryParse(
-                                        banner.link!.trim(),
-                                      );
-                                      if (uri != null &&
-                                          await canLaunchUrl(uri)) {
-                                        await launchUrl(
-                                          uri,
-                                          mode: LaunchMode.externalApplication,
-                                        );
-                                      }
-                                    }
-                                  },
-                                  child: Stack(
-                                    children: [
-                                      Image.network(
-                                        banner.img ?? "",
-                                        height: 260.h,
-                                        width: double.infinity,
-                                        fit: BoxFit.cover,
-                                        loadingBuilder:
-                                            (context, child, loadingProgress) {
-                                              if (loadingProgress == null) {
-                                                return child;
-                                              }
-                                              return Container(
-                                                height: 260.h,
-                                                width: double.infinity,
-                                                color: Colors.grey.shade200,
-                                                child: const Center(
-                                                  child:
-                                                      CircularProgressIndicator(
-                                                        color: Color(
-                                                          0xFF24ADD7,
-                                                        ),
-                                                        strokeWidth: 2,
-                                                      ),
-                                                ),
-                                              );
-                                            },
-                                        errorBuilder:
-                                            (context, error, stackTrace) {
-                                              return Image.asset(
-                                                currentImages.first,
-                                                height: 260.h,
-                                                width: double.infinity,
-                                                fit: BoxFit.cover,
-                                              );
-                                            },
-                                      ),
+                    slides.add({
+                      "img": (b.img != null && b.img!.trim().isNotEmpty)
+                          ? b.img!.trim()
+                          : fallbackSlide["img"]!,
+                      "fallback": fallbackSlide["fallback"]!,
+                      "title": hasTitle
+                          ? b.title!.trim()
+                          : (hasHighlight &&
+                                  b.highlight!.trim().toLowerCase() ==
+                                      "propertyle"
+                              ? fallbackSlide["title"]!
+                              : (hasHighlight
+                                  ? "PROPERTYLE"
+                                  : fallbackSlide["title"]!)),
+                      "highlight": hasHighlight
+                          ? b.highlight!.trim()
+                          : fallbackSlide["highlight"]!,
+                      "link": b.link,
+                      "isNetwork": true,
+                    });
+                  }
+                }
+              });
 
-                                      /// Gradient
-                                      Container(
-                                        height: 260.h,
-                                        decoration: BoxDecoration(
-                                          gradient: LinearGradient(
-                                            colors: [
-                                              Colors.black.withOpacity(0.6),
-                                              Colors.transparent,
-                                            ],
-                                            begin: Alignment.bottomCenter,
-                                            end: Alignment.topCenter,
-                                          ),
-                                        ),
-                                      ),
+              // If no dynamic banners for this tab, use defaultSlides
+              if (slides.isEmpty) {
+                for (final ds in defaultSlides) {
+                  slides.add({
+                    "img": ds["img"]!,
+                    "fallback": ds["fallback"]!,
+                    "title": ds["title"]!,
+                    "highlight": ds["highlight"]!,
+                    "link": null,
+                    "isNetwork": true,
+                  });
+                }
+              }
 
-                                      /// TEXT CONTENT
-                                      Positioned(
-                                        left: 16.w,
-                                        bottom: 30.h,
-                                        right: 16.w,
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Chip(
-                                              labelPadding: EdgeInsets.zero,
-                                              label: Text(
-                                                selectIndex == 0
-                                                    ? "Buy Property"
-                                                    : selectIndex == 1
-                                                    ? "Rent Property"
-                                                    : selectIndex == 2
-                                                    ? "Best Service"
-                                                    : "Easy Loan",
-                                              ),
-                                              backgroundColor: Colors.white
-                                                  .withOpacity(0.8),
-                                            ),
-                                            SizedBox(height: 6.h),
-                                            Text(
-                                              (banner.title != null &&
-                                                      banner.title!
-                                                          .trim()
-                                                          .isNotEmpty)
-                                                  ? banner.title!
-                                                  : (selectIndex == 0
-                                                        ? "Find Your Dream Property"
-                                                        : selectIndex == 1
-                                                        ? "Find Rental Homes"
-                                                        : selectIndex == 2
-                                                        ? "Best Home Services"
-                                                        : "Get Instant Loan"),
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 18.sp,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            SizedBox(height: 4.h),
-                                            Text(
-                                              (banner.highlight != null &&
-                                                      banner.highlight!
-                                                          .trim()
-                                                          .isNotEmpty)
-                                                  ? banner.highlight!
-                                                  : (selectIndex == 0
-                                                        ? "Buy properties"
-                                                        : selectIndex == 1
-                                                        ? "Rent properties"
-                                                        : selectIndex == 2
-                                                        ? "Cleaning, Plumbing, Electrician & more"
-                                                        : "Home, Personal & Business Loan Available"),
-                                              style: TextStyle(
-                                                color: Colors.white70,
-                                                fontSize: 13.sp,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }).toList()
-                            : currentImages.map((image) {
-                                return Stack(
-                                  children: [
-                                    Image.asset(
-                                      image,
-                                      height: 260.h,
-                                      width: double.infinity,
-                                      fit: BoxFit.cover,
-                                    ),
-                                    Container(
-                                      height: 260.h,
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          colors: [
-                                            Colors.black.withOpacity(0.6),
-                                            Colors.transparent,
-                                          ],
-                                          begin: Alignment.bottomCenter,
-                                          end: Alignment.topCenter,
-                                        ),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      left: 16.w,
-                                      bottom: 30.h,
-                                      right: 16.w,
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Chip(
-                                            labelPadding: EdgeInsets.zero,
-                                            label: Text(
-                                              selectIndex == 0
-                                                  ? "Top Property"
-                                                  : selectIndex == 1
-                                                  ? "Best Service"
-                                                  : "Easy Loan",
-                                            ),
-                                            backgroundColor: Colors.white
-                                                .withOpacity(0.8),
-                                          ),
-                                          SizedBox(height: 6.h),
-                                          Text(
-                                            selectIndex == 0
-                                                ? "Find Your Dream Property"
-                                                : selectIndex == 1
-                                                ? "Best Home Services"
-                                                : "Get Instant Loan",
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 18.sp,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          SizedBox(height: 4.h),
-                                          Text(
-                                            selectIndex == 0
-                                                ? "Buy properties"
-                                                : selectIndex == 1
-                                                ? "Rent properties"
-                                                : selectIndex == 2
-                                                ? "Cleaning, Plumbing, Electrician & more"
-                                                : "Home, Personal & Business Loan Available",
-                                            style: TextStyle(
-                                              color: Colors.white70,
-                                              fontSize: 13.sp,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              }).toList(),
-                      ),
+              final bannerCount = slides.length;
+              final activeDotIndex = bannerCount > 0
+                  ? (currentBannerIndex % bannerCount)
+                  : 0;
 
-                      /// 🔥 FIXED DOT INDICATOR
-                      if (bannerCount > 1)
-                        Positioned(
-                          bottom: 10.h,
-                          left: 0,
-                          right: 0,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: List.generate(
-                              bannerCount,
-                              (index) => AnimatedContainer(
-                                duration: const Duration(milliseconds: 300),
-                                margin: EdgeInsets.symmetric(horizontal: 4.w),
-                                width: activeDotIndex == index ? 12.w : 8.w,
-                                height: activeDotIndex == index ? 12.h : 8.h,
-                                decoration: BoxDecoration(
-                                  color: activeDotIndex == index
-                                      ? const Color(0xFF24ADD7)
-                                      : Colors.white,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  );
-                },
-                error: (error, stackTrace) {
-                  return Stack(
-                    children: [
-                      CarouselSlider(
-                        options: CarouselOptions(
-                          height: 260.h,
-                          viewportFraction: 1,
-                          autoPlay: true,
-                          autoPlayInterval: const Duration(seconds: 3),
-                          autoPlayAnimationDuration: const Duration(
-                            milliseconds: 800,
-                          ),
-                          onPageChanged: (index, reason) {
-                            setState(() {
-                              currentBannerIndex = index;
-                            });
-                          },
-                        ),
-                        items: currentImages.map((image) {
-                          return Stack(
-                            children: [
-                              Image.asset(
-                                image,
-                                height: 260.h,
-                                width: double.infinity,
+              return Stack(
+                children: [
+                  CarouselSlider(
+                    options: CarouselOptions(
+                      height: 240.h,
+                      viewportFraction: 1.0,
+                      autoPlay: bannerCount > 1,
+                      autoPlayInterval: const Duration(seconds: 4),
+                      autoPlayAnimationDuration:
+                          const Duration(milliseconds: 650),
+                      autoPlayCurve: Curves.easeInOut,
+                      onPageChanged: (index, reason) {
+                        setState(() {
+                          currentBannerIndex = index;
+                        });
+                      },
+                    ),
+                    items: slides.map((slide) {
+                      final imgUrl = slide["img"] as String;
+                      final fallbackAsset = slide["fallback"] as String;
+                      final title = (slide["title"] as String).trim();
+                      final highlight = (slide["highlight"] as String).trim();
+                      final link = slide["link"] as String?;
+                      final isNetwork = slide["isNetwork"] as bool? ?? false;
+
+                      return GestureDetector(
+                        onTap: () async {
+                          if (link != null && link.trim().isNotEmpty) {
+                            final uri = Uri.tryParse(link.trim());
+                            if (uri != null && await canLaunchUrl(uri)) {
+                              await launchUrl(
+                                uri,
+                                mode: LaunchMode.externalApplication,
+                              );
+                            }
+                          }
+                        },
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            // 1. Background Image with fallback
+                            if (isNetwork && imgUrl.isNotEmpty)
+                              Image.network(
+                                imgUrl,
                                 fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: double.infinity,
+                                loadingBuilder:
+                                    (context, child, loadingProgress) {
+                                  if (loadingProgress == null) return child;
+                                  return Container(
+                                    color: const Color(0xFF1E293B),
+                                    child: const Center(
+                                      child: CircularProgressIndicator(
+                                        color: Color(0xFF24ADD7),
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                errorBuilder:
+                                    (context, error, stackTrace) {
+                                  return Image.asset(
+                                    fallbackAsset,
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                  );
+                                },
+                              )
+                            else
+                              Image.asset(
+                                fallbackAsset,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: double.infinity,
                               ),
-                              Container(
-                                height: 260.h,
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      Colors.black.withOpacity(0.6),
-                                      Colors.transparent,
-                                    ],
-                                    begin: Alignment.bottomCenter,
-                                    end: Alignment.topCenter,
-                                  ),
+
+                            // 2. Translucent Overlay (matching website bg-black/50)
+                            Container(
+                              color: Colors.black.withValues(alpha: 0.45),
+                            ),
+
+                            // 3. Centered Content (matching website h3 + h1)
+                            Center(
+                              child: Padding(
+                                padding:
+                                    EdgeInsets.symmetric(horizontal: 20.w),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.center,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.center,
+                                  children: [
+                                    if (title.isNotEmpty)
+                                      Text(
+                                        title.toUpperCase(),
+                                        textAlign: TextAlign.center,
+                                        style: GoogleFonts.inter(
+                                          color: Colors.white
+                                              .withValues(alpha: 0.95),
+                                          fontSize: 13.sp,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 2.0,
+                                        ),
+                                      ),
+                                    if (title.isNotEmpty &&
+                                        highlight.isNotEmpty)
+                                      SizedBox(height: 6.h),
+                                    if (highlight.isNotEmpty)
+                                      Text(
+                                        highlight.toUpperCase(),
+                                        textAlign: TextAlign.center,
+                                        style: GoogleFonts.inter(
+                                          color: Colors.white,
+                                          fontSize: 26.sp,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 0.5,
+                                          height: 1.15,
+                                        ),
+                                      ),
+                                  ],
                                 ),
                               ),
-                            ],
-                          );
-                        }).toList(),
-                      ),
-                      Positioned(
-                        bottom: 10.h,
-                        left: 0,
-                        right: 0,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(
-                            currentImages.length,
-                            (index) => AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
-                              margin: EdgeInsets.symmetric(horizontal: 4.w),
-                              width:
-                                  (currentBannerIndex % currentImages.length) ==
-                                      index
-                                  ? 12.w
-                                  : 8.w,
-                              height:
-                                  (currentBannerIndex % currentImages.length) ==
-                                      index
-                                  ? 12.h
-                                  : 8.h,
-                              decoration: BoxDecoration(
-                                color:
-                                    (currentBannerIndex %
-                                            currentImages.length) ==
-                                        index
-                                    ? const Color(0xFF24ADD7)
-                                    : Colors.white,
-                                shape: BoxShape.circle,
-                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+
+                  // 4. Dot Indicators (Centered modern dots at bottom)
+                  if (bannerCount > 1)
+                    Positioned(
+                      bottom: 12.h,
+                      left: 0,
+                      right: 0,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(
+                          bannerCount,
+                          (index) => AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            margin:
+                                EdgeInsets.symmetric(horizontal: 3.5.w),
+                            width: activeDotIndex == index ? 18.w : 6.w,
+                            height: 6.h,
+                            decoration: BoxDecoration(
+                              color: activeDotIndex == index
+                                  ? const Color(0xFF24ADD7)
+                                  : Colors.white.withValues(alpha: 0.65),
+                              borderRadius: BorderRadius.circular(3.r),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  );
-                },
-                loading: () {
-                  return Container(
-                    height: 260.h,
-                    width: double.infinity,
-                    color: Colors.grey.shade200,
-                    child: const Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFF24ADD7),
-                        strokeWidth: 2,
                       ),
                     ),
-                  );
-                },
+                ],
               );
             },
           ),
 
-          // BUTTONS
+          // BUTTONS (WEBSITE CYAN ACTION BAR)
           Container(
             width: double.infinity,
-            height: 50.h,
             color: const Color(0xFF24ADD7),
+            padding: EdgeInsets.symmetric(vertical: 8.h),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              padding: EdgeInsets.symmetric(horizontal: 12.w),
+              child: Row(
+                children: [
+                  // 1. Call Us Now Button (matching website)
+                  InkWell(
+                    onTap: () async {
+                      final uri = Uri.parse("tel:+919171719060");
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri);
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(8.r),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 7.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8.r),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.phone_in_talk_rounded,
+                            color: const Color(0xFF24ADD7),
+                            size: 15.sp,
+                          ),
+                          SizedBox(width: 5.w),
+                          Text(
+                            "Call us Now",
+                            style: GoogleFonts.inter(
+                              color: const Color(0xFF24ADD7),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12.sp,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(width: 8.w),
+
+                  // Contextual buttons based on selectIndex
+                  if (selectIndex == 2) ...[
+                    // Pricing Plans Button
+                    InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          CupertinoPageRoute(
+                            builder: (context) => PricePlanPage(),
+                          ),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(8.r),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12.w,
+                          vertical: 7.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8.r),
+                          border: Border.all(
+                            color: Colors.white,
+                            width: 1.2,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.card_membership_rounded,
+                              color: Colors.white,
+                              size: 15.sp,
+                            ),
+                            SizedBox(width: 5.w),
+                            Text(
+                              "Pricing Plans",
+                              style: GoogleFonts.inter(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    // + Add Vendor Registration Button
+                    InkWell(
+                      onTap: () {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (_) =>
+                              const VendorRegistrationBottomSheet(),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(8.r),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12.w,
+                          vertical: 7.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8.r),
+                          border: Border.all(
+                            color: Colors.white,
+                            width: 1.2,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.person_add_alt_1_rounded,
+                              color: Colors.white,
+                              size: 15.sp,
+                            ),
+                            SizedBox(width: 5.w),
+                            Text(
+                              "+ Add Vendor Registration",
+                              style: GoogleFonts.inter(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ] else if (selectIndex == 3) ...[
+                    // Apply for Loans
+                    InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          CupertinoPageRoute(
+                            builder: (context) =>
+                                LoanServiceDetailsPage(),
+                          ),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(8.r),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 14.w,
+                          vertical: 7.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8.r),
+                          border: Border.all(
+                            color: Colors.white,
+                            width: 1.2,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.account_balance_outlined,
+                              color: Colors.white,
+                              size: 15.sp,
+                            ),
+                            SizedBox(width: 5.w),
+                            Text(
+                              "Apply for Loans",
+                              style: GoogleFonts.inter(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ] else ...[
+                    // + Add Property
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          bottomIndex = 2;
+                        });
+                        ref.invalidate(getMyPropertyController);
+                      },
+                      borderRadius: BorderRadius.circular(8.r),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 14.w,
+                          vertical: 7.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8.r),
+                          border: Border.all(
+                            color: Colors.white,
+                            width: 1.2,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.add_rounded,
+                              color: Colors.white,
+                              size: 16.sp,
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              "+ Add Property",
+                              style: GoogleFonts.inter(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+
+          SizedBox(height: 22.h),
+
+          // GREETING HEADING (Matching Website)
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
             child: Builder(
               builder: (context) {
-                if (selectIndex == 0 || selectIndex == 1) {
-                  return Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 10.w),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
+                final userName =
+                    (profileController.value?.data?.name ?? "").trim();
+                if (userName.isNotEmpty) {
+                  return RichText(
+                    textAlign: TextAlign.center,
+                    text: TextSpan(
+                      style: GoogleFonts.inter(
+                        fontSize: 22.sp,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF1F2937),
+                        letterSpacing: -0.5,
+                      ),
                       children: [
-                        InkWell(
-                          onTap: () {
-                            setState(() {
-                              bottomIndex = 2;
-                            });
-                            ref.invalidate(getMyPropertyController);
-                          },
-                          child: Container(
-                            height: 40.h,
-                            padding: EdgeInsets.symmetric(horizontal: 24.w),
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8.r),
-                              border: Border.all(color: Colors.white),
-                            ),
-                            child: Center(
-                              child: Text(
-                                '+ Add Property',
-                                style: GoogleFonts.inter(
-                                  fontSize: 13.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
+                        const TextSpan(text: "Hi "),
+                        TextSpan(
+                          text: userName,
+                          style: const TextStyle(
+                            color: Color(0xFF24ADD7),
+                            fontWeight: FontWeight.w900,
                           ),
                         ),
-                      ],
-                    ),
-                  );
-                } else if (selectIndex == 2) {
-                  return Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 10.w),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: InkWell(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                CupertinoPageRoute(
-                                  builder: (context) => PricePlanPage(),
-                                ),
-                              );
-                            },
-                            child: Container(
-                              height: 40.h,
-                              // padding: EdgeInsets.symmetric(horizontal: 15.w),
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8.r),
-                                border: Border.all(color: Colors.white),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  'PRICING PLANS',
-                                  textAlign: TextAlign.center,
-                                  maxLines: 2,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 11.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
-                                    height: 1.1,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 15.w),
-                        Expanded(
-                          child: InkWell(
-                            onTap: () {
-                              showModalBottomSheet(
-                                context: context,
-                                isScrollControlled: true,
-                                backgroundColor: Colors.transparent,
-                                builder: (_) =>
-                                    const VendorRegistrationBottomSheet(),
-                              );
-                            },
-                            child: Container(
-                              height: 40.h,
-                              // padding: EdgeInsets.symmetric(horizontal: 10.w),
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8.r),
-                                border: Border.all(color: Colors.white),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  '+ Add Vendor Registration',
-                                  textAlign: TextAlign.center,
-                                  maxLines: 2,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 11.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
-                                    height: 1.1,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                } else {
-                  return Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 10.w),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        InkWell(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              CupertinoPageRoute(
-                                builder: (context) => LoanServiceDetailsPage(),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            height: 40.h,
-                            padding: EdgeInsets.symmetric(horizontal: 24.w),
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8.r),
-                              border: Border.all(color: Colors.white),
-                            ),
-                            child: Center(
-                              child: Text(
-                                'Apply for Loan',
-                                style: GoogleFonts.inter(
-                                  fontSize: 13.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
+                        const TextSpan(
+                          text: ", how can we help you?",
+                          style: TextStyle(
+                            color: Color(0xFF4B5563),
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
                     ),
                   );
                 }
+                return RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    style: GoogleFonts.inter(
+                      fontSize: 22.sp,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF1F2937),
+                      letterSpacing: -0.5,
+                    ),
+                    children: const [
+                      TextSpan(text: "How can we "),
+                      TextSpan(
+                        text: "help you?",
+                        style: TextStyle(
+                          color: Color(0xFF24ADD7),
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
               },
             ),
           ),
-          SizedBox(height: 15.h),
-          SizedBox(height: 10.h),
+
+          SizedBox(height: 16.h),
+
+          // TAB BAR (Website Responsive Capsule: 2x2 on Mobile, 1 Row on Tablet)
           Padding(
-            padding: EdgeInsets.only(left: 0, right: 0),
-            child: TabBar(
-              labelPadding: EdgeInsets.zero,
-              indicatorPadding: EdgeInsets.zero,
-              splashBorderRadius: BorderRadius.circular(20.r),
-              controller: _tabController,
-              isScrollable: true,
-              tabAlignment: TabAlignment.start,
-              dividerColor: Colors.transparent,
-              padding: EdgeInsets.zero,
-              indicator: const BoxDecoration(),
-              tabs: [
-                _buildTab("Buy Property", 0),
-                _buildTab("Rent Property", 1),
-                _buildTab("Home Service", 2),
-                _buildTab("Loan Service", 3),
-              ],
+            padding: EdgeInsets.symmetric(horizontal: 14.w),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth >= 600;
+                if (isWide) {
+                  return Container(
+                    padding: EdgeInsets.all(4.r),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(30.r),
+                      border: Border.all(
+                        color: const Color(0xFFE2E8F0),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(child: _buildWebTabItem("Buy Property", 0)),
+                        SizedBox(width: 4.w),
+                        Expanded(child: _buildWebTabItem("Rent Property", 1)),
+                        SizedBox(width: 4.w),
+                        Expanded(child: _buildWebTabItem("Home Services", 2)),
+                        SizedBox(width: 4.w),
+                        Expanded(child: _buildWebTabItem("Loan Services", 3)),
+                      ],
+                    ),
+                  );
+                }
+
+                // 2x2 Grid for standard mobile phones (matches website mobile responsive layout grid-cols-2)
+                return Container(
+                  padding: EdgeInsets.all(6.r),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(18.r),
+                    border: Border.all(
+                      color: const Color(0xFFE2E8F0),
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(child: _buildWebTabItem("Buy Property", 0)),
+                          SizedBox(width: 6.w),
+                          Expanded(child: _buildWebTabItem("Rent Property", 1)),
+                        ],
+                      ),
+                      SizedBox(height: 6.h),
+                      Row(
+                        children: [
+                          Expanded(child: _buildWebTabItem("Home Services", 2)),
+                          SizedBox(width: 6.w),
+                          Expanded(child: _buildWebTabItem("Loan Services", 3)),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
           ),
+
+          SizedBox(height: 10.h),
+
+          // TAB CONTENT
           ExpandablePageView(
             controller: _tabController,
             children: [
@@ -1462,12 +1601,16 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
               LoanService(),
             ],
           ),
+
+          // ASSOCIATED CLIENTS & PARTNERS (Matching Website)
+          const AssociatedClientsSection(),
+          SizedBox(height: 30.h),
         ],
       ),
     );
   }
 
-  // ==================== MY LISTINGS SCREEN ====================
+    // ==================== MY LISTINGS SCREEN ====================
   Widget MyPropertyScreen() {
     final getMyPropertyProvider = ref.watch(getMyPropertyController);
     return SafeArea(
@@ -2871,6 +3014,49 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+    Widget _buildWebTabItem(String title, int index) {
+    final isSelected = selectIndex == index;
+    return InkWell(
+      onTap: () {
+        setState(() {
+          selectIndex = index;
+          currentBannerIndex = 0;
+        });
+        _tabController.animateTo(index);
+      },
+      borderRadius: BorderRadius.circular(14.r),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        alignment: Alignment.center,
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF24ADD7) : Colors.transparent,
+          borderRadius: BorderRadius.circular(14.r),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF24ADD7).withValues(alpha: 0.35),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Text(
+          title,
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.inter(
+            color: isSelected ? Colors.white : const Color(0xFF64748B),
+            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+            fontSize: 12.5.sp,
+          ),
         ),
       ),
     );
@@ -6078,5 +6264,187 @@ class _SizeReportingWidgetState extends State<SizeReportingWidget> {
       _oldSize = size;
       widget.onSizeChange(size);
     }
+  }
+}
+
+
+// ==================== ASSOCIATED CLIENTS & PARTNERS (WEBSITE SECTION) ====================
+class AssociatedClientsSection extends ConsumerStatefulWidget {
+  const AssociatedClientsSection({super.key});
+
+  @override
+  ConsumerState<AssociatedClientsSection> createState() =>
+      _AssociatedClientsSectionState();
+}
+
+class _AssociatedClientsSectionState
+    extends ConsumerState<AssociatedClientsSection> {
+  List<dynamic> clients = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchClients();
+  }
+
+  Future<void> _fetchClients() async {
+    try {
+      final dio = createDio();
+      final res = await dio.post(
+        "https://api.propertyleinnovation.com/api/v1/admin/getAssociatedClients",
+        data: {
+          "status": "active",
+          "sortOrder": "desc",
+          "sortBy": "createdAt",
+        },
+      );
+      if (res.data != null && res.data["data"] != null) {
+        final list = res.data["data"]["list"] as List<dynamic>?;
+        if (mounted) {
+          setState(() {
+            clients = list ?? [];
+            isLoading = false;
+          });
+        }
+      } else {
+        if (mounted) setState(() => isLoading = false);
+      }
+    } catch (e) {
+      log("Error fetching associated clients: $e");
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!isLoading && clients.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.only(top: 14.h),
+      padding: EdgeInsets.symmetric(vertical: 24.h),
+      color: const Color(0xFFF8FBFF), // matching website bg-[#f8fbff]
+      child: Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: Column(
+              children: [
+                RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    style: GoogleFonts.inter(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF1F2937),
+                    ),
+                    children: const [
+                      TextSpan(text: "Our Associated "),
+                      TextSpan(
+                        text: "Clients & Partners",
+                        style: TextStyle(
+                          color: Color(0xFF24ADD7),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 6.h),
+                Text(
+                  "We collaborate with the best in the industry to bring you unparalleled quality and trust.",
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 12.sp,
+                    color: const Color(0xFF6B7280),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 16.h),
+          if (isLoading)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: CircularProgressIndicator(
+                  color: Color(0xFF24ADD7),
+                  strokeWidth: 2,
+                ),
+              ),
+            )
+          else
+            SizedBox(
+              height: 110.h,
+              child: ListView.separated(
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                itemCount: clients.length,
+                separatorBuilder: (_, __) => SizedBox(width: 14.w),
+                itemBuilder: (context, index) {
+                  final client = clients[index];
+                  final logoUrl = client["clientLogo"]?.toString() ?? "";
+                  final name = client["clientName"]?.toString() ?? "";
+
+                  return Container(
+                    width: 140.w,
+                    padding: EdgeInsets.all(10.r),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16.r),
+                      border: Border.all(
+                        color: const Color(0xFFE2E8F0),
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: logoUrl.isNotEmpty
+                              ? Image.network(
+                                  logoUrl,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.business_outlined,
+                                    color: Color(0xFF24ADD7),
+                                  ),
+                                )
+                              : const Icon(
+                                  Icons.business_outlined,
+                                  color: Color(0xFF24ADD7),
+                                ),
+                        ),
+                        if (name.isNotEmpty) ...[
+                          SizedBox(height: 6.h),
+                          Text(
+                            name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.inter(
+                              fontSize: 11.sp,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF374151),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }

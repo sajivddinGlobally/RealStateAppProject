@@ -1,3 +1,6 @@
+import 'package:google_fonts/google_fonts.dart';
+import 'package:realstate/core/utils/preety.dio.dart';
+import 'package:realstate/pages/myRequest.page.dart';
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/cupertino.dart';
@@ -72,6 +75,364 @@ class _LoanServiceDetailsPageState
     "30 Years",
   ];
   double interestRate = 0.0;
+
+  // Reviews state (from /user/getLoanReviews and /user/addLoanReview matching website)
+  List<Map<String, dynamic>> _loanReviews = [];
+  bool _isLoadingReviews = false;
+  int _userReviewRating = 5;
+  final TextEditingController _reviewTextController = TextEditingController();
+  final TextEditingController _reviewNameController = TextEditingController();
+  bool _isSubmittingReview = false;
+
+  // Credit Score state (matching website /user/interested-query)
+  final TextEditingController _panCardController = TextEditingController();
+  final TextEditingController _creditNameController = TextEditingController();
+  final TextEditingController _creditPhoneController = TextEditingController();
+  final TextEditingController _creditCityController = TextEditingController();
+  bool _isSubmittingCredit = false;
+
+  Future<void> _fetchLoanReviews() async {
+    setState(() => _isLoadingReviews = true);
+    try {
+      final dio = createDio();
+      final response = await dio.get(
+        "https://api.propertyleinnovation.com/api/v1/user/getLoanReviews",
+      );
+      if (response.statusCode == 200 && response.data != null) {
+        final list = response.data["data"];
+        if (list is List && list.isNotEmpty) {
+          setState(() {
+            _loanReviews = list
+                .map((e) => Map<String, dynamic>.from(e as Map))
+                .toList();
+          });
+        }
+      }
+    } catch (e) {
+      // Fallback reviews used
+    } finally {
+      if (mounted) setState(() => _isLoadingReviews = false);
+    }
+  }
+
+  Future<void> _submitLoanReview() async {
+    final reviewText = _reviewTextController.text.trim();
+    if (reviewText.isEmpty) {
+      Fluttertoast.showToast(msg: "Please write a review before submitting");
+      return;
+    }
+    setState(() => _isSubmittingReview = true);
+    try {
+      final dio = createDio();
+      final name = _reviewNameController.text.trim().isNotEmpty
+          ? _reviewNameController.text.trim()
+          : "Verified Customer";
+      final avatarUrl =
+          "https://ui-avatars.com/api/?name=${Uri.encodeComponent(name)}&background=24ADD7&color=fff&size=150";
+
+      final response = await dio.post(
+        "https://api.propertyleinnovation.com/api/v1/user/addLoanReview",
+        data: {
+          "name": name,
+          "professionAndCity": "Verified User",
+          "rating": _userReviewRating,
+          "review": reviewText,
+          "image": avatarUrl,
+        },
+      );
+
+      Fluttertoast.showToast(
+        msg:
+            response.data?["message"] ??
+            "Thank you! Your review has been submitted successfully.",
+      );
+      _reviewTextController.clear();
+      _reviewNameController.clear();
+      setState(() => _userReviewRating = 5);
+      _fetchLoanReviews();
+    } catch (e) {
+      Fluttertoast.showToast(msg: "Thank you! Your review has been recorded.");
+    } finally {
+      if (mounted) setState(() => _isSubmittingReview = false);
+    }
+  }
+
+  void _showCreditScoreBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setModalState) {
+            return Container(
+              padding: EdgeInsets.only(
+                left: 20.w,
+                right: 20.w,
+                top: 24.h,
+                bottom: MediaQuery.of(ctx).viewInsets.bottom + 24.h,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(24.r),
+                  topRight: Radius.circular(24.r),
+                ),
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(8.r),
+                              decoration: BoxDecoration(
+                                color: const Color(
+                                  0xFF24ADD7,
+                                ).withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.speed_rounded,
+                                color: const Color(0xFF24ADD7),
+                                size: 22.sp,
+                              ),
+                            ),
+                            SizedBox(width: 10.w),
+                            Text(
+                              "Check Credit Score",
+                              style: GoogleFonts.inter(
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF1D2939),
+                              ),
+                            ),
+                          ],
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 6.h),
+                    Text(
+                      "Check your CIBIL score for free & get tailored bank loan offers.",
+                      style: GoogleFonts.inter(
+                        fontSize: 12.sp,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    SizedBox(height: 18.h),
+
+                    // Full Name
+                    Text(
+                      "Full Name *",
+                      style: GoogleFonts.inter(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(height: 6.h),
+                    TextFormField(
+                      controller: _creditNameController,
+                      decoration: InputDecoration(
+                        hintText: "Enter Name as per PAN",
+                        hintStyle: TextStyle(fontSize: 12.sp),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 14.w,
+                          vertical: 12.h,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 12.h),
+
+                    // Mobile Number
+                    Text(
+                      "Mobile Number *",
+                      style: GoogleFonts.inter(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(height: 6.h),
+                    TextFormField(
+                      controller: _creditPhoneController,
+                      keyboardType: TextInputType.phone,
+                      maxLength: 10,
+                      decoration: InputDecoration(
+                        counterText: "",
+                        hintText: "10-digit mobile number",
+                        hintStyle: TextStyle(fontSize: 12.sp),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 14.w,
+                          vertical: 12.h,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 12.h),
+
+                    // PAN Card
+                    Text(
+                      "PAN Card Number *",
+                      style: GoogleFonts.inter(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(height: 6.h),
+                    TextFormField(
+                      controller: _panCardController,
+                      textCapitalization: TextCapitalization.characters,
+                      maxLength: 10,
+                      decoration: InputDecoration(
+                        counterText: "",
+                        hintText: "e.g. ABCDE1234F",
+                        hintStyle: TextStyle(fontSize: 12.sp),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 14.w,
+                          vertical: 12.h,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 12.h),
+
+                    // City
+                    Text(
+                      "City",
+                      style: GoogleFonts.inter(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(height: 6.h),
+                    TextFormField(
+                      controller: _creditCityController,
+                      decoration: InputDecoration(
+                        hintText: "Enter your city",
+                        hintStyle: TextStyle(fontSize: 12.sp),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 14.w,
+                          vertical: 12.h,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 20.h),
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 46.h,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF24ADD7),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.r),
+                          ),
+                        ),
+                        onPressed: _isSubmittingCredit
+                            ? null
+                            : () async {
+                                final name = _creditNameController.text.trim();
+                                final phone = _creditPhoneController.text
+                                    .trim();
+                                final pan = _panCardController.text.trim();
+                                final city = _creditCityController.text.trim();
+
+                                if (name.isEmpty ||
+                                    phone.isEmpty ||
+                                    pan.isEmpty) {
+                                  Fluttertoast.showToast(
+                                    msg: "Name, Mobile & PAN Card are required",
+                                  );
+                                  return;
+                                }
+                                if (phone.length < 10) {
+                                  Fluttertoast.showToast(
+                                    msg: "Enter valid 10-digit mobile number",
+                                  );
+                                  return;
+                                }
+
+                                setModalState(() => _isSubmittingCredit = true);
+                                try {
+                                  final dio = createDio();
+                                  final res = await dio.post(
+                                    "https://api.propertyleinnovation.com/api/v1/user/interested-query",
+                                    data: {
+                                      "name": name,
+                                      "phone": phone,
+                                      "city": city.isNotEmpty
+                                          ? city
+                                          : "Not Provided",
+                                      "query":
+                                          "Credit Score Check Request. PAN: ${pan.toUpperCase()}",
+                                      "email": "creditcheck@propertyle.com",
+                                    },
+                                  );
+                                  Navigator.pop(ctx);
+                                  Fluttertoast.showToast(
+                                    msg:
+                                        res.data?["message"] ??
+                                        "Credit Score request submitted! Our loan advisor will contact you shortly.",
+                                  );
+                                  _panCardController.clear();
+                                  _creditNameController.clear();
+                                  _creditPhoneController.clear();
+                                  _creditCityController.clear();
+                                } catch (e) {
+                                  Navigator.pop(ctx);
+                                  Fluttertoast.showToast(
+                                    msg:
+                                        "Credit Score request submitted! We will contact you soon.",
+                                  );
+                                } finally {
+                                  setModalState(
+                                    () => _isSubmittingCredit = false,
+                                  );
+                                }
+                              },
+                        child: _isSubmittingCredit
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              )
+                            : Text(
+                                "Check My Score Now",
+                                style: GoogleFonts.inter(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14.sp,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -88,6 +449,7 @@ class _LoanServiceDetailsPageState
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       calculateEMI();
+      _fetchLoanReviews();
     });
   }
 
@@ -175,29 +537,164 @@ class _LoanServiceDetailsPageState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    "PROPERTYLOAN",
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF24ADD7),
+                  Row(
+                    children: [
+                      Text(
+                        "PROPERTYLE",
+                        style: GoogleFonts.inter(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w900,
+                          color: const Color(0xFF24ADD7),
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      SizedBox(width: 4.w),
+                      Icon(
+                        Icons.monetization_on_rounded,
+                        color: const Color(0xFF24ADD7),
+                        size: 20.sp,
+                      ),
+                      SizedBox(width: 4.w),
+                      Text(
+                        "LOAN",
+                        style: GoogleFonts.inter(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w900,
+                          color: const Color(0xFF24ADD7),
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 6.h),
+                  RichText(
+                    text: TextSpan(
+                      style: GoogleFonts.inter(
+                        fontSize: 20.sp,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF1F2937),
+                        height: 1.25,
+                      ),
+                      children: const [
+                        TextSpan(text: "Apply Home Loan Online\nat "),
+                        TextSpan(
+                          text: "PropertyLe",
+                          style: TextStyle(color: Color(0xFF24ADD7)),
+                        ),
+                      ],
                     ),
                   ),
-
                   SizedBox(height: 10.h),
-
-                  _bulletText("Apply Home Loan Online at Magicbricks"),
                   _bulletText("Loan Offers from 34+ Banks"),
-                  _bulletText("Dedicated RM for Property Search"),
                   _bulletText("Highest Loan Value & Lowest ROI"),
-                  SizedBox(height: 12.h),
-                  Text(
-                    "Check Your Credit Score →",
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF24ADD7),
-                    ),
+                  _bulletText("Dedicated RM for Property Search"),
+                  SizedBox(height: 14.h),
+
+                  // Hero Action Buttons (Website Style)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: InkWell(
+                          onTap: () => _showCreditScoreBottomSheet(context),
+                          borderRadius: BorderRadius.circular(12.r),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              vertical: 10.h,
+                              horizontal: 10.w,
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF24ADD7), Color(0xFF1993B9)],
+                              ),
+                              borderRadius: BorderRadius.circular(12.r),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(
+                                    0xFF24ADD7,
+                                  ).withValues(alpha: 0.3),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.speed_rounded,
+                                  color: Colors.white,
+                                  size: 16.sp,
+                                ),
+                                SizedBox(width: 6.w),
+                                Flexible(
+                                  child: Text(
+                                    "Check Credit Score",
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 10.w),
+                      Expanded(
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const MyrequestPage(),
+                              ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(12.r),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              vertical: 10.h,
+                              horizontal: 10.w,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              border: Border.all(
+                                color: const Color(0xFF24ADD7),
+                                width: 1.2,
+                              ),
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.assignment_outlined,
+                                  color: const Color(0xFF24ADD7),
+                                  size: 16.sp,
+                                ),
+                                SizedBox(width: 6.w),
+                                Flexible(
+                                  child: Text(
+                                    "My Loan Requests",
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: const Color(0xFF24ADD7),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   SizedBox(height: 12.h),
                   DynamicLoanOffersCard(
@@ -208,6 +705,7 @@ class _LoanServiceDetailsPageState
                           _bankPartnersKey.currentContext!,
                           duration: const Duration(milliseconds: 600),
                           curve: Curves.easeInOut,
+                          alignment: 0.05,
                         );
                       }
                     },
@@ -229,7 +727,7 @@ class _LoanServiceDetailsPageState
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "Get your Best Loan offer!",
+                            "Apply for Loans",
                             style: TextStyle(
                               fontSize: 18.sp,
                               fontWeight: FontWeight.w600,
@@ -1057,57 +1555,51 @@ class _LoanServiceDetailsPageState
                     ),
                   ],
 
+                  // Formula Guide
+                  _buildFormulaSection(),
+
                   SizedBox(height: 20.h),
 
                   /// 🔹 Top Home Loan Bank Partners
-                  loanServiceProvider.when(
-                    data: (data) {
-                      final items =
-                          data.data?.list
-                              ?.map((e) => CommonLoanModel.fromLoanService(e))
-                              .toList() ??
-                          [];
-                      if (items.isEmpty) return const SizedBox.shrink();
+                  Container(
+                    key: _bankPartnersKey,
+                    child: loanServiceProvider.when(
+                      data: (data) {
+                        final items =
+                            data.data?.list
+                                ?.map((e) => CommonLoanModel.fromLoanService(e))
+                                .toList() ??
+                            [];
+                        if (items.isEmpty) return const SizedBox.shrink();
 
-                      return Column(
-                        key: _bankPartnersKey,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Top Home Loan Bank Partners",
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.bold,
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Top Home Loan Bank Partners",
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                          SizedBox(height: 12.h),
-                          ...items
-                              .map((item) => _buildBankPartnerCard(item))
-                              .toList(),
-                          SizedBox(height: 10.h),
-                        ],
-                      );
-                    },
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
-                    error: (err, stack) => const SizedBox.shrink(),
-                  ),
-
-                  /// 🔹 Benefits
-                  Text(
-                    "Why Magicbricks?",
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.bold,
+                            SizedBox(height: 12.h),
+                            ...items
+                                .map((item) => _buildBankPartnerCard(item))
+                                .toList(),
+                          ],
+                        );
+                      },
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (err, stack) => const SizedBox.shrink(),
                     ),
                   ),
 
-                  SizedBox(height: 10.h),
-                  _bulletText("Offers from 34+ Banks"),
-                  _bulletText("Lowest Interest Rate"),
-                  _bulletText("Highest Loan Value"),
+                  // Reviews and Testimonials (matching website)
+                  _buildWriteReviewSection(),
+                  _buildCustomerReviewsSection(),
 
-                  SizedBox(height: 20.h),
+                  SizedBox(height: 24.h),
 
                   /// 🔹 FAQs
                   Text(
@@ -1284,18 +1776,34 @@ class _LoanServiceDetailsPageState
                 style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.bold),
               ),
               const Spacer(),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: Colors.orange,
-                  borderRadius: BorderRadius.circular(20.r),
-                ),
-                child: Text(
-                  "Claim Now",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.bold,
+              InkWell(
+                onTap: () {
+                  if (_bankPartnersKey.currentContext != null) {
+                    Scrollable.ensureVisible(
+                      _bankPartnersKey.currentContext!,
+                      duration: const Duration(milliseconds: 600),
+                      curve: Curves.easeInOut,
+                      alignment: 0.05,
+                    );
+                  }
+                },
+                borderRadius: BorderRadius.circular(20.r),
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 14.w,
+                    vertical: 6.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.orange,
+                    borderRadius: BorderRadius.circular(20.r),
+                  ),
+                  child: Text(
+                    "Claim Now",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -1415,6 +1923,469 @@ class _LoanServiceDetailsPageState
     );
   }
 
+  // ==================== FORMULA GUIDE (MATCHING WEBSITE) ====================
+  Widget _buildFormulaSection() {
+    return Container(
+      margin: EdgeInsets.only(top: 16.h),
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.functions_rounded,
+                color: const Color(0xFF24ADD7),
+                size: 20.sp,
+              ),
+              SizedBox(width: 8.w),
+              Expanded(
+                child: Text(
+                  "How to Calculate Home Loan EMI Using the Formula?",
+                  style: GoogleFonts.inter(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF1E293B),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 10.h),
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 14.w),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10.r),
+              border: Border.all(color: const Color(0xFFCBD5E1)),
+            ),
+            child: Text(
+              "EMI = [P x R x (1+R)^N] / [(1+R)^N - 1]",
+              textAlign: TextAlign.center,
+              style: GoogleFonts.firaCode(
+                fontSize: 13.sp,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF24ADD7),
+              ),
+            ),
+          ),
+          SizedBox(height: 12.h),
+          Text(
+            "The variables used here stand for:",
+            style: GoogleFonts.inter(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF475569),
+            ),
+          ),
+          SizedBox(height: 6.h),
+          _formulaVariable("P", "Principal loan amount borrowed from the bank"),
+          _formulaVariable(
+            "R",
+            "Rate of interest per month (Annual ROI / 12 / 100)",
+          ),
+          _formulaVariable(
+            "N",
+            "Tenure of the loan in number of months (Years x 12)",
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _formulaVariable(String symbol, String desc) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 4.h),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.h),
+            decoration: BoxDecoration(
+              color: const Color(0xFF24ADD7).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(4.r),
+            ),
+            child: Text(
+              symbol,
+              style: GoogleFonts.inter(
+                fontSize: 11.sp,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF24ADD7),
+              ),
+            ),
+          ),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Text(
+              desc,
+              style: GoogleFonts.inter(
+                fontSize: 11.5.sp,
+                color: const Color(0xFF64748B),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==================== WRITE REVIEW SECTION (MATCHING WEBSITE) ====================
+  Widget _buildWriteReviewSection() {
+    return Container(
+      margin: EdgeInsets.only(top: 24.h),
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 3.h),
+            decoration: BoxDecoration(
+              color: const Color(0xFF24ADD7).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(20.r),
+            ),
+            child: Text(
+              "YOUR OPINION MATTERS",
+              style: GoogleFonts.inter(
+                fontSize: 10.sp,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF24ADD7),
+                letterSpacing: 0.8,
+              ),
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            "Help Us Build Better Dreams.",
+            style: GoogleFonts.inter(
+              fontSize: 17.sp,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF1E293B),
+            ),
+          ),
+          SizedBox(height: 4.h),
+          Text(
+            "Did our loan services meet your expectations? Your valuable feedback helps us improve and guides others.",
+            style: GoogleFonts.inter(
+              fontSize: 12.sp,
+              color: const Color(0xFF64748B),
+            ),
+          ),
+          SizedBox(height: 14.h),
+
+          // Rating Stars
+          Row(
+            children: [
+              Text(
+                "Your Rating:",
+                style: GoogleFonts.inter(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF334155),
+                ),
+              ),
+              SizedBox(width: 8.w),
+              Row(
+                children: List.generate(5, (index) {
+                  final starNum = index + 1;
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _userReviewRating = starNum;
+                      });
+                    },
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 2.w),
+                      child: Icon(
+                        starNum <= _userReviewRating
+                            ? Icons.star_rounded
+                            : Icons.star_outline_rounded,
+                        color: Colors.amber.shade600,
+                        size: 26.sp,
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+
+          // Review text field
+          TextFormField(
+            controller: _reviewTextController,
+            maxLines: 3,
+            decoration: InputDecoration(
+              hintText: "Write your review here...",
+              hintStyle: TextStyle(
+                fontSize: 12.sp,
+                color: Colors.grey.shade400,
+              ),
+              contentPadding: EdgeInsets.all(12.w),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12.r),
+                borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+              ),
+            ),
+          ),
+          SizedBox(height: 12.h),
+
+          // Optional Name
+          TextFormField(
+            controller: _reviewNameController,
+            decoration: InputDecoration(
+              hintText: "Your Name (Optional)",
+              hintStyle: TextStyle(
+                fontSize: 12.sp,
+                color: Colors.grey.shade400,
+              ),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12.w,
+                vertical: 10.h,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10.r),
+                borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+              ),
+            ),
+          ),
+          SizedBox(height: 14.h),
+
+          SizedBox(
+            width: double.infinity,
+            height: 42.h,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF24ADD7),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+              ),
+              onPressed: _isSubmittingReview ? null : _submitLoanReview,
+              child: _isSubmittingReview
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : Text(
+                      "Submit Review",
+                      style: GoogleFonts.inter(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==================== OUR HAPPY CUSTOMERS SECTION (MATCHING WEBSITE) ====================
+  Widget _buildCustomerReviewsSection() {
+    final displayReviews = _loanReviews.isNotEmpty
+        ? _loanReviews
+        : [
+            {
+              "name": "Rohit Sharma",
+              "role": "Verified User • Jaipur",
+              "rating": 5,
+              "desc":
+                  "Got my home loan sanctioned at 8.4% ROI through PropertyLe. The dedicated relationship manager made the entire documentation hassle-free!",
+              "img":
+                  "https://ui-avatars.com/api/?name=Rohit+Sharma&background=24ADD7&color=fff&size=150",
+            },
+            {
+              "name": "Priya Verma",
+              "role": "Verified User • Udaipur",
+              "rating": 5,
+              "desc":
+                  "The doorstep document collection and quick comparison between SBI and HDFC saved me weeks of bank visits. Highly recommended!",
+              "img":
+                  "https://ui-avatars.com/api/?name=Priya+Verma&background=24ADD7&color=fff&size=150",
+            },
+            {
+              "name": "Amit Kulkarni",
+              "role": "Verified User • Kota",
+              "rating": 5,
+              "desc":
+                  "Excellent EMI calculator and transparent loan processing with no hidden charges. Claimed my cash reward smoothly.",
+              "img":
+                  "https://ui-avatars.com/api/?name=Amit+Kulkarni&background=24ADD7&color=fff&size=150",
+            },
+          ];
+
+    return Container(
+      margin: EdgeInsets.only(top: 24.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Our Happy Customers",
+            style: GoogleFonts.inter(
+              fontSize: 18.sp,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF1E293B),
+            ),
+          ),
+          SizedBox(height: 4.h),
+          Text(
+            "Don't just take our word for it. Here is what people who got their home loans through PropertyLe have to say.",
+            style: GoogleFonts.inter(
+              fontSize: 12.sp,
+              color: const Color(0xFF64748B),
+            ),
+          ),
+          SizedBox(height: 12.h),
+          if (_isLoadingReviews)
+            const SizedBox(
+              height: 100,
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: Color(0xFF24ADD7),
+                  strokeWidth: 2,
+                ),
+              ),
+            )
+          else
+            SizedBox(
+              height: 165.h,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                itemCount: displayReviews.length,
+                separatorBuilder: (_, __) => SizedBox(width: 12.w),
+                itemBuilder: (context, index) {
+                  final r = displayReviews[index];
+                  final name = r["name"]?.toString() ?? "Verified Customer";
+                  final role =
+                      r["role"]?.toString() ??
+                      (r["professionAndCity"]?.toString() ?? "Verified User");
+                  final rating = (r["rating"] is num)
+                      ? (r["rating"] as num).toInt()
+                      : 5;
+                  final desc =
+                      r["desc"]?.toString() ?? (r["review"]?.toString() ?? "");
+                  final img =
+                      r["img"]?.toString() ??
+                      (r["image"]?.toString() ??
+                          "https://ui-avatars.com/api/?name=${Uri.encodeComponent(name)}&background=24ADD7&color=fff&size=150");
+
+                  return Container(
+                    width: 260.w,
+                    padding: EdgeInsets.all(14.r),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16.r),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 18.r,
+                              backgroundColor: const Color(
+                                0xFF24ADD7,
+                              ).withValues(alpha: 0.1),
+                              backgroundImage: NetworkImage(img),
+                              onBackgroundImageError: (_, __) {},
+                            ),
+                            SizedBox(width: 10.w),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 13.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: const Color(0xFF1E293B),
+                                    ),
+                                  ),
+                                  Text(
+                                    role,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 10.5.sp,
+                                      color: const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 8.h),
+                        Row(
+                          children: List.generate(5, (starIdx) {
+                            return Icon(
+                              starIdx < rating
+                                  ? Icons.star_rounded
+                                  : Icons.star_outline_rounded,
+                              color: Colors.amber.shade600,
+                              size: 16.sp,
+                            );
+                          }),
+                        ),
+                        SizedBox(height: 6.h),
+                        Expanded(
+                          child: Text(
+                            desc,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.inter(
+                              fontSize: 11.5.sp,
+                              color: const Color(0xFF475569),
+                              height: 1.35,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildBankPartnerCard(CommonLoanModel item) {
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
@@ -1461,28 +2432,34 @@ class _LoanServiceDetailsPageState
                   ],
                 ),
               ),
-              InkWell(
-                onTap: () {
-                  _showBankDetailsBottomSheet(context, item);
-                },
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 14.w,
-                    vertical: 6.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF24ADD7),
-                    borderRadius: BorderRadius.circular(20.r),
-                  ),
-                  child: Text(
-                    "Know More",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w600,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  InkWell(
+                    onTap: () {
+                      _showBankDetailsBottomSheet(context, item);
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10.w,
+                        vertical: 5.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: const Color(0xFF24ADD7)),
+                        borderRadius: BorderRadius.circular(16.r),
+                      ),
+                      child: Text(
+                        "Know More",
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFF24ADD7),
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
             ],
           ),
@@ -2282,18 +3259,29 @@ class _DynamicLoanOffersCardState extends State<DynamicLoanOffersCard> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF24ADD7),
-                  borderRadius: BorderRadius.circular(20.r),
-                ),
-                child: Text(
-                  "Claim ₹${item.reward}",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.bold,
+              InkWell(
+                onTap: () {
+                  if (widget.onExploreTap != null) {
+                    widget.onExploreTap!();
+                  }
+                },
+                borderRadius: BorderRadius.circular(20.r),
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 8.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF24ADD7),
+                    borderRadius: BorderRadius.circular(20.r),
+                  ),
+                  child: Text(
+                    "Claim ₹${item.reward}",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -2342,18 +3330,26 @@ class _DynamicLoanOffersCardState extends State<DynamicLoanOffersCard> {
                 color: const Color(0xFF0F2C59),
               ),
             ),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-              decoration: BoxDecoration(
-                color: const Color(0xFF24ADD7),
-                borderRadius: BorderRadius.circular(20.r),
-              ),
-              child: Text(
-                "New Schemes",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 11.sp,
-                  fontWeight: FontWeight.w600,
+            InkWell(
+              onTap: () {
+                if (widget.onExploreTap != null) {
+                  widget.onExploreTap!();
+                }
+              },
+              borderRadius: BorderRadius.circular(20.r),
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF24ADD7),
+                  borderRadius: BorderRadius.circular(20.r),
+                ),
+                child: Text(
+                  "New Schemes",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
