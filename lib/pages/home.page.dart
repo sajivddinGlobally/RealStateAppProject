@@ -882,19 +882,22 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                 // Buy Property
                 defaultSlides = [
                   {
-                    "img": "https://propertyleinnovation.com/assets/home/homeheroslide1.png",
+                    "img":
+                        "https://propertyleinnovation.com/assets/home/homeheroslide1.png",
                     "fallback": "assets/property1.jpg",
                     "title": "FIND POPULAR PROPERTIES",
                     "highlight": "IN JAIPUR",
                   },
                   {
-                    "img": "https://propertyleinnovation.com/assets/home/homeheroslide2.png",
+                    "img":
+                        "https://propertyleinnovation.com/assets/home/homeheroslide2.png",
                     "fallback": "assets/property2.jfif",
                     "title": "BEST REAL ESTATE DEALS",
                     "highlight": "IN UDAIPUR",
                   },
                   {
-                    "img": "https://propertyleinnovation.com/assets/home/homeheroslide3.png",
+                    "img":
+                        "https://propertyleinnovation.com/assets/home/homeheroslide3.png",
                     "fallback": "assets/property3.jfif",
                     "title": "LUXURY HOMES FOR YOU",
                     "highlight": "PREMIUM LIVING",
@@ -904,19 +907,22 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                 // Rent Property
                 defaultSlides = [
                   {
-                    "img": "https://propertyleinnovation.com/assets/home/homeheroslide1.png",
+                    "img":
+                        "https://propertyleinnovation.com/assets/home/homeheroslide1.png",
                     "fallback": "assets/property1.jpg",
                     "title": "FIND RENTAL HOMES",
                     "highlight": "IN YOUR CITY",
                   },
                   {
-                    "img": "https://propertyleinnovation.com/assets/home/homeheroslide2.png",
+                    "img":
+                        "https://propertyleinnovation.com/assets/home/homeheroslide2.png",
                     "fallback": "assets/property2.jfif",
                     "title": "AFFORDABLE APARTMENTS",
                     "highlight": "FOR RENT",
                   },
                   {
-                    "img": "https://propertyleinnovation.com/assets/home/homeheroslide3.png",
+                    "img":
+                        "https://propertyleinnovation.com/assets/home/homeheroslide3.png",
                     "fallback": "assets/property3.jfif",
                     "title": "SPACIOUS VILLAS",
                     "highlight": "READY TO MOVE",
@@ -926,19 +932,22 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                 // Home Services
                 defaultSlides = [
                   {
-                    "img": "https://propertyleinnovation.com/assets/service/servicehero.png",
+                    "img":
+                        "https://propertyleinnovation.com/assets/service/servicehero.png",
                     "fallback": "assets/home1.webp",
                     "title": "EXPERT HOME SERVICES",
                     "highlight": "AT YOUR DOORSTEP",
                   },
                   {
-                    "img": "https://propertyleinnovation.com/assets/service/repair1.png",
+                    "img":
+                        "https://propertyleinnovation.com/assets/service/repair1.png",
                     "fallback": "assets/home2.jfif",
                     "title": "RELIABLE PROFESSIONALS",
                     "highlight": "FOR EVERY NEED",
                   },
                   {
-                    "img": "https://propertyleinnovation.com/assets/service/service1.png",
+                    "img":
+                        "https://propertyleinnovation.com/assets/service/service1.png",
                     "fallback": "assets/home3.jfif",
                     "title": "QUICK & EFFICIENT",
                     "highlight": "HOME REPAIRS",
@@ -948,19 +957,22 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                 // Loan Services
                 defaultSlides = [
                   {
-                    "img": "https://propertyleinnovation.com/assets/home/HomeLoan.png",
+                    "img":
+                        "https://propertyleinnovation.com/assets/home/HomeLoan.png",
                     "fallback": "assets/loan1.jpg",
                     "title": "EASY HOME LOANS",
                     "highlight": "LOW INTEREST RATES",
                   },
                   {
-                    "img": "https://propertyleinnovation.com/assets/home/CarLoan.png",
+                    "img":
+                        "https://propertyleinnovation.com/assets/home/CarLoan.png",
                     "fallback": "assets/loan2.jfif",
                     "title": "QUICK APPROVALS",
                     "highlight": "DREAM HOME",
                   },
                   {
-                    "img": "https://propertyleinnovation.com/assets/home/PERSONAL.png",
+                    "img":
+                        "https://propertyleinnovation.com/assets/home/PERSONAL.png",
                     "fallback": "assets/loan3.jpg",
                     "title": "FLEXIBLE EMIS",
                     "highlight": "HASSLE FREE",
@@ -980,8 +992,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                   final notDeleted = banner.isDeleted != true;
                   return isActive &&
                       notDeleted &&
-                      (cat == target ||
-                          cat.contains(target.split(" ").first));
+                      (cat == target || cat.contains(target.split(" ").first));
                 }).toList();
 
                 if (apiFiltered.isNotEmpty) {
@@ -1002,12 +1013,12 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                       "title": hasTitle
                           ? b.title!.trim()
                           : (hasHighlight &&
-                                  b.highlight!.trim().toLowerCase() ==
-                                      "propertyle"
-                              ? fallbackSlide["title"]!
-                              : (hasHighlight
-                                  ? "PROPERTYLE"
-                                  : fallbackSlide["title"]!)),
+                                    b.highlight!.trim().toLowerCase() ==
+                                        "propertyle"
+                                ? fallbackSlide["title"]!
+                                : (hasHighlight
+                                      ? "PROPERTYLE"
+                                      : fallbackSlide["title"]!)),
                       "highlight": hasHighlight
                           ? b.highlight!.trim()
                           : fallbackSlide["highlight"]!,
@@ -1045,8 +1056,9 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                       viewportFraction: 1.0,
                       autoPlay: bannerCount > 1,
                       autoPlayInterval: const Duration(seconds: 4),
-                      autoPlayAnimationDuration:
-                          const Duration(milliseconds: 650),
+                      autoPlayAnimationDuration: const Duration(
+                        milliseconds: 650,
+                      ),
                       autoPlayCurve: Curves.easeInOut,
                       onPageChanged: (index, reason) {
                         setState(() {
@@ -1086,19 +1098,18 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                                 height: double.infinity,
                                 loadingBuilder:
                                     (context, child, loadingProgress) {
-                                  if (loadingProgress == null) return child;
-                                  return Container(
-                                    color: const Color(0xFF1E293B),
-                                    child: const Center(
-                                      child: CircularProgressIndicator(
-                                        color: Color(0xFF24ADD7),
-                                        strokeWidth: 2,
-                                      ),
-                                    ),
-                                  );
-                                },
-                                errorBuilder:
-                                    (context, error, stackTrace) {
+                                      if (loadingProgress == null) return child;
+                                      return Container(
+                                        color: const Color(0xFF1E293B),
+                                        child: const Center(
+                                          child: CircularProgressIndicator(
+                                            color: Color(0xFF24ADD7),
+                                            strokeWidth: 2,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                errorBuilder: (context, error, stackTrace) {
                                   return Image.asset(
                                     fallbackAsset,
                                     fit: BoxFit.cover,
@@ -1123,22 +1134,20 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                             // 3. Centered Content (matching website h3 + h1)
                             Center(
                               child: Padding(
-                                padding:
-                                    EdgeInsets.symmetric(horizontal: 20.w),
+                                padding: EdgeInsets.symmetric(horizontal: 20.w),
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.center,
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
                                     if (title.isNotEmpty)
                                       Text(
                                         title.toUpperCase(),
                                         textAlign: TextAlign.center,
                                         style: GoogleFonts.inter(
-                                          color: Colors.white
-                                              .withValues(alpha: 0.95),
+                                          color: Colors.white.withValues(
+                                            alpha: 0.95,
+                                          ),
                                           fontSize: 13.sp,
                                           fontWeight: FontWeight.w700,
                                           letterSpacing: 2.0,
@@ -1181,8 +1190,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
                           bannerCount,
                           (index) => AnimatedContainer(
                             duration: const Duration(milliseconds: 300),
-                            margin:
-                                EdgeInsets.symmetric(horizontal: 3.5.w),
+                            margin: EdgeInsets.symmetric(horizontal: 3.5.w),
                             width: activeDotIndex == index ? 18.w : 6.w,
                             height: 6.h,
                             decoration: BoxDecoration(
@@ -1205,249 +1213,256 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
             width: double.infinity,
             color: const Color(0xFF24ADD7),
             padding: EdgeInsets.symmetric(vertical: 8.h),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              padding: EdgeInsets.symmetric(horizontal: 12.w),
-              child: Row(
-                children: [
-                  // 1. Call Us Now Button (matching website)
-                  InkWell(
-                    onTap: () async {
-                      final uri = Uri.parse("tel:+919171719060");
-                      if (await canLaunchUrl(uri)) {
-                        await launchUrl(uri);
-                      }
+            child: Builder(
+              builder: (context) {
+                // 1. Call Us Now Button (matching website)
+                final callUsNowBtn = InkWell(
+                  onTap: () async {
+                    final uri = Uri.parse("tel:+919171719060");
+                    if (await canLaunchUrl(uri)) {
+                      await launchUrl(uri);
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(8.r),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 7.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8.r),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.phone_in_talk_rounded,
+                          color: const Color(0xFF24ADD7),
+                          size: 15.sp,
+                        ),
+                        SizedBox(width: 5.w),
+                        Text(
+                          "Call us Now",
+                          style: GoogleFonts.inter(
+                            color: const Color(0xFF24ADD7),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12.sp,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+
+                if (selectIndex == 2) {
+                  // 3 Buttons: scrollable horizontally
+                  return SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    padding: EdgeInsets.symmetric(horizontal: 12.w),
+                    child: Row(
+                      children: [
+                        callUsNowBtn,
+                        SizedBox(width: 8.w),
+                        // Pricing Plans Button
+                        InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              CupertinoPageRoute(
+                                builder: (context) => PricePlanPage(),
+                              ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(8.r),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 12.w,
+                              vertical: 7.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(8.r),
+                              border: Border.all(
+                                color: Colors.white,
+                                width: 1.2,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.card_membership_rounded,
+                                  color: Colors.white,
+                                  size: 15.sp,
+                                ),
+                                SizedBox(width: 5.w),
+                                Text(
+                                  "Pricing Plans",
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 8.w),
+                        // + Add Vendor Registration Button
+                        InkWell(
+                          onTap: () {
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (_) =>
+                                  const VendorRegistrationBottomSheet(),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(8.r),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 12.w,
+                              vertical: 7.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(8.r),
+                              border: Border.all(
+                                color: Colors.white,
+                                width: 1.2,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.person_add_alt_1_rounded,
+                                  color: Colors.white,
+                                  size: 15.sp,
+                                ),
+                                SizedBox(width: 5.w),
+                                Text(
+                                  "+ Add Vendor Registration",
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                // 2 Buttons: Call us Now on left, Add Property / Apply for Loans on right with space in between
+                Widget rightButton;
+                if (selectIndex == 3) {
+                  rightButton = InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        CupertinoPageRoute(
+                          builder: (context) => LoanServiceDetailsPage(),
+                        ),
+                      );
                     },
                     borderRadius: BorderRadius.circular(8.r),
                     child: Container(
                       padding: EdgeInsets.symmetric(
-                        horizontal: 12.w,
+                        horizontal: 14.w,
                         vertical: 7.h,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Colors.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8.r),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+                        border: Border.all(color: Colors.white, width: 1.2),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            Icons.phone_in_talk_rounded,
-                            color: const Color(0xFF24ADD7),
+                            Icons.account_balance_outlined,
+                            color: Colors.white,
                             size: 15.sp,
                           ),
                           SizedBox(width: 5.w),
                           Text(
-                            "Call us Now",
+                            "Apply for Loans",
                             style: GoogleFonts.inter(
-                              color: const Color(0xFF24ADD7),
-                              fontWeight: FontWeight.bold,
                               fontSize: 12.sp,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
                             ),
                           ),
                         ],
                       ),
                     ),
+                  );
+                } else {
+                  rightButton = InkWell(
+                    onTap: () {
+                      setState(() {
+                        bottomIndex = 2;
+                      });
+                      ref.invalidate(getMyPropertyController);
+                    },
+                    borderRadius: BorderRadius.circular(8.r),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 14.w,
+                        vertical: 7.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8.r),
+                        border: Border.all(color: Colors.white, width: 1.2),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.add_rounded,
+                            color: Colors.white,
+                            size: 16.sp,
+                          ),
+                          SizedBox(width: 4.w),
+                          Text(
+                            "Add Property",
+                            style: GoogleFonts.inter(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                return Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12.w),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [callUsNowBtn, rightButton],
                   ),
-
-                  SizedBox(width: 8.w),
-
-                  // Contextual buttons based on selectIndex
-                  if (selectIndex == 2) ...[
-                    // Pricing Plans Button
-                    InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          CupertinoPageRoute(
-                            builder: (context) => PricePlanPage(),
-                          ),
-                        );
-                      },
-                      borderRadius: BorderRadius.circular(8.r),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 12.w,
-                          vertical: 7.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(8.r),
-                          border: Border.all(
-                            color: Colors.white,
-                            width: 1.2,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.card_membership_rounded,
-                              color: Colors.white,
-                              size: 15.sp,
-                            ),
-                            SizedBox(width: 5.w),
-                            Text(
-                              "Pricing Plans",
-                              style: GoogleFonts.inter(
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 8.w),
-                    // + Add Vendor Registration Button
-                    InkWell(
-                      onTap: () {
-                        showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (_) =>
-                              const VendorRegistrationBottomSheet(),
-                        );
-                      },
-                      borderRadius: BorderRadius.circular(8.r),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 12.w,
-                          vertical: 7.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(8.r),
-                          border: Border.all(
-                            color: Colors.white,
-                            width: 1.2,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.person_add_alt_1_rounded,
-                              color: Colors.white,
-                              size: 15.sp,
-                            ),
-                            SizedBox(width: 5.w),
-                            Text(
-                              "+ Add Vendor Registration",
-                              style: GoogleFonts.inter(
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ] else if (selectIndex == 3) ...[
-                    // Apply for Loans
-                    InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          CupertinoPageRoute(
-                            builder: (context) =>
-                                LoanServiceDetailsPage(),
-                          ),
-                        );
-                      },
-                      borderRadius: BorderRadius.circular(8.r),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 14.w,
-                          vertical: 7.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(8.r),
-                          border: Border.all(
-                            color: Colors.white,
-                            width: 1.2,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.account_balance_outlined,
-                              color: Colors.white,
-                              size: 15.sp,
-                            ),
-                            SizedBox(width: 5.w),
-                            Text(
-                              "Apply for Loans",
-                              style: GoogleFonts.inter(
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ] else ...[
-                    // + Add Property
-                    InkWell(
-                      onTap: () {
-                        setState(() {
-                          bottomIndex = 2;
-                        });
-                        ref.invalidate(getMyPropertyController);
-                      },
-                      borderRadius: BorderRadius.circular(8.r),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 14.w,
-                          vertical: 7.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(8.r),
-                          border: Border.all(
-                            color: Colors.white,
-                            width: 1.2,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.add_rounded,
-                              color: Colors.white,
-                              size: 16.sp,
-                            ),
-                            SizedBox(width: 4.w),
-                            Text(
-                              "+ Add Property",
-                              style: GoogleFonts.inter(
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+                );
+              },
             ),
           ),
 
@@ -1458,8 +1473,8 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
             padding: EdgeInsets.symmetric(horizontal: 16.w),
             child: Builder(
               builder: (context) {
-                final userName =
-                    (profileController.value?.data?.name ?? "").trim();
+                final userName = (profileController.value?.data?.name ?? "")
+                    .trim();
                 if (userName.isNotEmpty) {
                   return RichText(
                     textAlign: TextAlign.center,
@@ -1610,7 +1625,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
     );
   }
 
-    // ==================== MY LISTINGS SCREEN ====================
+  // ==================== MY LISTINGS SCREEN ====================
   Widget MyPropertyScreen() {
     final getMyPropertyProvider = ref.watch(getMyPropertyController);
     return SafeArea(
@@ -3019,7 +3034,7 @@ class _RealEstateHomePageState extends ConsumerState<RealEstateHomePage>
     );
   }
 
-    Widget _buildWebTabItem(String title, int index) {
+  Widget _buildWebTabItem(String title, int index) {
     final isSelected = selectIndex == index;
     return InkWell(
       onTap: () {
@@ -6267,7 +6282,6 @@ class _SizeReportingWidgetState extends State<SizeReportingWidget> {
   }
 }
 
-
 // ==================== ASSOCIATED CLIENTS & PARTNERS (WEBSITE SECTION) ====================
 class AssociatedClientsSection extends ConsumerStatefulWidget {
   const AssociatedClientsSection({super.key});
@@ -6293,11 +6307,7 @@ class _AssociatedClientsSectionState
       final dio = createDio();
       final res = await dio.post(
         "https://api.propertyleinnovation.com/api/v1/admin/getAssociatedClients",
-        data: {
-          "status": "active",
-          "sortOrder": "desc",
-          "sortBy": "createdAt",
-        },
+        data: {"status": "active", "sortOrder": "desc", "sortBy": "createdAt"},
       );
       if (res.data != null && res.data["data"] != null) {
         final list = res.data["data"]["list"] as List<dynamic>?;
@@ -6343,9 +6353,7 @@ class _AssociatedClientsSectionState
                       TextSpan(text: "Our Associated "),
                       TextSpan(
                         text: "Clients & Partners",
-                        style: TextStyle(
-                          color: Color(0xFF24ADD7),
-                        ),
+                        style: TextStyle(color: Color(0xFF24ADD7)),
                       ),
                     ],
                   ),
