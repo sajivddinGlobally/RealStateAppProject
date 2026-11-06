@@ -48,9 +48,33 @@ class CreatePropertyScreen extends ConsumerStatefulWidget {
 
 class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
   final _formKey = GlobalKey<FormState>();
-  bool get isEditMode =>
-      widget.data != null && (widget.data?.id?.isNotEmpty ?? false);
-  String? get propertyId => widget.data?.id;
+  String? get propertyId {
+    if (widget.data != null) {
+      if (widget.data is ListElement) {
+        final id = (widget.data as ListElement).id;
+        if (id != null && id.trim().isNotEmpty) return id.trim();
+      } else if (widget.data is Map) {
+        final m = widget.data as Map;
+        final id =
+            m['_id']?.toString() ?? m['id']?.toString() ?? m['sId']?.toString();
+        if (id != null && id.trim().isNotEmpty) return id.trim();
+      } else {
+        try {
+          final dynamic d = widget.data;
+          final String? id =
+              d.id?.toString() ??
+              d.sId?.toString() ??
+              d._id?.toString() ??
+              d['_id']?.toString() ??
+              d['id']?.toString();
+          if (id != null && id.trim().isNotEmpty) return id.trim();
+        } catch (_) {}
+      }
+    }
+    return null;
+  }
+
+  bool get isEditMode => propertyId != null && propertyId!.isNotEmpty;
 
   int _currentStep = 0;
 
@@ -103,7 +127,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
   String? selectedCity;
   String? selectedCityId;
   String? selectedLocality;
-  bool isLocalityFromDropdown = false;
+  bool isCustomLocalityMode = false;
   List<String> localityList = [];
   bool _isLocationLoading = false;
   bool get isCitySelected => selectedCity != null && selectedCity!.isNotEmpty;
@@ -241,6 +265,45 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
   bool showAllFurnishingItems = false;
   bool _isLoading = false;
 
+  final List<String> indianStates = [
+    "Andaman and Nicobar Islands",
+    "Andhra Pradesh",
+    "Arunachal Pradesh",
+    "Assam",
+    "Bihar",
+    "Chandigarh",
+    "Chhattisgarh",
+    "Dadra and Nagar Haveli and Daman and Diu",
+    "Delhi",
+    "Goa",
+    "Gujarat",
+    "Haryana",
+    "Himachal Pradesh",
+    "Jammu and Kashmir",
+    "Jharkhand",
+    "Karnataka",
+    "Kerala",
+    "Ladakh",
+    "Lakshadweep",
+    "Madhya Pradesh",
+    "Maharashtra",
+    "Manipur",
+    "Meghalaya",
+    "Mizoram",
+    "Nagaland",
+    "Odisha",
+    "Puducherry",
+    "Punjab",
+    "Rajasthan",
+    "Sikkim",
+    "Tamil Nadu",
+    "Telangana",
+    "Tripura",
+    "Uttar Pradesh",
+    "Uttarakhand",
+    "West Bengal",
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -269,12 +332,39 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
       cityController.text = selectedCity ?? "";
       selectedLocality = data.localityArea?.trim();
       localityController.text = selectedLocality ?? "";
-      isLocalityFromDropdown = true;
+      isCustomLocalityMode = false;
       selectedFurnishing = _normalize(data.furnishing);
 
       _houseNumberController.text = data.houseNumber ?? '';
-      _pincodeController.text = data.pincode ?? '';
-      _propertyAddressController.text = data.propertyAddress ?? '';
+      final fullAddr = data.propertyAddress ?? '';
+      _propertyAddressController.text = fullAddr;
+
+      // Extract Pincode: use data.pincode if present, otherwise extract 6-digit pin from propertyAddress
+      String pincode = (data.pincode != null && data.pincode!.trim().isNotEmpty)
+          ? data.pincode!.trim()
+          : '';
+      if (pincode.isEmpty && fullAddr.isNotEmpty) {
+        final pinMatch = RegExp(r'\b[1-9][0-9]{5}\b').firstMatch(fullAddr);
+        if (pinMatch != null) {
+          pincode = pinMatch.group(0)!;
+        }
+      }
+      _pincodeController.text = pincode;
+
+      // Extract State: match from indianStates list in propertyAddress
+      String stateVal = '';
+      if (fullAddr.isNotEmpty) {
+        for (final st in indianStates) {
+          if (RegExp(
+            r'\b' + RegExp.escape(st) + r'\b',
+            caseSensitive: false,
+          ).hasMatch(fullAddr)) {
+            stateVal = st;
+            break;
+          }
+        }
+      }
+      _stateController.text = stateVal;
       _priceController.text = data.price ?? '';
       _areaController.text = data.area ?? '';
 
@@ -317,11 +407,14 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
       isBroker = (data.isBroker == "1" || data.isBroker == "yes");
 
       final overview = data.aveneuOverView;
-      _projectAreaController.text = overview?.projectArea ?? '';
-      _unitSizesController.text = overview?.size ?? '';
-      _projectSizeController.text = overview?.projectSize ?? '';
-      _launchDateController.text = overview?.launchDate ?? '';
-      _possessionDateController.text = overview?.possessionStart ?? '';
+      if (overview != null) {
+        _projectAreaController.text = overview.projectArea?.toString() ?? '';
+        _unitSizesController.text = overview.size?.toString() ?? '';
+        _projectSizeController.text = overview.projectSize?.toString() ?? '';
+        _launchDateController.text = overview.launchDate?.toString() ?? '';
+        _possessionDateController.text =
+            overview.possessionStart?.toString() ?? '';
+      }
 
       if (data.amenities != null && data.amenities!.isNotEmpty) {
         selectedAmenities = List<String>.from(data.amenities!);
@@ -447,81 +540,84 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
       if (!customFurnishingItems.contains(text)) {
         customFurnishingItems.add(text);
       }
-    });
-    applianceController.clear();
-  }
-
-  void removeCustomAppliance(String item) {
-    setState(() {
-      appliance.remove(item);
-      customFurnishingItems.remove(item);
+      applianceController.clear();
     });
   }
 
   void addCustomAmenity() {
-    final custom = _customAmenityController.text.trim();
-    if (custom.isEmpty) return;
+    final text = _customAmenityController.text.trim();
+    if (text.isEmpty) return;
     setState(() {
-      if (!allAmenities.contains(custom)) {
-        allAmenities.insert(0, custom);
+      if (!allAmenities.contains(text)) {
+        allAmenities.insert(0, text);
       }
-      if (!selectedAmenities.contains(custom)) {
-        selectedAmenities.add(custom);
+      if (!selectedAmenities.contains(text)) {
+        selectedAmenities.add(text);
       }
-      if (!customAmenitiesList.contains(custom)) {
-        customAmenitiesList.add(custom);
+      if (!customAmenitiesList.contains(text)) {
+        customAmenitiesList.add(text);
       }
-    });
-    _customAmenityController.clear();
-  }
-
-  void removeCustomAmenity(String amenity) {
-    setState(() {
-      selectedAmenities.remove(amenity);
-      customAmenitiesList.remove(amenity);
-      allAmenities.remove(amenity);
+      _customAmenityController.clear();
     });
   }
 
   @override
   void dispose() {
     _stateController.dispose();
+    cityController.dispose();
     localityController.dispose();
     _houseNumberController.dispose();
-    _propertyAddressController.dispose();
     _pincodeController.dispose();
-
+    _propertyAddressController.dispose();
     _priceController.dispose();
     _bedroomsController.dispose();
     _areaController.dispose();
     _availableFromController.dispose();
     _customSecurityDepositController.dispose();
-
     _bathroomsController.dispose();
     _kitchenController.dispose();
     _balconyController.dispose();
     _parkingController.dispose();
-
     _permitNoController.dispose();
     _reraController.dispose();
     _dedController.dispose();
     _brnController.dispose();
-
+    _descriptionController.dispose();
     _projectAreaController.dispose();
     _unitSizesController.dispose();
     _projectSizeController.dispose();
     _launchDateController.dispose();
     _possessionDateController.dispose();
-
     applianceController.dispose();
     _customAmenityController.dispose();
-    _descriptionController.dispose();
 
-    for (var ctrlMap in aroundProjectList) {
-      (ctrlMap['place'] as TextEditingController?)?.dispose();
-      (ctrlMap['distance'] as TextEditingController?)?.dispose();
+    for (var element in aroundProjectList) {
+      (element['place'] as TextEditingController?)?.dispose();
+      (element['distance'] as TextEditingController?)?.dispose();
     }
     super.dispose();
+  }
+
+  Future<void> _selectDate(TextEditingController controller) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+      builder: (context, child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            colorScheme: const ColorScheme.light(primary: Color(0xFF24ADD7)),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      final formatted =
+          "${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}";
+      setState(() => controller.text = formatted);
+    }
   }
 
   Future<void> _useCurrentLocation() async {
@@ -679,23 +775,33 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
         localityList = areas;
         selectedLocality = localityName.isNotEmpty ? localityName : null;
         localityController.text = localityName;
-        isLocalityFromDropdown = areas.any(
+        isCustomLocalityMode = !areas.any(
           (a) => a.toLowerCase() == localityName.toLowerCase(),
         );
-        if (postalCode.isNotEmpty && !addressStr.contains(postalCode)) {
-          addressStr = addressStr.isNotEmpty
-              ? "$addressStr, $postalCode"
-              : postalCode;
+        if (postalCode.isNotEmpty) {
+          _pincodeController.text = postalCode;
         }
         if (addressStr.isNotEmpty) {
           _propertyAddressController.text = addressStr;
         }
       });
-    } catch (e) {
-      debugPrint("Location Error: $e");
-      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Unable to fetch current location")),
+        SnackBar(
+          content: Text(
+            cityName.isNotEmpty
+                ? "Location detected: $cityName, $stateName"
+                : "Location updated",
+          ),
+          backgroundColor: const Color(0xFF24ADD7),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error fetching location: $e"),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       if (mounted) setState(() => _isLocationLoading = false);
@@ -703,43 +809,12 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
   }
 
   Future<void> pickImages() async {
-    showCupertinoModalPopup(
-      context: context,
-      builder: (_) => CupertinoActionSheet(
-        title: const Text('Add Property Photos'),
-        actions: [
-          CupertinoActionSheetAction(
-            onPressed: () async {
-              Navigator.pop(context);
-              final picked = await _picker.pickMultiImage(imageQuality: 75);
-              if (picked.isNotEmpty) {
-                setState(() {
-                  propertyImages.addAll(picked.map((x) => File(x.path)));
-                });
-              }
-            },
-            child: const Text('Gallery'),
-          ),
-          CupertinoActionSheetAction(
-            onPressed: () async {
-              Navigator.pop(context);
-              final file = await _picker.pickImage(
-                source: ImageSource.camera,
-                imageQuality: 75,
-              );
-              if (file != null) {
-                setState(() => propertyImages.add(File(file.path)));
-              }
-            },
-            child: const Text('Camera'),
-          ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-      ),
-    );
+    final List<XFile> images = await _picker.pickMultiImage();
+    if (images.isNotEmpty) {
+      setState(() {
+        propertyImages.addAll(images.map((e) => File(e.path)).toList());
+      });
+    }
   }
 
   void removeImage(int index) {
@@ -747,7 +822,188 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
   }
 
   bool _validateStep(int step) {
+    // 1. Form key validation
     final formValid = _formKey.currentState?.validate() ?? true;
+
+    // 2. Explicit website-identical validation rules (ev())
+    if (step == 0) {
+      if (selectedType == null &&
+          (selectedListingCategory == null ||
+              selectedListingCategory!.isEmpty)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Listing Category is required"),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return false;
+      }
+      if (selectedPropertyType == null || selectedPropertyType!.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Property Sector is required"),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return false;
+      }
+      if (selectedPropertySubType == null || selectedPropertySubType!.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Specific Property Type is required"),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return false;
+      }
+      if (isBroker == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Please specify if you are a broker"),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return false;
+      }
+    } else if (step == 1) {
+      if (_stateController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("State is required"),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return false;
+      }
+      if (selectedCity == null || selectedCity!.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("City is required"),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return false;
+      }
+      if (_pincodeController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Pincode is required"),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return false;
+      }
+      if (!isEditMode && _houseNumberController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("House number is required"),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return false;
+      }
+      if (_propertyAddressController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Address is required"),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return false;
+      }
+      if ((selectedLocality == null ||
+              selectedLocality!.trim().isEmpty ||
+              selectedLocality == "__no_localities__") &&
+          localityController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Locality is required"),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return false;
+      }
+    } else if (step == 2) {
+      final priceVal = double.tryParse(
+        _priceController.text.trim().replaceAll(',', ''),
+      );
+      if (priceVal == null || priceVal <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Valid price required"),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return false;
+      }
+      final areaVal = double.tryParse(
+        _areaController.text.trim().replaceAll(',', ''),
+      );
+      if (areaVal == null || areaVal <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Valid area required"),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return false;
+      }
+      final isLand =
+          selectedPropertySubType?.toLowerCase().contains("land") ?? false;
+      if (!isLand && (_selectedBhk == null || _selectedBhk!.trim().isEmpty)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Bedrooms required"),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return false;
+      }
+      final isRent =
+          selectedType == 2 || selectedListingCategory?.toLowerCase() == "rent";
+      if (isRent && _availableFromController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Available From date is required"),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return false;
+      }
+    } else if (step == 3) {
+      final isLand =
+          selectedPropertySubType?.toLowerCase().contains("land") ?? false;
+      if (!isLand &&
+          (selectedFurnishing == null || selectedFurnishing!.trim().isEmpty)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Furnishing is required"),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return false;
+      }
+      if (isBroker == true && _reraController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("RERA number is required"),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return false;
+      }
+    } else if (step == 4) {
+      if (propertyImages.length < 3) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Upload at least 3 photos"),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return false;
+      }
+    }
+
     return formValid;
   }
 
@@ -770,12 +1026,11 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
   Future<void> _submitProperty() async {
     if (_isLoading) return;
 
-    if (!_validateStep(0) ||
-        !_validateStep(1) ||
-        !_validateStep(2) ||
-        !_validateStep(3) ||
-        !_validateStep(4)) {
-      return;
+    for (int step = 0; step < 5; step++) {
+      if (!_validateStep(step)) {
+        setState(() => _currentStep = step);
+        return;
+      }
     }
 
     setState(() => _isLoading = true);
@@ -805,6 +1060,12 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
       }
 
       if (finalImageUrls.length < 3) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Upload at least 3 photos"),
+            backgroundColor: Colors.red,
+          ),
+        );
         return;
       }
 
@@ -918,6 +1179,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
             parking: _selectParking ?? _parkingController.text.trim(),
             furnishing: selectedFurnishing?.toLowerCase(),
             amenities: selectedAmenities,
+            furnishingItems: appliance,
             aroundProject: updateAround,
             permitNo: _permitNoController.text.trim(),
             rera: _reraController.text.trim(),
@@ -927,80 +1189,47 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
             aveneuOverView: updateAveneu,
             uploadedPhotos: finalImageUrls,
             isBroker: isBroker == true ? "yes" : "no",
-            furnishingItems: appliance,
           ),
         );
       } else {
         response = await service.createProperty(body);
       }
 
-      if (!mounted) return;
-
-      if (response.error == false) {
+      if (response != null && response.error == false) {
+        ref.invalidate(getMyPropertyController);
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              response.message ??
-                  (isEditMode
-                      ? "Property updated successfully!"
-                      : "Property uploaded successfully!"),
+              isEditMode
+                  ? "Property Updated Successfully!"
+                  : "Property Upload Successfully.",
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: const Color(0xFF17C69B),
           ),
         );
 
-        if (!widget.fromBottomNav) {
-          Navigator.pop(context, true);
-          ref.invalidate(getMyPropertyController);
-          return;
-        } else {
-          widget.onSuccess?.call();
+        if (widget.onSuccess != null) {
+          widget.onSuccess!();
+        } else if (Navigator.canPop(context)) {
+          Navigator.pop(context);
         }
       } else {
+        final errMsg = response?.message ?? "Property submission failed";
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response.message ?? "Failed to save property."),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(errMsg), backgroundColor: Colors.red),
         );
       }
-    } catch (e, st) {
-      log("Submit error: $e\n$st");
-      if (!mounted) return;
+    } catch (e) {
+      log("Error submitting property: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Something went wrong."),
+          content: Text("Something went wrong. Please try again."),
           backgroundColor: Colors.red,
         ),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _selectDate(TextEditingController controller) async {
-    DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF24ADD7),
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (pickedDate != null) {
-      controller.text =
-          "${pickedDate.day.toString().padLeft(2, '0')}/${pickedDate.month.toString().padLeft(2, '0')}/${pickedDate.year}";
     }
   }
 
@@ -1010,14 +1239,37 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
     final categoryAsync = ref.watch(getPropertyCategoryProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: const Color(0xFFFDFDFD),
       appBar: AppBar(
         backgroundColor: const Color(0xFF24ADD7),
-        foregroundColor: Colors.white,
-        elevation: 1,
-        title: Text(
-          isEditMode ? 'Edit Property' : 'Create Property Listing',
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+        elevation: 0,
+        title: RichText(
+          text: TextSpan(
+            style: TextStyle(
+              fontSize: 17.sp,
+              fontWeight: FontWeight.w900,
+              fontStyle: FontStyle.italic,
+            ),
+            children: [
+              const TextSpan(
+                text: "Property",
+                style: TextStyle(color: Colors.white),
+              ),
+              TextSpan(
+                text: "Le",
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.8)),
+              ),
+              TextSpan(
+                text: isEditMode ? " | Edit Property" : " | Add Property",
+                style: TextStyle(
+                  fontSize: 13.5.sp,
+                  fontWeight: FontWeight.w400,
+                  fontStyle: FontStyle.normal,
+                  color: Colors.white.withValues(alpha: 0.95),
+                ),
+              ),
+            ],
+          ),
         ),
         centerTitle: true,
         leading: !widget.fromBottomNav
@@ -1031,14 +1283,14 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
         key: _formKey,
         autovalidateMode: AutovalidateMode.onUserInteraction,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Top 5-Step Stepper Navigation Bar
               _buildStepperHeader(),
 
-              const SizedBox(height: 16),
+              SizedBox(height: 14.h),
 
               // Current step form widget
               Container(
@@ -1046,11 +1298,12 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                 child: _buildCurrentStep(cityAsync, categoryAsync),
               ),
 
-              const SizedBox(height: 20),
+              SizedBox(height: 18.h),
 
-              _buildOriginalNavigationButtons(),
+              // Navigation Buttons (Back & Save / Publish)
+              _buildNavigationButtons(),
 
-              const SizedBox(height: 20),
+              SizedBox(height: 20.h),
             ],
           ),
         ),
@@ -1058,77 +1311,68 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
     );
   }
 
-  // ────── Original Navigation Buttons (Restored as requested) ──────
-  Widget _buildOriginalNavigationButtons() {
+  // ────── Bottom Navigation Buttons ──────
+  Widget _buildNavigationButtons() {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // BACK Button
+        // BACK Button (uppercase tracking-widest text button)
         if (_currentStep > 0)
-          Expanded(
-            flex: 1,
-            child: SizedBox(
-              height: 48.h,
-              child: ElevatedButton(
-                onPressed: _goToPreviousStep,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  foregroundColor: const Color(0xFF24ADD7),
-                  elevation: 0,
-                  side: const BorderSide(color: Color(0xFF24ADD7), width: 1.5),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.r),
-                  ),
-                ),
-                child: Text(
-                  'BACK',
-                  style: TextStyle(
-                    fontSize: 13.5.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+          TextButton(
+            onPressed: _goToPreviousStep,
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            ),
+            child: Text(
+              'BACK',
+              style: TextStyle(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w900,
+                color: Colors.grey.shade500,
+                letterSpacing: 1.2,
               ),
             ),
-          ),
+          )
+        else
+          const SizedBox.shrink(),
 
-        if (_currentStep > 0) SizedBox(width: 12.w),
-        Expanded(
-          flex: _currentStep > 0 ? 2 : 1,
-          child: SizedBox(
-            height: 48.h,
-            child: ElevatedButton(
-              onPressed: _isLoading ? null : _handleNextStep,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF24ADD7),
-                foregroundColor: Colors.white,
-                disabledIconColor: const Color(
-                  0xFF24ADD7,
-                ).withValues(alpha: 0.5),
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
+        // SAVE & CONTINUE or PUBLISH PROPERTY
+        SizedBox(
+          height: 48.h,
+          child: ElevatedButton(
+            onPressed: _isLoading ? null : _handleNextStep,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _isLastStep
+                  ? const Color(0xFF17C69B) // emerald green on step 5
+                  : const Color(0xFF24ADD7), // cyan/blue on steps 1-4
+              foregroundColor: Colors.white,
+              elevation: 2,
+              padding: EdgeInsets.symmetric(horizontal: 24.w),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14.r),
               ),
-              child: _isLoading
-                  ? SizedBox(
-                      width: 20.w,
-                      height: 20.w,
-                      child: const Center(
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      ),
-                    )
-                  : Text(
-                      _isLastStep
-                          ? (isEditMode ? 'Update Property' : 'Submit Property')
-                          : 'SAVE & CONTINUE',
-                      style: TextStyle(
-                        fontSize: 13.5.sp,
-                        fontWeight: FontWeight.bold,
+            ),
+            child: _isLoading
+                ? SizedBox(
+                    width: 20.w,
+                    height: 20.w,
+                    child: const Center(
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
                       ),
                     ),
-            ),
+                  )
+                : Text(
+                    _isLastStep
+                        ? (isEditMode ? 'UPDATE PROPERTY' : 'PUBLISH PROPERTY')
+                        : 'SAVE & CONTINUE',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
           ),
         ),
       ],
@@ -1137,89 +1381,170 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
 
   // ────── Modern 5-Step Stepper Header ──────
   Widget _buildStepperHeader() {
+    final progress = (_currentStep + 1) / _steps.length;
+    final percent = (progress * 100).round();
+
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 6.w),
+      padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 14.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(color: const Color(0xFFF3F4F6), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
-      child: Row(
-        children: List.generate(_steps.length, (index) {
-          final isCurrent = index == _currentStep;
-          final isPassed = index < _currentStep;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () {
-                if (isPassed || _validateStep(_currentStep)) {
-                  setState(() => _currentStep = index);
-                }
-              },
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 32.w,
-                    height: 32.w,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isCurrent
-                          ? const Color(0xFF24ADD7)
-                          : (isPassed
-                                ? const Color(
-                                    0xFF24ADD7,
-                                  ).withValues(alpha: 0.18)
-                                : Colors.grey.shade100),
-                      border: Border.all(
-                        color: isCurrent
-                            ? const Color(0xFF24ADD7)
-                            : (isPassed
-                                  ? const Color(0xFF24ADD7)
-                                  : Colors.grey.shade300),
-                        width: isCurrent ? 2 : 1.2,
-                      ),
-                    ),
-                    child: Center(
-                      child: isPassed
-                          ? const Icon(
-                              Icons.check,
-                              size: 16,
-                              color: Color(0xFF24ADD7),
-                            )
-                          : Icon(
-                              _steps[index]['icon'] as IconData,
-                              size: 15.sp,
-                              color: isCurrent
-                                  ? Colors.white
-                                  : Colors.grey.shade500,
-                            ),
-                    ),
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    _steps[index]['label'] as String,
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 10.sp,
-                      fontWeight: isCurrent ? FontWeight.bold : FontWeight.w500,
-                      color: isCurrent
-                          ? const Color(0xFF24ADD7)
-                          : Colors.grey.shade600,
-                    ),
-                  ),
-                ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Progress bar & % Complete
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "$percent% COMPLETE",
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.grey.shade500,
+                  letterSpacing: 1.2,
+                ),
               ),
+              Text(
+                "STEP ${_currentStep + 1} OF ${_steps.length}",
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF24ADD7),
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8.h),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4.r),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 5.h,
+              backgroundColor: Colors.grey.shade100,
+              valueColor: const AlwaysStoppedAnimation(Color(0xFF24ADD7)),
             ),
-          );
-        }),
+          ),
+          SizedBox(height: 14.h),
+
+          // 5 Step Nodes (Scrollable horizontally)
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: List.generate(_steps.length, (index) {
+                final isCurrent = index == _currentStep;
+                final isPassed = index < _currentStep;
+                final label = _steps[index]['label'] as String;
+                final desc = _steps[index]['desc'] as String;
+
+                return GestureDetector(
+                  onTap: () {
+                    if (isPassed) {
+                      setState(() => _currentStep = index);
+                    } else if (index > _currentStep) {
+                      if (_validateStep(_currentStep)) {
+                        setState(() => _currentStep = index);
+                      }
+                    }
+                  },
+                  child: Container(
+                    margin: EdgeInsets.only(
+                      right: index < _steps.length - 1 ? 14.w : 0,
+                    ),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 8.w,
+                      vertical: 4.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isCurrent
+                          ? const Color(0xFFEBF8FC)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 28.w,
+                          height: 28.w,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isCurrent || isPassed
+                                ? const Color(0xFF24ADD7)
+                                : const Color(0xFFF9FAFB),
+                            border: Border.all(
+                              color: isCurrent || isPassed
+                                  ? const Color(0xFF24ADD7)
+                                  : Colors.grey.shade300,
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Center(
+                            child: isPassed
+                                ? const Icon(
+                                    Icons.check,
+                                    size: 15,
+                                    color: Colors.white,
+                                  )
+                                : Text(
+                                    "${index + 1}",
+                                    style: TextStyle(
+                                      color: isCurrent
+                                          ? Colors.white
+                                          : Colors.grey.shade400,
+                                      fontSize: 11.sp,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                        SizedBox(width: 8.w),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              label.toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 10.5.sp,
+                                fontWeight: FontWeight.w900,
+                                color: isCurrent
+                                    ? const Color(0xFF111827)
+                                    : (isPassed
+                                          ? Colors.grey.shade700
+                                          : Colors.grey.shade400),
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            Text(
+                              desc.toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 8.5.sp,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey.shade400,
+                                letterSpacing: 0.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1315,15 +1640,13 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
         ? dynamicOptions
         : (isCommercial ? fallbackCommercial : fallbackResidential);
 
-    // final displayCount = showAllPropertySubTypes
-    //     ? currentOptions.length
-    //     : (currentOptions.length > 6 ? 6 : currentOptions.length);
-
     return _buildCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Listing Category (Sell / Rent Out)
+          _buildStepHeaderTitle("Basic Details"),
+
+          // 1. Listing Purpose (Sell / Rent Out)
           FormField<int>(
             key: ValueKey(selectedType),
             initialValue: selectedType,
@@ -1337,24 +1660,19 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    "Listing Purpose *",
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      color: Colors.grey.shade800,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(height: 6.h),
+                  _buildFieldLabel("Listing Purpose", isRequired: true),
                   Container(
-                    height: 46.h,
+                    height: 48.h,
                     padding: EdgeInsets.all(4.r),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF1F3F5),
-                      borderRadius: BorderRadius.circular(10.r),
-                      border: fieldState.hasError
-                          ? Border.all(color: Colors.red, width: 1.2)
-                          : null,
+                      color: const Color(0xFFF9FAFB),
+                      borderRadius: BorderRadius.circular(14.r),
+                      border: Border.all(
+                        color: fieldState.hasError
+                            ? Colors.red
+                            : const Color(0xFFE5E7EB),
+                        width: 1.5,
+                      ),
                     ),
                     child: Row(
                       children: [
@@ -1367,22 +1685,35 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                               });
                               fieldState.didChange(1);
                             },
-                            child: Container(
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 150),
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8.r),
+                                borderRadius: BorderRadius.circular(10.r),
                                 color: selectedType == 1
                                     ? const Color(0xFF24ADD7)
                                     : Colors.transparent,
+                                boxShadow: selectedType == 1
+                                    ? [
+                                        BoxShadow(
+                                          color: const Color(
+                                            0xFF24ADD7,
+                                          ).withValues(alpha: 0.3),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ]
+                                    : null,
                               ),
                               child: Text(
                                 'SELL',
                                 style: TextStyle(
                                   color: selectedType == 1
                                       ? Colors.white
-                                      : Colors.grey.shade700,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13.sp,
+                                      : Colors.black87,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 12.5.sp,
+                                  letterSpacing: 0.5,
                                 ),
                               ),
                             ),
@@ -1397,22 +1728,35 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                               });
                               fieldState.didChange(2);
                             },
-                            child: Container(
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 150),
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8.r),
+                                borderRadius: BorderRadius.circular(10.r),
                                 color: selectedType == 2
                                     ? const Color(0xFF24ADD7)
                                     : Colors.transparent,
+                                boxShadow: selectedType == 2
+                                    ? [
+                                        BoxShadow(
+                                          color: const Color(
+                                            0xFF24ADD7,
+                                          ).withValues(alpha: 0.3),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ]
+                                    : null,
                               ),
                               child: Text(
                                 'RENT OUT',
                                 style: TextStyle(
                                   color: selectedType == 2
                                       ? Colors.white
-                                      : Colors.grey.shade700,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13.sp,
+                                      : Colors.black87,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 12.5.sp,
+                                  letterSpacing: 0.5,
                                 ),
                               ),
                             ),
@@ -1437,7 +1781,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
               );
             },
           ),
-          SizedBox(height: 14.h),
+          SizedBox(height: 16.h),
 
           // 2. Property Sector (Residential / Commercial)
           _buildDropdown(
@@ -1450,145 +1794,122 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
             }),
             isRequired: true,
           ),
-          SizedBox(height: 14.h),
+          SizedBox(height: 16.h),
 
-          // 3. Specific Property Type
-          FormField<String>(
-            key: ValueKey(selectedPropertySubType),
-            initialValue: selectedPropertySubType,
-            validator: (_) {
-              if (selectedPropertySubType == null ||
-                  selectedPropertySubType!.isEmpty) {
-                return "Please select Specific Property Type";
-              }
-              return null;
-            },
-            builder: (fieldState) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Specific Property Type *",
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      color: Colors.grey.shade800,
-                      fontWeight: FontWeight.w600,
+          // 3. Specific Property Type (Grid of pills)
+          if (selectedPropertyType != null)
+            FormField<String>(
+              key: ValueKey(selectedPropertySubType),
+              initialValue: selectedPropertySubType,
+              validator: (_) {
+                if (selectedPropertySubType == null ||
+                    selectedPropertySubType!.isEmpty) {
+                  return "Please select Specific Property Type";
+                }
+                return null;
+              },
+              builder: (fieldState) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildFieldLabel(
+                      "Specific Property Type",
+                      isRequired: true,
                     ),
-                  ),
-                  SizedBox(height: 6.h),
-                  Container(
-                    decoration: fieldState.hasError
-                        ? BoxDecoration(
-                            borderRadius: BorderRadius.circular(10.r),
-                            border: Border.all(color: Colors.red, width: 1.2),
-                          )
-                        : null,
-                    padding: fieldState.hasError
-                        ? EdgeInsets.all(4.r)
-                        : EdgeInsets.zero,
-                    child: GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: currentOptions.length,
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 8.h,
-                        crossAxisSpacing: 8.w,
-                        mainAxisExtent: 42.h,
+                    Container(
+                      decoration: fieldState.hasError
+                          ? BoxDecoration(
+                              borderRadius: BorderRadius.circular(12.r),
+                              border: Border.all(color: Colors.red, width: 1.2),
+                            )
+                          : null,
+                      padding: fieldState.hasError
+                          ? EdgeInsets.all(4.r)
+                          : EdgeInsets.zero,
+                      child: GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: currentOptions.length,
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 8.h,
+                          crossAxisSpacing: 8.w,
+                          mainAxisExtent: 44.h,
+                        ),
+                        itemBuilder: (context, index) {
+                          final item = currentOptions[index];
+                          final isSelected =
+                              selectedPropertySubType != null &&
+                              (selectedPropertySubType!.toLowerCase() ==
+                                      item.value.toLowerCase() ||
+                                  selectedPropertySubType!.toLowerCase() ==
+                                      item.title.toLowerCase() ||
+                                  selectedPropertySubType!
+                                          .toLowerCase()
+                                          .replaceAll('-', ' ') ==
+                                      item.title.toLowerCase());
+
+                          return GestureDetector(
+                            onTap: () {
+                              setState(
+                                () => selectedPropertySubType = item.value,
+                              );
+                              fieldState.didChange(item.value);
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 180),
+                              alignment: Alignment.center,
+                              padding: EdgeInsets.symmetric(horizontal: 6.w),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? const Color(0xFFEBF8FC)
+                                    : const Color(0xFFF9FAFB),
+                                borderRadius: BorderRadius.circular(12.r),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? const Color(0xFF24ADD7)
+                                      : const Color(0xFFE5E7EB),
+                                  width: isSelected ? 2.0 : 1.5,
+                                ),
+                              ),
+                              child: Text(
+                                item.title.toUpperCase(),
+                                textAlign: TextAlign.center,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 11.5.sp,
+                                  color: isSelected
+                                      ? const Color(0xFF24ADD7)
+                                      : const Color(0xFF4B5563),
+                                  letterSpacing: 0.4,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                      itemBuilder: (context, index) {
-                        final item = currentOptions[index];
-                        final isSelected =
-                            selectedPropertySubType != null &&
-                            (selectedPropertySubType!.toLowerCase() ==
-                                    item.value.toLowerCase() ||
-                                selectedPropertySubType!.toLowerCase() ==
-                                    item.title.toLowerCase() ||
-                                selectedPropertySubType!
-                                        .toLowerCase()
-                                        .replaceAll('-', ' ') ==
-                                    item.title.toLowerCase());
-
-                        return GestureDetector(
-                          onTap: () {
-                            setState(
-                              () => selectedPropertySubType = item.value,
-                            );
-                            fieldState.didChange(item.value);
-                          },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 180),
-                            alignment: Alignment.center,
-                            padding: EdgeInsets.symmetric(horizontal: 6.w),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? const Color(0xFF24ADD7)
-                                  : const Color(0xFFF8F9FA),
-                              borderRadius: BorderRadius.circular(10.r),
-                              border: Border.all(
-                                color: isSelected
-                                    ? const Color(0xFF24ADD7)
-                                    : Colors.grey.shade300,
-                              ),
-                            ),
-                            child: Text(
-                              item.title.toUpperCase(),
-                              textAlign: TextAlign.center,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 11.5.sp,
-                                color: isSelected
-                                    ? Colors.white
-                                    : const Color(0xFF344054),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
                     ),
-                  ),
-                  if (fieldState.hasError)
-                    Padding(
-                      padding: EdgeInsets.only(top: 4.h, left: 4.w),
-                      child: Text(
-                        fieldState.errorText!,
-                        style: TextStyle(
-                          color: Colors.red.shade700,
-                          fontSize: 11.5.sp,
-                          height: 1.1,
+                    if (fieldState.hasError)
+                      Padding(
+                        padding: EdgeInsets.only(top: 4.h, left: 4.w),
+                        child: Text(
+                          fieldState.errorText!,
+                          style: TextStyle(
+                            color: Colors.red.shade700,
+                            fontSize: 11.5.sp,
+                            height: 1.1,
+                          ),
                         ),
                       ),
-                    ),
-                ],
-              );
-            },
-          ),
-          // if (currentOptions.length > 6)
-          //   Align(
-          //     alignment: Alignment.centerRight,
-          //     child: TextButton(
-          //       style: const ButtonStyle(
-          //         padding: WidgetStatePropertyAll(EdgeInsets.zero),
-          //         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          //       ),
-          //       onPressed: () {
-          //         setState(() {
-          //           showAllPropertySubTypes = !showAllPropertySubTypes;
-          //         });
-          //       },
-          //       child: Text(
-          //         showAllPropertySubTypes ? "View Less" : "View All",
-          //         style: TextStyle(
-          //           color: const Color(0xFF24ADD7),
-          //           fontSize: 12.sp,
-          //           fontWeight: FontWeight.w600,
-          //         ),
-          //       ),
-          //     ),
-          //   ),
-          SizedBox(height: 10.h),
+                  ],
+                );
+              },
+            ),
+
+          SizedBox(height: 16.h),
+
           // 4. Are you a broker?
           FormField<bool>(
             key: ValueKey(isBroker),
@@ -1603,15 +1924,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    "Are You A Broker? *",
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      color: Colors.grey.shade800,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(height: 6.h),
+                  _buildFieldLabel("Are You A Broker?", isRequired: true),
                   Row(
                     children: [
                       Expanded(
@@ -1625,25 +1938,27 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                             decoration: BoxDecoration(
                               color: isBroker == true
                                   ? const Color(0xFF24ADD7)
-                                  : const Color(0xFFF8F9FA),
-                              borderRadius: BorderRadius.circular(10.r),
+                                  : const Color(0xFFF9FAFB),
+                              borderRadius: BorderRadius.circular(14.r),
                               border: Border.all(
                                 color: fieldState.hasError
                                     ? Colors.red
                                     : (isBroker == true
                                           ? const Color(0xFF24ADD7)
-                                          : Colors.grey.shade300),
+                                          : const Color(0xFFE5E7EB)),
+                                width: isBroker == true ? 2 : 1.5,
                               ),
                             ),
                             child: Center(
                               child: Text(
-                                "Yes",
+                                "YES",
                                 style: TextStyle(
                                   color: isBroker == true
                                       ? Colors.white
                                       : Colors.black87,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 12.5.sp,
+                                  letterSpacing: 0.6,
                                 ),
                               ),
                             ),
@@ -1662,25 +1977,27 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                             decoration: BoxDecoration(
                               color: isBroker == false
                                   ? const Color(0xFF24ADD7)
-                                  : const Color(0xFFF8F9FA),
-                              borderRadius: BorderRadius.circular(10.r),
+                                  : const Color(0xFFF9FAFB),
+                              borderRadius: BorderRadius.circular(14.r),
                               border: Border.all(
                                 color: fieldState.hasError
                                     ? Colors.red
                                     : (isBroker == false
                                           ? const Color(0xFF24ADD7)
-                                          : Colors.grey.shade300),
+                                          : const Color(0xFFE5E7EB)),
+                                width: isBroker == false ? 2 : 1.5,
                               ),
                             ),
                             child: Center(
                               child: Text(
-                                "No",
+                                "NO",
                                 style: TextStyle(
                                   color: isBroker == false
                                       ? Colors.white
                                       : Colors.black87,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 12.5.sp,
+                                  letterSpacing: 0.6,
                                 ),
                               ),
                             ),
@@ -1714,151 +2031,394 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
   // STEP 2: LOCATION (City & Address)
   // ══════════════════════════════════════════
   Widget _buildStep2Location(AsyncValue<CityResponseModel> cityAsync) {
+    final cities = cityAsync.value?.data ?? [];
+    if (selectedCity != null && cities.isNotEmpty) {
+      try {
+        final match = cities.firstWhere(
+          (c) =>
+              (c.cityName ?? '').trim().toLowerCase() ==
+              selectedCity!.trim().toLowerCase(),
+        );
+        localityList = List<String>.from(match.areas ?? []);
+      } catch (_) {
+        localityList = [];
+      }
+    } else if (selectedCity == null || selectedCity!.trim().isEmpty) {
+      localityList = [];
+    }
+
     return _buildCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Use current location button
+          _buildStepHeaderTitle("Property Location"),
+
+          // Use current location button (Matches website prominent cyan button)
           Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              style: ButtonStyle(
-                padding: WidgetStatePropertyAll(EdgeInsets.zero),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              onPressed: _isLocationLoading ? null : _useCurrentLocation,
-              icon: _isLocationLoading
-                  ? SizedBox(
-                      width: 14.w,
-                      height: 14.w,
-                      child: const CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Color(0xFF24ADD7),
-                      ),
-                    )
-                  : const Icon(
-                      Icons.my_location,
-                      size: 16,
-                      color: Color(0xFF24ADD7),
-                    ),
-              label: Text(
-                "Use Current Location",
-                style: TextStyle(
+            alignment: Alignment.centerLeft,
+            child: GestureDetector(
+              onTap: _isLocationLoading ? null : _useCurrentLocation,
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+                decoration: BoxDecoration(
                   color: const Color(0xFF24ADD7),
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12.sp,
+                  borderRadius: BorderRadius.circular(12.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF24ADD7).withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_isLocationLoading)
+                      SizedBox(
+                        width: 16.w,
+                        height: 16.w,
+                        child: const CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    else
+                      Icon(Icons.my_location, size: 16.sp, color: Colors.white),
+                    SizedBox(width: 8.w),
+                    Text(
+                      _isLocationLoading
+                          ? "Detecting location..."
+                          : "Use my current location",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12.5.sp,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
+          SizedBox(height: 16.h),
 
-          // City
+          // State * (Website field)
+          _buildStateField(),
+          SizedBox(height: 14.h),
+
+          // City * (Website field)
           _buildCityDropdown(cityAsync),
-          SizedBox(height: 12.h),
+          SizedBox(height: 14.h),
 
-          // Locality / Area
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Locality / Area *',
-                style: TextStyle(
-                  fontSize: 12.5.sp,
-                  color: Colors.grey.shade800,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              SizedBox(height: 4.h),
-              AbsorbPointer(
-                absorbing: !isCitySelected,
-                child: Opacity(
-                  opacity: isCitySelected ? 1 : 0.5,
-                  child: Autocomplete<String>(
-                    key: ValueKey(selectedCity),
-                    initialValue: TextEditingValue(
-                      text: selectedLocality ?? "",
-                    ),
-                    optionsBuilder: (TextEditingValue textEditingValue) {
-                      if (!isCitySelected)
-                        return const Iterable<String>.empty();
-                      if (textEditingValue.text.isEmpty) return localityList;
-                      return localityList.where((option) {
-                        return option.toLowerCase().contains(
-                          textEditingValue.text.toLowerCase(),
-                        );
-                      });
-                    },
-                    onSelected: (String selection) {
-                      setState(() {
-                        selectedLocality = selection;
-                        isLocalityFromDropdown = true;
-                      });
-                    },
-                    fieldViewBuilder:
-                        (context, controller, focusNode, onFieldSubmitted) {
-                          return TextFormField(
-                            controller: controller,
-                            focusNode: focusNode,
-                            style: TextStyle(
-                              fontSize: 13.sp,
-                              color: Colors.black87,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            onChanged: (value) {
-                              selectedLocality = value;
-                              isLocalityFromDropdown = false;
-                            },
-                            validator: (val) {
-                              if (val == null || val.trim().isEmpty) {
-                                return 'Locality / Area is required';
-                              }
-                              return null;
-                            },
-                            decoration: _inputDecoration(
-                              hint: isCitySelected
-                                  ? 'e.g. Malviya Nagar'
-                                  : 'Select City first',
-                            ),
-                          );
-                        },
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12.h),
-
-          // House / Flat / Plot Number (Website field: houseNumber)
+          // Pincode * (Website field)
           _buildTextField(
-            'House No / Tower / Block',
-            _houseNumberController,
-            hint: 'e.g. A-101, Royal Residency',
-            isRequired: false,
-            // validator: (val) {
-            //   if (val == null || val.trim().isEmpty) {
-            //     return 'House / Flat number is required';
-            //   }
-            //   return null;
-            // },
-          ),
-          SizedBox(height: 12.h),
-
-          // Property Address
-          _buildTextField(
-            'Address (building, street, etc.)',
-            _propertyAddressController,
-            hint: 'Detailed street address, landmarks...',
-            maxLines: 2,
+            'Pincode',
+            _pincodeController,
+            hint: 'e.g. 474001',
+            type: TextInputType.number,
             isRequired: true,
             validator: (val) {
               if (val == null || val.trim().isEmpty) {
-                return 'Property address is required';
+                return 'Pincode is required';
               }
               return null;
             },
           ),
+          SizedBox(height: 14.h),
+
+          // House No / Tower / Block (Website field - optional in edit mode)
+          _buildTextField(
+            'House No / Tower / Block',
+            _houseNumberController,
+            hint: 'e.g. A-101',
+            isRequired: !isEditMode,
+            validator: (val) {
+              if (!isEditMode && (val == null || val.trim().isEmpty)) {
+                return 'House number is required';
+              }
+              return null;
+            },
+          ),
+          SizedBox(height: 14.h),
+
+          // Address (building, street, etc.) * (Website field)
+          _buildTextField(
+            'Address (building, street, etc.)',
+            _propertyAddressController,
+            hint: 'Detailed address...',
+            maxLines: 2,
+            isRequired: true,
+            validator: (val) {
+              if (val == null || val.trim().isEmpty) {
+                return 'Address is required';
+              }
+              return null;
+            },
+          ),
+          SizedBox(height: 14.h),
+
+          // Locality / Area Dropdown (From getCityList or "No localities available")
+          _buildLocalityDropdownField(),
         ],
       ),
+    );
+  }
+
+  Widget _buildLocalityDropdownField() {
+    final hasSelected =
+        selectedLocality != null && selectedLocality!.trim().isNotEmpty;
+    final currentValue = hasSelected ? selectedLocality!.trim() : "";
+
+    final List<DropdownMenuItem<String>> dropdownItems = [];
+
+    // Header default option matching image
+    dropdownItems.add(
+      DropdownMenuItem<String>(
+        value: "",
+        child: Text(
+          "Select Locality / Area",
+          style: TextStyle(
+            fontSize: 13.5.sp,
+            color: const Color(0xFF6B7280),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+
+    if (localityList.isNotEmpty) {
+      for (final area in localityList) {
+        final trimmed = area.trim();
+        if (trimmed.isEmpty) continue;
+        if (!dropdownItems.any((item) => item.value == trimmed)) {
+          dropdownItems.add(
+            DropdownMenuItem<String>(
+              value: trimmed,
+              child: Text(
+                trimmed,
+                style: TextStyle(
+                  fontSize: 13.5.sp,
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          );
+        }
+      }
+    } else {
+      // Exactly matching image: "No localities available"
+      dropdownItems.add(
+        DropdownMenuItem<String>(
+          value: "__no_localities__",
+          child: Text(
+            "No localities available",
+            style: TextStyle(
+              fontSize: 13.5.sp,
+              color: Colors.black87,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Preserve existing selection if prefilled (e.g. edit mode)
+    if (currentValue.isNotEmpty &&
+        !dropdownItems.any((item) => item.value == currentValue)) {
+      dropdownItems.add(
+        DropdownMenuItem<String>(
+          value: currentValue,
+          child: Text(
+            currentValue,
+            style: TextStyle(
+              fontSize: 13.5.sp,
+              color: Colors.black87,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      );
+    }
+
+    final safeValue = dropdownItems.any((item) => item.value == currentValue)
+        ? currentValue
+        : "";
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildFieldLabel("Locality / Area", isRequired: true),
+        if (!isCustomLocalityMode) ...[
+          DropdownButtonFormField<String>(
+            key: ValueKey("${safeValue}_${localityList.length}_$selectedCity"),
+            initialValue: safeValue,
+            isExpanded: true,
+            icon: Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: Colors.black87,
+              size: 22.sp,
+            ),
+            menuMaxHeight: 300.h,
+            dropdownColor: Colors.white,
+            style: TextStyle(
+              fontSize: 13.5.sp,
+              color: Colors.black87,
+              fontWeight: FontWeight.w600,
+            ),
+            decoration: InputDecoration(
+              isDense: true,
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 14.w,
+                vertical: 13.h,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14.r),
+                borderSide: const BorderSide(
+                  color: Color(0xFF24ADD7),
+                  width: 1.5,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14.r),
+                borderSide: const BorderSide(
+                  color: Color(0xFF24ADD7),
+                  width: 1.5,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14.r),
+                borderSide: const BorderSide(
+                  color: Color(0xFF24ADD7),
+                  width: 1.8,
+                ),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14.r),
+                borderSide: const BorderSide(color: Colors.red, width: 1.5),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14.r),
+                borderSide: const BorderSide(color: Colors.red, width: 1.8),
+              ),
+            ),
+            items: dropdownItems,
+            onChanged: (val) {
+              if (val == "__no_localities__") {
+                setState(() {
+                  isCustomLocalityMode = true;
+                });
+                return;
+              }
+              setState(() {
+                selectedLocality = (val == null || val.isEmpty) ? null : val;
+                localityController.text = selectedLocality ?? "";
+              });
+            },
+            validator: (val) {
+              if (val == null ||
+                  val.trim().isEmpty ||
+                  val == "__no_localities__") {
+                return 'Locality is required';
+              }
+              return null;
+            },
+          ),
+          SizedBox(height: 6.h),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: InkWell(
+              onTap: () {
+                setState(() {
+                  isCustomLocalityMode = true;
+                });
+              },
+              borderRadius: BorderRadius.circular(6.r),
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 4.h, horizontal: 2.w),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.add_circle_outline,
+                      size: 15.sp,
+                      color: const Color(0xFF24ADD7),
+                    ),
+                    SizedBox(width: 5.w),
+                    Text(
+                      "Area not listed? Add locality area",
+                      style: TextStyle(
+                        color: const Color(0xFF24ADD7),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12.sp,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ] else ...[
+          // Custom text input mode
+          TextFormField(
+            controller: localityController,
+            style: TextStyle(
+              fontSize: 13.5.sp,
+              color: Colors.black87,
+              fontWeight: FontWeight.w600,
+            ),
+            onChanged: (value) {
+              selectedLocality = value;
+            },
+            validator: (val) {
+              if (val == null || val.trim().isEmpty) {
+                return 'Locality is required';
+              }
+              return null;
+            },
+            decoration: _inputDecoration(
+              hint: 'Enter Locality / Area (e.g. Bani Park)',
+            ),
+          ),
+          SizedBox(height: 6.h),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: InkWell(
+              onTap: () {
+                setState(() {
+                  isCustomLocalityMode = false;
+                });
+              },
+              borderRadius: BorderRadius.circular(6.r),
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 4.h, horizontal: 2.w),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.list_alt_rounded,
+                      size: 15.sp,
+                      color: const Color(0xFF24ADD7),
+                    ),
+                    SizedBox(width: 5.w),
+                    Text(
+                      "Select from locality list instead",
+                      style: TextStyle(
+                        color: const Color(0xFF24ADD7),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12.sp,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 
@@ -1873,37 +2433,27 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Price
+          _buildStepHeaderTitle("Specifications"),
+
+          // Price (Rent vs Sell label dynamic)
           _buildTextField(
             isRent ? 'Monthly Rent (₹)' : 'Sell Price (₹)',
             _priceController,
-            hint: isRent ? 'e.g. 25000' : 'e.g. 7500000',
+            hint: isRent ? 'e.g. 25000' : 'e.g. 500000',
             type: TextInputType.number,
             isRequired: true,
             validator: (v) {
               if (v == null || v.trim().isEmpty) {
-                return 'Valid price is required';
+                return 'Valid price required';
+              }
+              final numVal = double.tryParse(v.trim().replaceAll(',', ''));
+              if (numVal == null || numVal <= 0) {
+                return 'Valid price required';
               }
               return null;
             },
           ),
-          SizedBox(height: 12.h),
-
-          // Area (sq.ft)
-          _buildTextField(
-            'Area (Sqft)',
-            _areaController,
-            hint: 'e.g. 1500',
-            type: TextInputType.number,
-            isRequired: true,
-            validator: (v) {
-              if (v == null || v.trim().isEmpty) {
-                return 'Valid area is required';
-              }
-              return null;
-            },
-          ),
-          SizedBox(height: 12.h),
+          SizedBox(height: 14.h),
 
           // BHK (hidden if land)
           if (!isLand) ...[
@@ -1918,7 +2468,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                 "5 BHK",
                 "6 BHK",
                 "7 BHK",
-                "8+ BHK",
+                "8 BHK",
               ],
               (v) {
                 setState(() {
@@ -1929,13 +2479,33 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
               isRequired: true,
               validator: (v) {
                 if (v == null || v.isEmpty) {
-                  return 'BHK is required';
+                  return 'Bedrooms required';
                 }
                 return null;
               },
             ),
-            SizedBox(height: 12.h),
+            SizedBox(height: 14.h),
           ],
+
+          // Area (sq.ft)
+          _buildTextField(
+            'Area (Sqft)',
+            _areaController,
+            hint: 'e.g. 1500',
+            type: TextInputType.number,
+            isRequired: true,
+            validator: (v) {
+              if (v == null || v.trim().isEmpty) {
+                return 'Valid area required';
+              }
+              final numVal = double.tryParse(v.trim().replaceAll(',', ''));
+              if (numVal == null || numVal <= 0) {
+                return 'Valid area required';
+              }
+              return null;
+            },
+          ),
+          SizedBox(height: 14.h),
 
           // Rent-specific fields (Available From & Security Deposit)
           if (isRent) ...[
@@ -1953,64 +2523,65 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
               isRequired: true,
               validator: (v) {
                 if (v == null || v.trim().isEmpty) {
-                  return 'Available from date is required';
+                  return 'Available From date is required';
                 }
                 return null;
               },
             ),
-            SizedBox(height: 12.h),
+            SizedBox(height: 14.h),
 
-            Text(
-              "Security Deposit",
-              style: TextStyle(
-                fontSize: 12.5.sp,
-                color: Colors.grey.shade800,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            SizedBox(height: 6.h),
+            _buildFieldLabel("SECURITY DEPOSIT"),
             Wrap(
               spacing: 8.w,
               runSpacing: 8.h,
               children: ["None", "1 month", "2 month", "Custom"].map((dep) {
                 final isSelected = selectedSecurityDeposit == dep;
-                return ChoiceChip(
-                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  showCheckmark: true,
-                  labelPadding: EdgeInsets.symmetric(
-                    horizontal: 1.w,
-                    vertical: -4.h,
-                  ),
-                  label: Text(
-                    dep,
-                    style: TextStyle(
-                      color: isSelected ? Colors.white : Colors.black87,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12.sp,
+                return GestureDetector(
+                  onTap: () => setState(() => selectedSecurityDeposit = dep),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 14.w,
+                      vertical: 8.h,
                     ),
-                  ),
-                  selected: isSelected,
-                  selectedColor: const Color(0xFF24ADD7),
-                  backgroundColor: const Color(0xFFF8F9FA),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.r),
-                    side: BorderSide(
+                    decoration: BoxDecoration(
                       color: isSelected
                           ? const Color(0xFF24ADD7)
-                          : Colors.grey.shade300,
+                          : Colors.white,
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(
+                        color: isSelected
+                            ? const Color(0xFF24ADD7)
+                            : const Color(0xFFE5E7EB),
+                        width: 1.5,
+                      ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: const Color(
+                                  0xFF24ADD7,
+                                ).withValues(alpha: 0.25),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Text(
+                      dep,
+                      style: TextStyle(
+                        color: isSelected ? Colors.white : Colors.grey.shade800,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12.sp,
+                      ),
                     ),
                   ),
-                  onSelected: (val) {
-                    setState(() => selectedSecurityDeposit = dep);
-                  },
                 );
               }).toList(),
             ),
             if (selectedSecurityDeposit == "Custom") ...[
-              SizedBox(height: 12.h),
+              SizedBox(height: 14.h),
               _buildTextField(
-                'Custom Security Deposit (₹)',
+                'Enter Custom Amount (₹)',
                 _customSecurityDepositController,
                 hint: 'e.g. 50000',
                 type: TextInputType.number,
@@ -2024,7 +2595,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                 },
               ),
             ],
-            SizedBox(height: 12.h),
+            SizedBox(height: 14.h),
           ],
         ],
       ),
@@ -2037,30 +2608,23 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
   Widget _buildStep4AmenitiesLegal() {
     final isLand = selectedPropertySubType?.contains("land") ?? false;
     final isFurnished =
-        selectedFurnishing == "Furnished" ||
-        selectedFurnishing == "Semi-Furnished";
+        selectedFurnishing?.toLowerCase() == "furnished" ||
+        selectedFurnishing?.toLowerCase() == "semi-furnished";
+
     final displayFurnishingItems = showAllFurnishingItems
         ? standardFurnishingItems
         : standardFurnishingItems.take(8).toList();
 
     return Column(
       children: [
-        // 1. Rooms & Facilities Card
-        if (!isLand)
-          _buildCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Room & Facility Details",
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade900,
-                  ),
-                ),
-                SizedBox(height: 12.h),
+        _buildCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildStepHeaderTitle("Amenities & Legal"),
 
+              // Room & Facilities Grid (if not land)
+              if (!isLand) ...[
                 Row(
                   children: [
                     Expanded(
@@ -2127,7 +2691,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                       child: _buildDropdown(
                         'Balcony',
                         _selectBalcony,
-                        ["None", "1", "2", "3", "4+"],
+                        ["1", "2", "3", "4+"],
                         (v) {
                           setState(() {
                             _selectBalcony = v;
@@ -2142,7 +2706,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                       child: _buildDropdown(
                         'Parking',
                         _selectParking,
-                        ["None", "1", "2", "3", "4+"],
+                        ["1", "2", "3", "4+"],
                         (v) {
                           setState(() {
                             _selectParking = v;
@@ -2154,159 +2718,82 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                     ),
                   ],
                 ),
-                SizedBox(height: 14.h),
+                SizedBox(height: 18.h),
+              ],
 
-                // Furnishing
-                _buildDropdown(
-                  'Furnishing Status',
-                  selectedFurnishing,
-                  ["Furnished", "Semi-Furnished", "Unfurnished"],
-                  (v) => setState(() => selectedFurnishing = v),
-                  isRequired: true,
-                ),
+              // Key Amenities
+              _buildFieldLabel("Select Key Amenities"),
+              _buildMultiSelectAmenities(),
+              SizedBox(height: 12.h),
 
-                // Predefined Furnishing Items (Website Feature)
-                if (isFurnished) ...[
-                  SizedBox(height: 16.h),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "Select Furnishing Items",
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          color: Colors.grey.shade800,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        "${appliance.length} selected",
-                        style: TextStyle(
-                          fontSize: 11.5.sp,
-                          color: const Color(0xFF24ADD7),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 8.h),
-
-                  Wrap(
-                    spacing: 8.w,
-                    runSpacing: 8.h,
-                    children: displayFurnishingItems.map((item) {
-                      final isSelected = appliance.contains(item);
-                      return FilterChip(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 6.w,
-                          vertical: 4.h,
-                        ),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        showCheckmark: true,
-                        labelPadding: EdgeInsets.symmetric(
-                          horizontal: 1.w,
-                          vertical: -4.h,
-                        ),
-                        label: Text(
-                          item,
-                          style: TextStyle(
-                            fontSize: 11.5.sp,
-                            color: isSelected
-                                ? const Color(0xFF24ADD7)
-                                : Colors.grey.shade800,
-                            fontWeight: isSelected
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                          ),
-                        ),
-                        selected: isSelected,
-                        selectedColor: const Color(
-                          0xFF24ADD7,
-                        ).withValues(alpha: 0.14),
-                        checkmarkColor: const Color(0xFF24ADD7),
-                        backgroundColor: const Color(0xFFF8F9FA),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10.r),
-                          side: BorderSide(
-                            color: isSelected
-                                ? const Color(0xFF24ADD7)
-                                : Colors.grey.shade300,
-                          ),
-                        ),
-                        onSelected: (_) => toggleFurnishingItem(item),
-                      );
-                    }).toList(),
-                  ),
-                  if (standardFurnishingItems.length > 8)
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        style: ButtonStyle(
-                          padding: WidgetStatePropertyAll(EdgeInsets.zero),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            showAllFurnishingItems = !showAllFurnishingItems;
-                          });
-                        },
-                        child: Text(
-                          showAllFurnishingItems
-                              ? "View Less"
-                              : "View All Items",
-                          style: TextStyle(
-                            color: const Color(0xFF24ADD7),
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
+              // Custom Amenity Adder
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "ADD OTHER / CUSTOM AMENITY:",
+                    style: TextStyle(
+                      fontSize: 10.5.sp,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.grey.shade600,
+                      letterSpacing: 0.6,
                     ),
-                  SizedBox(height: 4.h),
+                  ),
+                  SizedBox(height: 6.h),
                   Row(
                     children: [
                       Expanded(
                         child: TextFormField(
-                          controller: applianceController,
+                          controller: _customAmenityController,
                           style: TextStyle(
                             fontSize: 13.sp,
                             color: Colors.black87,
                             fontWeight: FontWeight.w500,
                           ),
                           decoration: _inputDecoration(
-                            hint: "Add other furnishing item...",
+                            hint:
+                                'Type custom amenity (e.g. Solar Panels, Servant Quarter)...',
                           ),
-                          onFieldSubmitted: (_) => addCustomAppliance(),
                         ),
                       ),
                       SizedBox(width: 8.w),
-                      IconButton(
-                        onPressed: addCustomAppliance,
-                        icon: const Icon(
-                          Icons.add_circle,
-                          color: Color(0xFF24ADD7),
-                          size: 32,
+                      ElevatedButton(
+                        onPressed: addCustomAmenity,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF24ADD7),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 14.w,
+                            vertical: 13.h,
+                          ),
+                        ),
+                        child: Text(
+                          "+ Add",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12.5.sp,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  if (customFurnishingItems.isNotEmpty) ...[
+                  if (customAmenitiesList.isNotEmpty) ...[
                     SizedBox(height: 8.h),
                     Wrap(
-                      spacing: 8.w,
-                      runSpacing: 8.h,
-                      children: customFurnishingItems.map((item) {
+                      spacing: 6.w,
+                      runSpacing: 6.h,
+                      children: customAmenitiesList.map((item) {
                         return Container(
                           padding: EdgeInsets.symmetric(
                             horizontal: 10.w,
-                            vertical: 5.h,
+                            vertical: 4.h,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(
-                              0xFF24ADD7,
-                            ).withValues(alpha: 0.12),
+                            color: const Color(0xFF24ADD7),
                             borderRadius: BorderRadius.circular(10.r),
-                            border: Border.all(color: const Color(0xFF24ADD7)),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -2314,18 +2801,24 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                               Text(
                                 item,
                                 style: TextStyle(
+                                  color: Colors.white,
                                   fontSize: 11.5.sp,
-                                  color: const Color(0xFF24ADD7),
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              SizedBox(width: 6.w),
+                              SizedBox(width: 4.w),
                               GestureDetector(
-                                onTap: () => removeCustomAppliance(item),
-                                child: const Icon(
+                                onTap: () {
+                                  setState(() {
+                                    customAmenitiesList.remove(item);
+                                    selectedAmenities.remove(item);
+                                    allAmenities.remove(item);
+                                  });
+                                },
+                                child: Icon(
                                   Icons.close,
-                                  size: 15,
-                                  color: Color(0xFF24ADD7),
+                                  size: 14.sp,
+                                  color: Colors.white,
                                 ),
                               ),
                             ],
@@ -2335,328 +2828,74 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                     ),
                   ],
                 ],
-              ],
-            ),
-          ),
-        SizedBox(height: 14.h),
-
-        // 2. Legal Details Card & 3. Project / Avenue Overview Card (Only in Edit Mode)
-        if (isEditMode) ...[
-          _buildCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Legal & Approvals",
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade900,
-                  ),
-                ),
-                SizedBox(height: 12.h),
-
-                _buildTextField(
-                  'RERA Registration No.',
-                  _reraController,
-                  hint: 'e.g. RAJ/P/2023/1234',
-                  isRequired: isBroker == true,
-                  validator: (val) {
-                    if (isBroker == true &&
-                        (val == null || val.trim().isEmpty)) {
-                      return 'RERA registration number is required for brokers';
-                    }
-                    return null;
-                  },
-                ),
-                SizedBox(height: 12.h),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildTextField(
-                        'Permit No.',
-                        _permitNoController,
-                        hint: 'Optional',
-                        isRequired: false,
-                      ),
-                    ),
-                    SizedBox(width: 10.w),
-                    Expanded(
-                      child: _buildTextField(
-                        'DED No.',
-                        _dedController,
-                        hint: 'Optional',
-                        isRequired: false,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12.h),
-
-                _buildTextField(
-                  'BRN No.',
-                  _brnController,
-                  hint: 'Optional',
-                  isRequired: false,
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: 14.h),
-
-          // 3. Project / Avenue Overview Card
-          _buildCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Avenue / Project Overview",
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade900,
-                  ),
-                ),
-                SizedBox(height: 12.h),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildTextField(
-                        'Project Area',
-                        _projectAreaController,
-                        hint: 'e.g. 5 Acres',
-                        isRequired: false,
-                      ),
-                    ),
-                    SizedBox(width: 8.w),
-                    Expanded(
-                      child: _buildTextField(
-                        'Unit Size',
-                        _unitSizesController,
-                        hint: 'e.g. 1200-2400',
-                        isRequired: false,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12.h),
-
-                _buildTextField(
-                  'Project Size',
-                  _projectSizeController,
-                  hint: 'e.g. 400 Units',
-                  isRequired: false,
-                ),
-                SizedBox(height: 12.h),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildTextField(
-                        'Launch Date',
-                        _launchDateController,
-                        hint: 'DD/MM/YYYY',
-                        readOnly: true,
-                        onTap: () => _selectDate(_launchDateController),
-                        suffixIcon: Icon(
-                          Icons.calendar_today,
-                          size: 16.sp,
-                          color: const Color(0xFF24ADD7),
-                        ),
-                        isRequired: false,
-                      ),
-                    ),
-                    SizedBox(width: 8.w),
-                    Expanded(
-                      child: _buildTextField(
-                        'Possession Start',
-                        _possessionDateController,
-                        hint: 'DD/MM/YYYY',
-                        readOnly: true,
-                        onTap: () => _selectDate(_possessionDateController),
-                        suffixIcon: Icon(
-                          Icons.calendar_today,
-                          size: 16.sp,
-                          color: const Color(0xFF24ADD7),
-                        ),
-                        isRequired: false,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: 14.h),
-        ],
-
-        // 4. Amenities Grid Card
-        _buildCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "Amenities & Features",
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey.shade900,
-                    ),
-                  ),
-                  Text(
-                    "${selectedAmenities.length} selected",
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: const Color(0xFF24ADD7),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
               ),
-              SizedBox(height: 10.h),
+              SizedBox(height: 20.h),
 
-              _buildMultiSelectAmenities(),
-              SizedBox(height: 10.h),
-
-              // Add Custom Amenity
+              // Around The Project
               Row(
                 children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _customAmenityController,
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        color: Colors.black87,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      decoration: _inputDecoration(
-                        hint: "Add custom amenity...",
-                      ),
-                      onFieldSubmitted: (_) => addCustomAmenity(),
-                    ),
+                  Container(
+                    width: 24.w,
+                    height: 3.h,
+                    color: const Color(0xFF24ADD7),
                   ),
                   SizedBox(width: 8.w),
-                  IconButton(
-                    onPressed: addCustomAmenity,
-                    icon: const Icon(
-                      Icons.add_circle,
-                      color: Color(0xFF24ADD7),
-                      size: 32,
+                  Text(
+                    "AROUND THE PROJECT",
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFF24ADD7),
+                      letterSpacing: 1.2,
                     ),
                   ),
                 ],
-              ),
-              if (customAmenitiesList.isNotEmpty) ...[
-                SizedBox(height: 8.h),
-                Wrap(
-                  spacing: 8.w,
-                  runSpacing: 8.h,
-                  children: customAmenitiesList.map((amenity) {
-                    return Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 10.w,
-                        vertical: 5.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF24ADD7).withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10.r),
-                        border: Border.all(color: const Color(0xFF24ADD7)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            amenity,
-                            style: TextStyle(
-                              fontSize: 11.5.sp,
-                              color: const Color(0xFF24ADD7),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          SizedBox(width: 6.w),
-                          GestureDetector(
-                            onTap: () => removeCustomAmenity(amenity),
-                            child: const Icon(
-                              Icons.close,
-                              size: 15,
-                              color: Color(0xFF24ADD7),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ],
-            ],
-          ),
-        ),
-        SizedBox(height: 14.h),
-
-        // 5. Around The Project Card (with Distance & Unit Radio matching website)
-        _buildCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Around The Project (Nearby Places)",
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade900,
-                ),
               ),
               SizedBox(height: 12.h),
 
-              ...aroundProjectList.asMap().entries.map((entry) {
-                final idx = entry.key;
-                final itemMap = entry.value;
-                final placeCtrl = itemMap['place'] as TextEditingController;
-                final distCtrl = itemMap['distance'] as TextEditingController;
-                final currentUnit = itemMap['unit'] as String? ?? 'meter';
-
-                return Padding(
-                  padding: EdgeInsets.only(bottom: 12.h),
+              ...List.generate(aroundProjectList.length, (idx) {
+                final currentUnit =
+                    aroundProjectList[idx]['unit'] as String? ?? 'meter';
+                return Container(
+                  margin: EdgeInsets.only(bottom: 12.h),
+                  padding: EdgeInsets.all(12.w),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(14.r),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                  ),
                   child: Stack(
                     children: [
-                      Container(
-                        padding: EdgeInsets.all(12.w),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8F9FA),
-                          borderRadius: BorderRadius.circular(10.r),
-                          border: Border.all(color: Colors.grey.shade200),
-                        ),
+                      Padding(
+                        padding: EdgeInsets.only(right: 28.w),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildTextField(
-                              'Place Name',
-                              placeCtrl,
-                              hint: 'e.g. Metro Station, Airport, School',
-                              isRequired: false,
+                            _buildFieldLabel("Place Name"),
+                            TextFormField(
+                              controller:
+                                  aroundProjectList[idx]['place']
+                                      as TextEditingController?,
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                color: Colors.black87,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              decoration: _inputDecoration(
+                                hint: 'e.g. Metro Station, Hospital',
+                              ),
                             ),
                             SizedBox(height: 10.h),
 
-                            Text(
-                              "Distance & Unit",
-                              style: TextStyle(
-                                fontSize: 13.sp,
-                                color: Colors.grey.shade700,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            SizedBox(height: 6.h),
+                            _buildFieldLabel("Distance & Unit"),
                             Row(
                               children: [
                                 Expanded(
-                                  flex: 2,
+                                  flex: 3,
                                   child: TextFormField(
-                                    controller: distCtrl,
+                                    controller:
+                                        aroundProjectList[idx]['distance']
+                                            as TextEditingController?,
                                     keyboardType: TextInputType.number,
                                     style: TextStyle(
                                       fontSize: 13.sp,
@@ -2664,7 +2903,9 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                                       fontWeight: FontWeight.w500,
                                     ),
                                     decoration: _inputDecoration(
-                                      hint: 'e.g. 500',
+                                      hint: currentUnit == 'km'
+                                          ? 'e.g. 2.5'
+                                          : 'e.g. 500',
                                     ),
                                   ),
                                 ),
@@ -2673,46 +2914,76 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                                   flex: 2,
                                   child: Row(
                                     children: [
-                                      ChoiceChip(
-                                        label: const Text("M"),
-                                        selected: currentUnit == 'meter',
-                                        selectedColor: const Color(0xFF24ADD7),
-                                        backgroundColor: Colors.white,
-                                        labelStyle: TextStyle(
-                                          color: currentUnit == 'meter'
-                                              ? Colors.white
-                                              : Colors.black87,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12.sp,
+                                      GestureDetector(
+                                        onTap: () => setState(
+                                          () => aroundProjectList[idx]['unit'] =
+                                              'meter',
                                         ),
-                                        onSelected: (val) {
-                                          setState(
-                                            () =>
-                                                aroundProjectList[idx]['unit'] =
-                                                    'meter',
-                                          );
-                                        },
+                                        child: Container(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 10.w,
+                                            vertical: 8.h,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: currentUnit == 'meter'
+                                                ? const Color(0xFF24ADD7)
+                                                : Colors.white,
+                                            borderRadius: BorderRadius.circular(
+                                              10.r,
+                                            ),
+                                            border: Border.all(
+                                              color: currentUnit == 'meter'
+                                                  ? const Color(0xFF24ADD7)
+                                                  : const Color(0xFFE5E7EB),
+                                            ),
+                                          ),
+                                          child: Text(
+                                            "M",
+                                            style: TextStyle(
+                                              color: currentUnit == 'meter'
+                                                  ? Colors.white
+                                                  : Colors.black87,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12.sp,
+                                            ),
+                                          ),
+                                        ),
                                       ),
                                       SizedBox(width: 6.w),
-                                      ChoiceChip(
-                                        label: const Text("KM"),
-                                        selected: currentUnit == 'km',
-                                        selectedColor: const Color(0xFF24ADD7),
-                                        backgroundColor: Colors.white,
-                                        labelStyle: TextStyle(
-                                          color: currentUnit == 'km'
-                                              ? Colors.white
-                                              : Colors.black87,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12.sp,
+                                      GestureDetector(
+                                        onTap: () => setState(
+                                          () => aroundProjectList[idx]['unit'] =
+                                              'km',
                                         ),
-                                        onSelected: (val) {
-                                          setState(
-                                            () =>
-                                                aroundProjectList[idx]['unit'] =
-                                                    'km',
-                                          );
-                                        },
+                                        child: Container(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 10.w,
+                                            vertical: 8.h,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: currentUnit == 'km'
+                                                ? const Color(0xFF24ADD7)
+                                                : Colors.white,
+                                            borderRadius: BorderRadius.circular(
+                                              10.r,
+                                            ),
+                                            border: Border.all(
+                                              color: currentUnit == 'km'
+                                                  ? const Color(0xFF24ADD7)
+                                                  : const Color(0xFFE5E7EB),
+                                            ),
+                                          ),
+                                          child: Text(
+                                            "KM",
+                                            style: TextStyle(
+                                              color: currentUnit == 'km'
+                                                  ? Colors.white
+                                                  : Colors.black87,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12.sp,
+                                            ),
+                                          ),
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -2724,15 +2995,22 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                       ),
                       if (aroundProjectList.length > 1)
                         Positioned(
-                          top: 4,
-                          right: 4,
-                          child: IconButton(
-                            icon: const Icon(
-                              Icons.cancel,
-                              color: Colors.red,
-                              size: 22,
+                          top: 0,
+                          right: 0,
+                          child: GestureDetector(
+                            onTap: () => removeAroundProjectRow(idx),
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.close,
+                                size: 14,
+                                color: Colors.white,
+                              ),
                             ),
-                            onPressed: () => removeAroundProjectRow(idx),
                           ),
                         ),
                     ],
@@ -2746,7 +3024,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                   onPressed: addAroundProjectRow,
                   icon: const Icon(Icons.add, color: Color(0xFF24ADD7)),
                   label: const Text(
-                    'Add More Nearby Place',
+                    '+ Add Nearby Place',
                     style: TextStyle(
                       color: Color(0xFF24ADD7),
                       fontWeight: FontWeight.bold,
@@ -2754,11 +3032,534 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                   ),
                 ),
               ),
+              SizedBox(height: 18.h),
+
+              // RERA Number * (Only visible and required if isBroker == true)
+              if (isBroker == true) ...[
+                _buildTextField(
+                  'RERA NUMBER',
+                  _reraController,
+                  hint: 'P521000...',
+                  isRequired: true,
+                  validator: (v) {
+                    if (isBroker == true && (v == null || v.trim().isEmpty)) {
+                      return 'RERA number is required';
+                    }
+                    return null;
+                  },
+                ),
+                SizedBox(height: 16.h),
+              ],
+
+              if (isEditMode) ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildTextField(
+                        'PERMIT NO',
+                        _permitNoController,
+                        hint: 'Permit No',
+                        isRequired: false,
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: _buildTextField(
+                        'DED NO',
+                        _dedController,
+                        hint: 'DED No',
+                        isRequired: false,
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: _buildTextField(
+                        'BRN NO',
+                        _brnController,
+                        hint: 'BRN No',
+                        isRequired: false,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 16.h),
+              ],
+
+              // Furnishing Status * (if not land)
+              if (!isLand) ...[
+                _buildDropdown(
+                  'Furnishing',
+                  selectedFurnishing,
+                  ["Furnished", "Semi-Furnished", "Unfurnished"],
+                  (v) => setState(() => selectedFurnishing = v),
+                  isRequired: true,
+                  validator: (v) {
+                    if (v == null || v.isEmpty) {
+                      return 'Furnishing is required';
+                    }
+                    return null;
+                  },
+                ),
+
+                // Furnishing Items (if furnished / semi-furnished)
+                if (isFurnished) ...[
+                  SizedBox(height: 16.h),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildFieldLabel("Select Furnishing Items"),
+                      Text(
+                        "${appliance.length} selected",
+                        style: TextStyle(
+                          fontSize: 11.5.sp,
+                          color: const Color(0xFF24ADD7),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 6.h),
+
+                  Wrap(
+                    spacing: 8.w,
+                    runSpacing: 8.h,
+                    children: displayFurnishingItems.map((item) {
+                      final isSelected = appliance.contains(item);
+                      return GestureDetector(
+                        onTap: () => toggleFurnishingItem(item),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 8.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? const Color(0xFF24ADD7)
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(
+                              color: isSelected
+                                  ? const Color(0xFF24ADD7)
+                                  : const Color(0xFFE5E7EB),
+                              width: 1.5,
+                            ),
+                            boxShadow: isSelected
+                                ? [
+                                    BoxShadow(
+                                      color: const Color(
+                                        0xFF24ADD7,
+                                      ).withValues(alpha: 0.25),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: Text(
+                            item,
+                            style: TextStyle(
+                              color: isSelected
+                                  ? Colors.white
+                                  : Colors.grey.shade700,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12.sp,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  if (standardFurnishingItems.length > 8)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () {
+                          setState(() {
+                            showAllFurnishingItems = !showAllFurnishingItems;
+                          });
+                        },
+                        child: Text(
+                          showAllFurnishingItems
+                              ? "View Less ▲"
+                              : "View More ▼",
+                          style: TextStyle(
+                            color: const Color(0xFF24ADD7),
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  SizedBox(height: 8.h),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "ADD OTHER / CUSTOM FURNISHING ITEM:",
+                        style: TextStyle(
+                          fontSize: 10.5.sp,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.grey.shade600,
+                          letterSpacing: 0.6,
+                        ),
+                      ),
+                      SizedBox(height: 6.h),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: applianceController,
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                color: Colors.black87,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              decoration: _inputDecoration(
+                                hint: 'Type custom furnishing item...',
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 8.w),
+                          ElevatedButton(
+                            onPressed: addCustomAppliance,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF24ADD7),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 14.w,
+                                vertical: 13.h,
+                              ),
+                            ),
+                            child: Text(
+                              "+ Add",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12.5.sp,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (customFurnishingItems.isNotEmpty) ...[
+                        SizedBox(height: 8.h),
+                        Wrap(
+                          spacing: 6.w,
+                          runSpacing: 6.h,
+                          children: customFurnishingItems.map((item) {
+                            return Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 10.w,
+                                vertical: 4.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF24ADD7),
+                                borderRadius: BorderRadius.circular(10.r),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    item,
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 11.5.sp,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  SizedBox(width: 4.w),
+                                  GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        customFurnishingItems.remove(item);
+                                        appliance.remove(item);
+                                      });
+                                    },
+                                    child: Icon(
+                                      Icons.close,
+                                      size: 14.sp,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ],
             ],
+          ),
+        ),
+        if (isEditMode) ...[SizedBox(height: 16.h), _buildAvenueOverviewCard()],
+      ],
+    );
+  }
+
+  // ──────────────────────────────────────────
+  // AVENUE OVERVIEW CARD (EDIT MODE ONLY)
+  // ──────────────────────────────────────────
+  Widget _buildAvenueOverviewCard() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: const Color(0xFFD1D5DB), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Avenue Overview",
+            style: TextStyle(
+              color: const Color(0xFF24ADD7),
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          SizedBox(height: 14.h),
+
+          // Row 1: Project Area, Size, Project Size
+          Row(
+            children: [
+              Expanded(
+                child: _buildAvenueField(
+                  label: "Project Area",
+                  controller: _projectAreaController,
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: _buildAvenueField(
+                  label: "Size",
+                  controller: _unitSizesController,
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: _buildAvenueField(
+                  label: "Project Size",
+                  controller: _projectSizeController,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 14.h),
+
+          // Row 2: Launch Date, Possession Start
+          Row(
+            children: [
+              Expanded(
+                child: _buildAvenueDateField(
+                  label: "Launch Date",
+                  controller: _launchDateController,
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: _buildAvenueDateField(
+                  label: "Possession Start",
+                  controller: _possessionDateController,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAvenueField({
+    required String label,
+    required TextEditingController controller,
+    String hint = "",
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF1F2937),
+          ),
+        ),
+        SizedBox(height: 6.h),
+        TextFormField(
+          controller: controller,
+          style: TextStyle(
+            fontSize: 13.sp,
+            color: Colors.black87,
+            fontWeight: FontWeight.w500,
+          ),
+          decoration: InputDecoration(
+            isDense: true,
+            hintText: hint,
+            hintStyle: TextStyle(
+              color: const Color(0xFF9CA3AF),
+              fontSize: 12.5.sp,
+            ),
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 12.w,
+              vertical: 12.h,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10.r),
+              borderSide: const BorderSide(
+                color: Color(0xFF1F2937),
+                width: 1.0,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10.r),
+              borderSide: const BorderSide(
+                color: Color(0xFF1F2937),
+                width: 1.0,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10.r),
+              borderSide: const BorderSide(
+                color: Color(0xFF24ADD7),
+                width: 1.5,
+              ),
+            ),
           ),
         ),
       ],
     );
+  }
+
+  Widget _buildAvenueDateField({
+    required String label,
+    required TextEditingController controller,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF1F2937),
+          ),
+        ),
+        SizedBox(height: 6.h),
+        InkWell(
+          onTap: () => _selectAvenueDate(controller),
+          borderRadius: BorderRadius.circular(10.r),
+          child: IgnorePointer(
+            child: TextFormField(
+              controller: controller,
+              readOnly: true,
+              style: TextStyle(
+                fontSize: 13.sp,
+                color: Colors.black87,
+                fontWeight: FontWeight.w500,
+              ),
+              decoration: InputDecoration(
+                isDense: true,
+                hintText: "mm/dd/yyyy",
+                hintStyle: TextStyle(
+                  color: const Color(0xFF6B7280),
+                  fontSize: 12.5.sp,
+                ),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12.w,
+                  vertical: 12.h,
+                ),
+                suffixIcon: Padding(
+                  padding: EdgeInsets.only(right: 10.w),
+                  child: Icon(
+                    Icons.calendar_today_outlined,
+                    size: 18.sp,
+                    color: Colors.black87,
+                  ),
+                ),
+                suffixIconConstraints: BoxConstraints(
+                  minWidth: 24.w,
+                  minHeight: 24.h,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF1F2937),
+                    width: 1.0,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF1F2937),
+                    width: 1.0,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF24ADD7),
+                    width: 1.5,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _selectAvenueDate(TextEditingController controller) async {
+    DateTime initial = DateTime.now();
+    if (controller.text.trim().isNotEmpty) {
+      final parsed = DateTime.tryParse(controller.text.trim());
+      if (parsed != null) initial = parsed;
+    }
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+      builder: (context, child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF24ADD7),
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black87,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      final formatted =
+          "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+      setState(() => controller.text = formatted);
+    }
   }
 
   // ══════════════════════════════════════════
@@ -2769,25 +3570,16 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildStepHeaderTitle("Photos & Media"),
           Text(
-            "Photos & Media *",
+            "CLICK ANY BOX TO UPLOAD · AT LEAST 3 PHOTOS REQUIRED",
             style: TextStyle(
-              fontSize: 15.sp,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey.shade900,
-            ),
-          ),
-          SizedBox(height: 4.h),
-          Text(
-            "Upload at least 3 photos of your property (exterior, interior, rooms)",
-            style: TextStyle(
-              fontSize: 12.sp,
+              fontSize: 10.5.sp,
+              fontWeight: FontWeight.w900,
               color: propertyImages.length < 3
-                  ? Colors.red.shade600
-                  : Colors.grey.shade600,
-              fontWeight: propertyImages.length < 3
-                  ? FontWeight.w600
-                  : FontWeight.normal,
+                  ? Colors.red.shade700
+                  : Colors.grey.shade400,
+              letterSpacing: 1.2,
             ),
           ),
           SizedBox(height: 14.h),
@@ -2796,7 +3588,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
             key: ValueKey(propertyImages.length),
             validator: (_) {
               if (propertyImages.length < 3) {
-                return "Upload at least 3 photos of your property";
+                return "Upload at least 3 photos";
               }
               return null;
             },
@@ -2820,22 +3612,33 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                         return Stack(
                           fit: StackFit.expand,
                           children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(12.r),
-                              child: img is File
-                                  ? Image.file(img, fit: BoxFit.cover)
-                                  : Image.network(
-                                      img.toString(),
-                                      fit: BoxFit.cover,
-                                    ),
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16.r),
+                                border: Border.all(
+                                  color: const Color(
+                                    0xFF24ADD7,
+                                  ).withValues(alpha: 0.35),
+                                  width: 2,
+                                ),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(14.r),
+                                child: img is File
+                                    ? Image.file(img, fit: BoxFit.cover)
+                                    : Image.network(
+                                        img.toString(),
+                                        fit: BoxFit.cover,
+                                      ),
+                              ),
                             ),
                             Positioned(
-                              bottom: 6,
-                              left: 6,
+                              bottom: 8,
+                              left: 8,
                               child: Container(
                                 padding: EdgeInsets.symmetric(
                                   horizontal: 8.w,
-                                  vertical: 2.h,
+                                  vertical: 2.5.h,
                                 ),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF24ADD7),
@@ -2845,29 +3648,39 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                                   "Photo ${index + 1}",
                                   style: TextStyle(
                                     color: Colors.white,
-                                    fontSize: 10.sp,
-                                    fontWeight: FontWeight.bold,
+                                    fontSize: 9.5.sp,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 0.4,
                                   ),
                                 ),
                               ),
                             ),
                             Positioned(
-                              top: 6,
-                              right: 6,
+                              top: 8,
+                              right: 8,
                               child: GestureDetector(
                                 onTap: () {
                                   removeImage(index);
                                   fieldState.didChange(propertyImages);
                                 },
                                 child: Container(
-                                  padding: const EdgeInsets.all(4),
-                                  decoration: const BoxDecoration(
-                                    color: Colors.red,
+                                  padding: const EdgeInsets.all(5),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF24ADD7),
                                     shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.2,
+                                        ),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
                                   ),
                                   child: const Icon(
                                     Icons.close,
-                                    size: 16,
+                                    size: 14,
                                     color: Colors.white,
                                   ),
                                 ),
@@ -2885,37 +3698,40 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                         },
                         child: Container(
                           decoration: BoxDecoration(
-                            color: const Color(
-                              0xFF24ADD7,
-                            ).withValues(alpha: 0.05),
-                            borderRadius: BorderRadius.circular(12.r),
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16.r),
                             border: Border.all(
                               color: fieldState.hasError
                                   ? Colors.red
-                                  : const Color(0xFF24ADD7),
-                              width: 1.5,
+                                  : Colors.grey.shade300,
+                              width: 1.8,
                               style: BorderStyle.solid,
                             ),
                           ),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(
-                                Icons.add_a_photo_outlined,
-                                size: 32.sp,
-                                color: fieldState.hasError
-                                    ? Colors.red
-                                    : const Color(0xFF24ADD7),
+                              Container(
+                                width: 44.w,
+                                height: 44.w,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade100,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.add,
+                                  size: 24.sp,
+                                  color: Colors.grey.shade400,
+                                ),
                               ),
                               SizedBox(height: 8.h),
                               Text(
-                                "Upload Photos",
+                                "PHOTO ${propertyImages.length + 1}",
                                 style: TextStyle(
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.bold,
-                                  color: fieldState.hasError
-                                      ? Colors.red
-                                      : const Color(0xFF24ADD7),
+                                  fontSize: 10.sp,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.grey.shade400,
+                                  letterSpacing: 1,
                                 ),
                               ),
                             ],
@@ -2940,29 +3756,31 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
               );
             },
           ),
+          SizedBox(height: 8.h),
+          Text(
+            "${propertyImages.length} / ∞ PHOTOS UPLOADED",
+            style: TextStyle(
+              fontSize: 10.sp,
+              fontWeight: FontWeight.w900,
+              color: Colors.grey.shade400,
+              letterSpacing: 1.2,
+            ),
+          ),
           SizedBox(height: 20.h),
 
           // Deep Property Description
-          Text(
-            "Deep Property Description",
-            style: TextStyle(
-              fontSize: 13.5.sp,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey.shade900,
-            ),
-          ),
-          SizedBox(height: 4.h),
+          _buildFieldLabel("Deep Property Description"),
           TextFormField(
             controller: _descriptionController,
-            maxLines: 4,
+            maxLines: 5,
             style: TextStyle(
-              fontSize: 13.sp,
+              fontSize: 13.5.sp,
               color: Colors.black87,
               fontWeight: FontWeight.w500,
             ),
             decoration: _inputDecoration(
               hint:
-                  "Describe your property highlights, nearby landmarks, furnishing, community features...",
+                  "Write detailed description about your property, amenities, nearby landmarks, furnishing...",
               isMultiline: true,
             ),
           ),
@@ -2973,18 +3791,63 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
 
   // ────── Common Form Helpers ──────
 
+  Widget _buildStepHeaderTitle(String title) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 16.h),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 19.sp,
+          fontWeight: FontWeight.w900,
+          color: const Color(0xFF111827),
+          letterSpacing: -0.4,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFieldLabel(String label, {bool isRequired = false}) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 6.h),
+      child: RichText(
+        text: TextSpan(
+          text: label.toUpperCase(),
+          style: TextStyle(
+            fontSize: 11.5.sp,
+            fontWeight: FontWeight.w900,
+            color: const Color(0xFF1F2937),
+            letterSpacing: 0.6,
+          ),
+          children: isRequired
+              ? [
+                  TextSpan(
+                    text: ' *',
+                    style: TextStyle(
+                      color: Colors.red.shade600,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 12.sp,
+                    ),
+                  ),
+                ]
+              : null,
+        ),
+      ),
+    );
+  }
+
   Widget _buildCard({required Widget child}) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 18.h),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(24.r),
+        border: Border.all(color: const Color(0xFFF3F4F6), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -3001,7 +3864,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
       isDense: true,
       hintText: hint,
       hintStyle: TextStyle(
-        color: Colors.grey.shade400,
+        color: const Color(0xFF9CA3AF),
         fontSize: 13.sp,
         fontWeight: FontWeight.normal,
       ),
@@ -3011,7 +3874,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
         color: Colors.red.shade700,
       ),
       filled: true,
-      fillColor: const Color(0xFFF8F9FA),
+      fillColor: Colors.white,
       suffixIcon: suffixIcon,
       suffixIconConstraints: BoxConstraints(minWidth: 40.w, minHeight: 40.h),
       contentPadding: EdgeInsets.symmetric(
@@ -3019,24 +3882,24 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
         vertical: isMultiline ? 12.h : 13.h,
       ),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10.r),
-        borderSide: BorderSide(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(14.r),
+        borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1.5),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10.r),
-        borderSide: BorderSide(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(14.r),
+        borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1.5),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10.r),
-        borderSide: const BorderSide(color: Color(0xFF24ADD7), width: 1.5),
+        borderRadius: BorderRadius.circular(14.r),
+        borderSide: const BorderSide(color: Color(0xFF24ADD7), width: 1.8),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10.r),
-        borderSide: const BorderSide(color: Colors.red),
+        borderRadius: BorderRadius.circular(14.r),
+        borderSide: const BorderSide(color: Colors.red, width: 1.5),
       ),
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10.r),
-        borderSide: const BorderSide(color: Colors.red, width: 1.5),
+        borderRadius: BorderRadius.circular(14.r),
+        borderSide: const BorderSide(color: Colors.red, width: 1.8),
       ),
     );
   }
@@ -3056,15 +3919,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label + (isRequired ? " *" : ""),
-          style: TextStyle(
-            fontSize: 13.sp,
-            color: Colors.grey.shade800,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        SizedBox(height: 6.h),
+        _buildFieldLabel(label, isRequired: isRequired),
         TextFormField(
           controller: controller,
           maxLines: maxLines,
@@ -3074,7 +3929,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
           style: TextStyle(
             fontSize: 13.5.sp,
             color: Colors.black87,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
           ),
           validator:
               validator ??
@@ -3096,6 +3951,57 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
     );
   }
 
+  Widget _buildStateField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildFieldLabel("State", isRequired: true),
+        Autocomplete<String>(
+          key: ValueKey(_stateController.text),
+          initialValue: TextEditingValue(text: _stateController.text),
+          optionsBuilder: (TextEditingValue textEditingValue) {
+            if (textEditingValue.text.isEmpty) {
+              return indianStates;
+            }
+            return indianStates.where(
+              (s) =>
+                  s.toLowerCase().contains(textEditingValue.text.toLowerCase()),
+            );
+          },
+          onSelected: (selection) {
+            setState(() {
+              _stateController.text = selection;
+            });
+          },
+          fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+            if (_stateController.text.isNotEmpty && controller.text.isEmpty) {
+              controller.text = _stateController.text;
+            }
+            return TextFormField(
+              controller: controller,
+              focusNode: focusNode,
+              style: TextStyle(
+                fontSize: 13.5.sp,
+                color: Colors.black87,
+                fontWeight: FontWeight.w600,
+              ),
+              onChanged: (v) {
+                _stateController.text = v;
+              },
+              validator: (val) {
+                if (val == null || val.trim().isEmpty) {
+                  return 'State is required';
+                }
+                return null;
+              },
+              decoration: _inputDecoration(hint: 'Type state...'),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
   Widget _buildDropdown(
     String label,
     String? value,
@@ -3109,15 +4015,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label + (isRequired ? " *" : ""),
-          style: TextStyle(
-            fontSize: 13.sp,
-            color: Colors.grey.shade800,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        SizedBox(height: 6.h),
+        _buildFieldLabel(label, isRequired: isRequired),
         DropdownButtonFormField<String>(
           key: ValueKey(safeValue),
           initialValue: safeValue,
@@ -3125,11 +4023,15 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
           style: TextStyle(
             fontSize: 13.5.sp,
             color: Colors.black87,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
           ),
           hint: Text(
             'Select $label',
-            style: TextStyle(color: Colors.grey.shade400, fontSize: 13.sp),
+            style: TextStyle(
+              color: const Color(0xFF9CA3AF),
+              fontSize: 13.sp,
+              fontWeight: FontWeight.normal,
+            ),
           ),
           icon: Icon(
             Icons.keyboard_arrow_down,
@@ -3140,7 +4042,13 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
               .map(
                 (item) => DropdownMenuItem(
                   value: item,
-                  child: Text(item, style: TextStyle(fontSize: 13.5.sp)),
+                  child: Text(
+                    item,
+                    style: TextStyle(
+                      fontSize: 13.5.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               )
               .toList(),
@@ -3165,15 +4073,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "City *",
-              style: TextStyle(
-                fontSize: 12.5.sp,
-                color: Colors.grey.shade800,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            SizedBox(height: 4.h),
+            _buildFieldLabel("City", isRequired: true),
             Autocomplete<String>(
               key: ValueKey(selectedCity),
               initialValue: TextEditingValue(text: selectedCity ?? ""),
@@ -3194,7 +4094,10 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
               onSelected: (String city) {
                 setState(() {
                   selectedCity = city;
+                  cityController.text = city;
                   selectedLocality = null;
+                  localityController.clear();
+                  isCustomLocalityMode = false;
 
                   final selectedCityObj = cities.firstWhere(
                     (c) =>
@@ -3208,18 +4111,35 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
               },
               fieldViewBuilder:
                   (context, controller, focusNode, onFieldSubmitted) {
+                    if (selectedCity != null &&
+                        selectedCity!.isNotEmpty &&
+                        controller.text.isEmpty) {
+                      controller.text = selectedCity!;
+                    }
                     return TextFormField(
                       controller: controller,
                       focusNode: focusNode,
                       style: TextStyle(
-                        fontSize: 13.sp,
+                        fontSize: 13.5.sp,
                         color: Colors.black87,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w600,
                       ),
                       onChanged: (value) {
                         setState(() {
                           selectedCity = value;
+                          cityController.text = value;
                           selectedCityId = null;
+                          try {
+                            final match = cities.firstWhere(
+                              (c) =>
+                                  (c.cityName ?? "").toLowerCase() ==
+                                  value.trim().toLowerCase(),
+                            );
+                            selectedCityId = match.id;
+                            localityList = List<String>.from(match.areas ?? []);
+                          } catch (_) {
+                            localityList = [];
+                          }
                         });
                       },
                       validator: (val) {
@@ -3230,6 +4150,11 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                       },
                       decoration: _inputDecoration(
                         hint: 'Select or Enter City',
+                        suffixIcon: Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: const Color(0xFF6B7280),
+                          size: 22.sp,
+                        ),
                       ),
                     );
                   },
@@ -3258,46 +4183,49 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
           runSpacing: 8.h,
           children: displayAmenities.map((amenity) {
             final selected = selectedAmenities.contains(amenity);
-            return FilterChip(
-              padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              showCheckmark: true,
-              labelPadding: EdgeInsets.symmetric(
-                horizontal: 1.w,
-                vertical: -4.h,
-              ),
-              label: Text(
-                amenity,
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: selected
-                      ? const Color(0xFF24ADD7)
-                      : Colors.grey.shade800,
-                  fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-                ),
-              ),
-              selected: selected,
-              selectedColor: const Color(0xFF24ADD7).withValues(alpha: 0.14),
-              checkmarkColor: const Color(0xFF24ADD7),
-              backgroundColor: const Color(0xFFF8F9FA),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10.r),
-                side: BorderSide(
-                  color: selected
-                      ? const Color(0xFF24ADD7)
-                      : Colors.grey.shade300,
-                ),
-              ),
-              onSelected: (sel) {
+            return GestureDetector(
+              onTap: () {
                 setState(() {
-                  if (sel) {
-                    selectedAmenities.add(amenity);
-                  } else {
+                  if (selected) {
                     selectedAmenities.remove(amenity);
                     customAmenitiesList.remove(amenity);
+                  } else {
+                    selectedAmenities.add(amenity);
                   }
                 });
               },
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                decoration: BoxDecoration(
+                  color: selected ? const Color(0xFF24ADD7) : Colors.white,
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(
+                    color: selected
+                        ? const Color(0xFF24ADD7)
+                        : const Color(0xFFE5E7EB),
+                    width: 1.5,
+                  ),
+                  boxShadow: selected
+                      ? [
+                          BoxShadow(
+                            color: const Color(
+                              0xFF24ADD7,
+                            ).withValues(alpha: 0.25),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Text(
+                  amenity,
+                  style: TextStyle(
+                    color: selected ? Colors.white : Colors.grey.shade700,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12.sp,
+                  ),
+                ),
+              ),
             );
           }).toList(),
         ),
@@ -3305,22 +4233,17 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
           Align(
             alignment: Alignment.centerRight,
             child: TextButton(
-              style: ButtonStyle(
-                padding: WidgetStatePropertyAll(EdgeInsets.zero),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-
               onPressed: () {
                 setState(() {
                   showAllAmenities = !showAllAmenities;
                 });
               },
               child: Text(
-                showAllAmenities ? "View Less" : "View All Amenities",
+                showAllAmenities ? "View Less ▲" : "View More ▼",
                 style: TextStyle(
                   color: const Color(0xFF24ADD7),
                   fontSize: 12.sp,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),
