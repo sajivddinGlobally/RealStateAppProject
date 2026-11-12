@@ -131,6 +131,8 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
   List<String> localityList = [];
   bool _isLocationLoading = false;
   bool get isCitySelected => selectedCity != null && selectedCity!.isNotEmpty;
+  int _cityResetKey = 0;
+  int _stateResetKey = 0;
 
   // Step 3: Specifications
   final TextEditingController _priceController = TextEditingController();
@@ -333,6 +335,8 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
       selectedLocality = data.localityArea?.trim();
       localityController.text = selectedLocality ?? "";
       isCustomLocalityMode = false;
+      _cityResetKey++;
+      _stateResetKey++;
       selectedFurnishing = _normalize(data.furnishing);
 
       _houseNumberController.text = data.houseNumber ?? '';
@@ -767,6 +771,8 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
       }
 
       setState(() {
+        _cityResetKey++;
+        _stateResetKey++;
         _stateController.text = stateName;
         _pincodeController.text = postalCode;
         selectedCity = matchedCity;
@@ -993,10 +999,10 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
         return false;
       }
     } else if (step == 4) {
-      if (propertyImages.length < 3) {
+      if (propertyImages.length < 1) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Upload at least 3 photos"),
+            content: Text("Upload at least 1 photo"),
             backgroundColor: Colors.red,
           ),
         );
@@ -1059,10 +1065,10 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
         }
       }
 
-      if (finalImageUrls.length < 3) {
+      if (finalImageUrls.length < 1) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Upload at least 3 photos"),
+            content: Text("Upload at least 1 photo"),
             backgroundColor: Colors.red,
           ),
         );
@@ -3572,11 +3578,11 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
         children: [
           _buildStepHeaderTitle("Photos & Media"),
           Text(
-            "CLICK ANY BOX TO UPLOAD · AT LEAST 3 PHOTOS REQUIRED",
+            "CLICK ANY BOX TO UPLOAD · AT LEAST 1 PHOTO REQUIRED",
             style: TextStyle(
               fontSize: 10.5.sp,
               fontWeight: FontWeight.w900,
-              color: propertyImages.length < 3
+              color: propertyImages.length < 1
                   ? Colors.red.shade700
                   : Colors.grey.shade400,
               letterSpacing: 1.2,
@@ -3587,8 +3593,8 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
           FormField<List>(
             key: ValueKey(propertyImages.length),
             validator: (_) {
-              if (propertyImages.length < 3) {
-                return "Upload at least 3 photos";
+              if (propertyImages.length < 1) {
+                return "Upload at least 1 photo";
               }
               return null;
             },
@@ -3957,7 +3963,7 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
       children: [
         _buildFieldLabel("State", isRequired: true),
         Autocomplete<String>(
-          key: ValueKey(_stateController.text),
+          key: ValueKey(_stateResetKey),
           initialValue: TextEditingValue(text: _stateController.text),
           optionsBuilder: (TextEditingValue textEditingValue) {
             if (textEditingValue.text.isEmpty) {
@@ -3969,14 +3975,9 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
             );
           },
           onSelected: (selection) {
-            setState(() {
-              _stateController.text = selection;
-            });
+            _stateController.text = selection;
           },
           fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-            if (_stateController.text.isNotEmpty && controller.text.isEmpty) {
-              controller.text = _stateController.text;
-            }
             return TextFormField(
               controller: controller,
               focusNode: focusNode,
@@ -3994,7 +3995,14 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                 }
                 return null;
               },
-              decoration: _inputDecoration(hint: 'Type state...'),
+              decoration: _inputDecoration(
+                hint: 'Type state...',
+                suffixIcon: Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: const Color(0xFF6B7280),
+                  size: 22.sp,
+                ),
+              ),
             );
           },
         ),
@@ -4075,13 +4083,15 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
           children: [
             _buildFieldLabel("City", isRequired: true),
             Autocomplete<String>(
-              key: ValueKey(selectedCity),
-              initialValue: TextEditingValue(text: selectedCity ?? ""),
+              key: ValueKey(_cityResetKey),
+              initialValue: TextEditingValue(
+                text: selectedCity ?? cityController.text,
+              ),
               optionsBuilder: (TextEditingValue textEditingValue) {
                 if (textEditingValue.text.isEmpty) {
                   return cities
                       .map((e) => e.cityName ?? "")
-                      .where((e) => e.isNotEmpty);
+                      .where((e) => e.trim().isNotEmpty);
                 }
                 return cities
                     .map((e) => e.cityName ?? "")
@@ -4099,23 +4109,24 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                   localityController.clear();
                   isCustomLocalityMode = false;
 
-                  final selectedCityObj = cities.firstWhere(
-                    (c) =>
-                        (c.cityName ?? "").toLowerCase() == city.toLowerCase(),
-                    orElse: () => cities.first,
-                  );
-
-                  selectedCityId = selectedCityObj.id;
-                  localityList = List<String>.from(selectedCityObj.areas ?? []);
+                  try {
+                    final selectedCityObj = cities.firstWhere(
+                      (c) =>
+                          (c.cityName ?? "").toLowerCase() ==
+                          city.toLowerCase(),
+                    );
+                    selectedCityId = selectedCityObj.id;
+                    localityList = List<String>.from(
+                      selectedCityObj.areas ?? [],
+                    );
+                  } catch (_) {
+                    selectedCityId = null;
+                    localityList = [];
+                  }
                 });
               },
               fieldViewBuilder:
                   (context, controller, focusNode, onFieldSubmitted) {
-                    if (selectedCity != null &&
-                        selectedCity!.isNotEmpty &&
-                        controller.text.isEmpty) {
-                      controller.text = selectedCity!;
-                    }
                     return TextFormField(
                       controller: controller,
                       focusNode: focusNode,
@@ -4125,22 +4136,20 @@ class _CreatePropertyScreenState extends ConsumerState<CreatePropertyScreen> {
                         fontWeight: FontWeight.w600,
                       ),
                       onChanged: (value) {
-                        setState(() {
-                          selectedCity = value;
-                          cityController.text = value;
+                        selectedCity = value;
+                        cityController.text = value;
+                        try {
+                          final match = cities.firstWhere(
+                            (c) =>
+                                (c.cityName ?? "").toLowerCase() ==
+                                value.trim().toLowerCase(),
+                          );
+                          selectedCityId = match.id;
+                          localityList = List<String>.from(match.areas ?? []);
+                        } catch (_) {
                           selectedCityId = null;
-                          try {
-                            final match = cities.firstWhere(
-                              (c) =>
-                                  (c.cityName ?? "").toLowerCase() ==
-                                  value.trim().toLowerCase(),
-                            );
-                            selectedCityId = match.id;
-                            localityList = List<String>.from(match.areas ?? []);
-                          } catch (_) {
-                            localityList = [];
-                          }
-                        });
+                          localityList = [];
+                        }
                       },
                       validator: (val) {
                         if (val == null || val.trim().isEmpty) {
